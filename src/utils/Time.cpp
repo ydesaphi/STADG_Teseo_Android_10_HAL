@@ -1,3 +1,10 @@
+/**
+ * @brief Clock time utilities
+ * @file Time.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "Time.h"
 
 #define LOG_TAG "teseo_hal_utils_Time"

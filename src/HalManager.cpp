@@ -1,3 +1,10 @@
+/**
+ * @brief HAL Life cycle manager
+ * @file HalManager.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "HalManager.h"
 
 #define LOG_TAG "teseo_hal_HalManager"

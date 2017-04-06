@@ -1,3 +1,9 @@
+/**
+ * @file NmeaDevice.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_DEVICE_NMEA_DEVICE_H
 #define TESEO_HAL_DEVICE_NMEA_DEVICE_H
 
@@ -6,6 +12,9 @@
 namespace stm {
 namespace device {
 
+/**
+ * @brief      NMEA Device manager
+ */
 class NmeaDevice :
 	public AbstractDevice
 {

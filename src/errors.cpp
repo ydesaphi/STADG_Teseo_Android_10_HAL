@@ -1,5 +1,13 @@
+/**
+ * @brief Error handlers
+ * @file errors.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "errors.h"
 
+// This define can be used when debogging the HAL as a binary
 #ifdef STM_TESEO_HAL_ERRORS_TO_IOSTREAM
 #include <iostream>
 #define ALOGE(message) std::cout << message << std::endl

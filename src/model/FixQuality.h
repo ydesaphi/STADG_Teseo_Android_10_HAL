@@ -1,8 +1,17 @@
+/**
+ * @file FixQuality.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_MODEL_FIX_QUALITY
 #define TESEO_HAL_MODEL_FIX_QUALITY
 
 namespace stm {
 
+/**
+ * @brief      Fix quality enumeration
+ */
 enum class FixQuality : uint8_t
 {
 	Invalid           = 0, ///< Invalid Fix or not available
@@ -16,6 +25,13 @@ enum class FixQuality : uint8_t
 	SimulationMode    = 8, ///< Simulation Mode
 };
 
+/**
+ * @brief      Convert integer to fix quality
+ *
+ * @param[in]  qual  The fix quality integer value
+ *
+ * @return     The fix quality enumeration value
+ */
 FixQuality FixQualityFromInt(uint8_t qual)
 {
 	if(qual < 0 || 8 < qual)

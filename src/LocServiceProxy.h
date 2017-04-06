@@ -1,3 +1,10 @@
+/**
+ * @brief Android Location Service proxy
+ * @file LocServiceProxy.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_LOCATION_PROXY_H
 #define TESEO_HAL_LOCATION_PROXY_H
 
@@ -10,8 +17,18 @@
 #include "model/Location.h"
 
 namespace stm {
+
+/**
+ * The LocServiceProxy namespace contains functions, structures and signals used to communicate
+ * between the Android Location Services and the HAL.
+ * 
+ * @details    The HAL interfaces are
+ */
 namespace LocServiceProxy {
 
+/**
+ * @brief      HAL public interfaces
+ */
 struct Interfaces {
 	GpsInterface                  gps;
 	GpsXtraInterface              xtra;
@@ -33,10 +50,33 @@ struct Interfaces {
  */
 void RegisterCallbacks(const GpsCallbacks * cb);
 
+/**
+ * @brief      Open function called by the Android platform to create the "HAL device"
+ *
+ * @param[in]  module  The GPS module instance
+ * @param      name    The GPS module name
+ * @param      dev     The pointer to device where to store the allocated device
+ *
+ * @return     0 on success, 1 on failure
+ */
 int openDevice(const struct hw_module_t * module, char const * name, struct hw_device_t ** dev);
 
+/**
+ * @brief      Close function called by the Android platform to close the "HAL device"
+ *
+ * @param      dev   The device to close
+ *
+ * @return     0 on succes, 1 on failure
+ */
 int closeDevice(struct hw_device_t * dev);
 
+/**
+ * @brief      Function called by the Android platform to get the HAL Gps Interface
+ *
+ * @param      device  The HAL device
+ *
+ * @return     The gps interface.
+ */
 const GpsInterface * getGpsInterface(struct gps_device_t * device);
 
 /**
@@ -88,31 +128,16 @@ namespace gps {
 
 	void requestUtcTime();
 
-	int onInit(GpsCallbacks * cb);
-
-	int onStart(void);
-
-	int onStop(void);
-
-	void onCleanup(void);
-
-	int onInjectTime(GpsUtcTime time, int64_t timeReference, int uncertainty);
-
-	int onInjectLocation(double latitude, double longitude, float accuracy);
-
-	void onDeleteAidingData(GpsAidingData flags);
-
-	int onSetPositionMode(
-		GpsPositionMode mode,
-		GpsPositionRecurrence recurrence,
-		uint32_t minInterval,
-		uint32_t preferredAccuracy,
-		uint32_t preferredTime);
-
-	const void * onGetExtension(const char * name);
 } // namespace gps
 
 namespace debug {
+
+	struct Signals {
+		Signal<std::string> getInternalState = Signal<std::string>("debug::signals::getInternalState");
+	};
+
+	Signals & getSignals();
+
 	/**
 	 * @brief      Dump HAL internal state into buffer
 	 *

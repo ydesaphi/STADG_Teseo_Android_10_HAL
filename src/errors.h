@@ -1,3 +1,10 @@
+/**
+ * @brief Error handlers
+ * @file errors.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_ERRORS_H
 #define TESEO_HAL_ERRORS_H
 

@@ -1,3 +1,9 @@
+/**
+ * @file Location.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "Location.h"
 #include "string.h"
 

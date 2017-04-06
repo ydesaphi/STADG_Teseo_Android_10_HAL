@@ -1,7 +1,12 @@
+/**
+ * @file TalkerId.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "TalkerId.h"
 
 namespace stm {
-
 
 const char * TalkerIdToString(TalkerId id)
 {

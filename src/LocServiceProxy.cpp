@@ -1,3 +1,10 @@
+/**
+ * @brief Android Location Service proxy
+ * @file LocServiceProxy.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "LocServiceProxy.h"
 
 #define LOG_TAG "teseo_hal_LocServiceProxy"
@@ -12,45 +19,9 @@
 namespace stm {
 namespace LocServiceProxy {
 
-namespace gps {
-
-}
-
 static struct {
 	GpsCallbacks gps;
 } callbacks;
-
-static Interfaces interfaces = {
-	.gps = {
-		.size               = sizeof(GpsInterface),
-		.init               = &LocServiceProxy::gps::onInit,
-		.start              = &LocServiceProxy::gps::onStart,
-		.stop               = &LocServiceProxy::gps::onStop,
-		.cleanup            = &LocServiceProxy::gps::onCleanup,
-		.inject_time        = &LocServiceProxy::gps::onInjectTime,
-		.inject_location    = &LocServiceProxy::gps::onInjectLocation,
-		.delete_aiding_data = &LocServiceProxy::gps::onDeleteAidingData,
-		.set_position_mode  = &LocServiceProxy::gps::onSetPositionMode,
-		.get_extension      = &LocServiceProxy::gps::onGetExtension
-	},
-	.debug = {
-		.size               = sizeof(GpsDebugInterface),
-		.get_internal_state = &LocServiceProxy::debug::getInternalState
-	}
-};
-
-static std::unordered_map<const char *, void *> interfacesMap = {
-	{GPS_XTRA_INTERFACE,               NULL}                ,
-	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)} ,
-	{AGPS_INTERFACE,                   NULL}                ,
-	{SUPL_CERTIFICATE_INTERFACE,       NULL}                ,
-	{GPS_NI_INTERFACE,                 NULL}                ,
-	{AGPS_RIL_INTERFACE,               NULL}                ,
-	{GPS_GEOFENCING_INTERFACE,         NULL}                ,
-	{GPS_MEASUREMENT_INTERFACE,        NULL}                ,
-	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                ,
-	{GNSS_CONFIGURATION_INTERFACE,     NULL}
-};
 
 static struct gps_device_t * device = nullptr;
 
@@ -101,13 +72,9 @@ int closeDevice(struct hw_device_t * dev)
 	return 0;
 }
 
-const GpsInterface * getGpsInterface(struct gps_device_t * device)
-{
-	(void)(device);
-	return &(interfaces.gps);
-}
-
 namespace gps {
+
+const void * onGetExtension(const char * name);
 
 static Signals signals;
 
@@ -168,12 +135,6 @@ int onSetPositionMode(
 	return 0;
 }
 
-const void * onGetExtension(const char * name)
-{
-	ALOGI("Get extension '%s'", name);
-	return interfacesMap.count(name) == 1 ? interfacesMap[name] : NULL;
-}
-
 void sendNmea(GpsUtcTime timestamp, const NmeaMessage & nmea)
 {
 	std::string asString = nmea.toString();
@@ -211,19 +172,84 @@ void requestUtcTime()
 
 namespace debug {
 
+static Signals signals;
+
+Signals & getSignals() { return signals; }
+
 size_t getInternalState(char * buffer, size_t bufferSize)
 {
-	static const char data[] = "TeseoHal-debug: no data";
+	std::string output;
 
-	strncpy(buffer, data, bufferSize);
+	auto collectedInformation = signals.getInternalState.collect();
 
-	if(sizeof(data) > bufferSize)
+	if(collectedInformation.size() == 0)
+	{
+		output = "No data.";
+	}
+	else
+	{
+		for(auto d: collectedInformation)
+		{
+			output.append(d);
+			output.append("\n");
+		}
+	}
+
+	strncpy(buffer, output.c_str(), bufferSize);
+
+	if(output.size() > bufferSize)
 		buffer[bufferSize - 1] = '\0';
 
-	return sizeof(data);
+	return output.size();
 }
 
 } // namespace debug
+
+static Interfaces interfaces = {
+	.gps = {
+		.size               = sizeof(GpsInterface),
+		.init               = &LocServiceProxy::gps::onInit,
+		.start              = &LocServiceProxy::gps::onStart,
+		.stop               = &LocServiceProxy::gps::onStop,
+		.cleanup            = &LocServiceProxy::gps::onCleanup,
+		.inject_time        = &LocServiceProxy::gps::onInjectTime,
+		.inject_location    = &LocServiceProxy::gps::onInjectLocation,
+		.delete_aiding_data = &LocServiceProxy::gps::onDeleteAidingData,
+		.set_position_mode  = &LocServiceProxy::gps::onSetPositionMode,
+		.get_extension      = &LocServiceProxy::gps::onGetExtension
+	},
+	.debug = {
+		.size               = sizeof(GpsDebugInterface),
+		.get_internal_state = &LocServiceProxy::debug::getInternalState
+	}
+};
+
+static std::unordered_map<const char *, void *> interfacesMap = {
+	{GPS_XTRA_INTERFACE,               NULL}                ,
+	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)} ,
+	{AGPS_INTERFACE,                   NULL}                ,
+	{SUPL_CERTIFICATE_INTERFACE,       NULL}                ,
+	{GPS_NI_INTERFACE,                 NULL}                ,
+	{AGPS_RIL_INTERFACE,               NULL}                ,
+	{GPS_GEOFENCING_INTERFACE,         NULL}                ,
+	{GPS_MEASUREMENT_INTERFACE,        NULL}                ,
+	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                ,
+	{GNSS_CONFIGURATION_INTERFACE,     NULL}
+};
+
+const GpsInterface * getGpsInterface(struct gps_device_t * device)
+{
+	(void)(device);
+	return &(interfaces.gps);
+}
+
+namespace gps {	
+	const void * onGetExtension(const char * name)
+	{
+		ALOGI("Get extension '%s'", name);
+		return interfacesMap.count(name) == 1 ? interfacesMap[name] : NULL;
+	}
+}
 
 } // namespace LocServiceProxy
 } // namespace stm

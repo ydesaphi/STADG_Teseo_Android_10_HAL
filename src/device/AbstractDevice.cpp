@@ -1,3 +1,9 @@
+/**
+ * @file AbstractDevice.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "AbstractDevice.h"
 
 #define LOG_TAG "teseo_hal_AbstractDevice"
@@ -37,7 +43,7 @@ void AbstractDevice::connectStreamToDecoder()
 		return;
 	}
 
-	stream->onNewBytes.connect(SlotFactory::create(*decoder, &decoder::IDecoder::onNewBytes));
+	stream->onNewBytes.connect(SlotFactory::create(*decoder, &decoder::AbstractDecoder::onNewBytes));
 }
 
 void AbstractDevice::setStream(stream::IStream * s)
@@ -50,7 +56,7 @@ void AbstractDevice::setStream(stream::IStream * s)
 	stream = s;
 }
 
-void AbstractDevice::setDecoder(decoder::IDecoder * d)
+void AbstractDevice::setDecoder(decoder::AbstractDecoder * d)
 {
 	if(d == nullptr)
 	{
@@ -92,57 +98,6 @@ void AbstractDevice::setTimestamp(GpsUtcTime t)
 {
 	timestamp = t;
 	location.timestamp(t);
-}
-
-void AbstractDevice::invalidateLocation()
-{
-	location.invalidateLocation();
-}
-
-void AbstractDevice::invalidateAltitude()
-{
-	location.invalidateAltitude();
-}
-
-void AbstractDevice::invalidateSpeed()
-{
-	location.invalidateSpeed();
-}
-
-void AbstractDevice::invalidateBearing()
-{
-	location.invalidateBearing();
-}
-
-void AbstractDevice::invalidateAccuracy()
-{
-	location.invalidateAccuracy();
-}
-
-void AbstractDevice::setLocation(double latitude, double longitude)
-{
-	location.latitude(latitude);
-	location.longitude(longitude);
-}
-
-void AbstractDevice::setAltitude(double altitude)
-{
-	location.altitude(altitude);
-}
-
-void AbstractDevice::setSpeed(float speed)
-{
-	location.speed(speed);
-}
-
-void AbstractDevice::setBearing(float bearing)
-{
-	location.bearing(bearing);
-}
-
-void AbstractDevice::setAccuracy(float accuracy)
-{
-	location.accuracy(accuracy);
 }
 
 void AbstractDevice::emitNmea(const NmeaMessage & nmea)

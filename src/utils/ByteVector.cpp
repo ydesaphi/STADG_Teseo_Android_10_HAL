@@ -1,3 +1,10 @@
+/**
+ * @brief Byte vector utilities
+ * @file ByteVector.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "ByteVector.h"
 
 #define LOG_TAG "teseo_hal_utils_ByteVector"
@@ -74,12 +81,12 @@ int byteVectorParseInt(const ByteVector & bytes)
 	catch(const std::invalid_argument & ex)
 	{
 		ALOGE("byteVectorParseInt: Invalid argument: %s '%s'", ex.what(), bytesToString(bytes).c_str());
-		return 0;
+		throw;
 	}
 	catch(...)
 	{
 		ALOGE("byteVectorParseInt: unknown exeception '%s'", bytesToString(bytes).c_str());
-		return 0;
+		throw;
 	}
 }
 
@@ -92,12 +99,12 @@ int byteVectorParseInt(const ByteVector::const_iterator & begin, const ByteVecto
 	catch(const std::invalid_argument & ex)
 	{
 		ALOGE("byteVectorParseInt: Invalid argument: %s '%s'", ex.what(), bytesToString(begin,end).c_str());
-		return 0;
+		throw;
 	}
 	catch(...)
 	{
 		ALOGE("byteVectorParseInt: unknown exeception '%s'", bytesToString(begin,end).c_str());
-		return 0;
+		throw;
 	}
 }
 
@@ -110,12 +117,12 @@ double byteVectorParseDouble(const ByteVector & bytes)
 	catch(const std::invalid_argument & ex)
 	{
 		ALOGE("byteVectorParseDouble: Invalid argument: %s '%s'", ex.what(), bytesToString(bytes).c_str());
-		return 0.;
+		throw;
 	}
 	catch(...)
 	{
 		ALOGE("byteVectorParseDouble: unknown exeception '%s'", bytesToString(bytes).c_str());
-		return 0;
+		throw;
 	}
 }
 
@@ -128,17 +135,18 @@ double byteVectorParseDouble(const ByteVector::const_iterator & begin, const Byt
 	catch(const std::invalid_argument & ex)
 	{
 		ALOGE("byteVectorParseDouble: Invalid argument: %s '%s'", ex.what(), bytesToString(begin,end).c_str());
-		return 0.;
+		throw;
 	}
 	catch(...)
 	{
 		ALOGE("byteVectorParseDouble: unknown exeception '%s'", bytesToString(begin,end).c_str());
-		return 0;
+		throw;
 	}
 }
 
-void split(const ByteVector & bytes, uint8_t separator, std::vector<ByteVector> & pieces)
+std::vector<ByteVector> split(const ByteVector & bytes, uint8_t separator)
 {
+	std::vector<ByteVector> pieces;
 	ByteVector current;
 
 	for(uint8_t b : bytes)
@@ -154,6 +162,10 @@ void split(const ByteVector & bytes, uint8_t separator, std::vector<ByteVector> 
 
 	// Push last piece
 	pieces.push_back(current);
+
+	// Shrink container and return pieces
+	pieces.shrink_to_fit();
+	return pieces;
 }
 
 ByteVector createFromString(const char * str)

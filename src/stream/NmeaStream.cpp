@@ -1,3 +1,9 @@
+/**
+ * @file NmeaStream.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "NmeaStream.h"
 
 #define LOG_TAG "teseo_hal_NmeaStream"

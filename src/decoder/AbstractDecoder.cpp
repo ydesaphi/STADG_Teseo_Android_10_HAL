@@ -1,6 +1,12 @@
-#include "IDecoder.h"
+/**
+ * @file AbstractDecoder.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
 
-#define LOG_TAG "teseo_hal_IDecoder"
+#include "AbstractDecoder.h"
+
+#define LOG_TAG "teseo_hal_AbstractDecoder"
 #include <cutils/log.h>
 #include <stdexcept>
 
@@ -10,18 +16,18 @@
 namespace stm {
 namespace decoder {
 
-IDecoder::IDecoder() :
+AbstractDecoder::AbstractDecoder() :
 	Trackable(),
 	Thread("teseo-decoder"),
-	bytesChannel("IDecoder::bytesChannel")
+	bytesChannel("AbstractDecoder::bytesChannel")
 {
 	stopDecoder = false;
 }
 
-IDecoder::~IDecoder()
+AbstractDecoder::~AbstractDecoder()
 { }
 
-void IDecoder::run()
+void AbstractDecoder::run()
 {
 	ByteVector * bytes = nullptr;
 	int errcount = 0;
@@ -64,7 +70,7 @@ void IDecoder::run()
 	ALOGI("End of decoder thread");
 }
 
-void IDecoder::onNewBytes(ByteVectorPtr bytes)
+void AbstractDecoder::onNewBytes(ByteVectorPtr bytes)
 {
 	if(isRunning())
 	{
@@ -76,7 +82,7 @@ void IDecoder::onNewBytes(ByteVectorPtr bytes)
 	}
 }
 
-int IDecoder::stop()
+int AbstractDecoder::stop()
 {
 	if(isRunning())
 	{

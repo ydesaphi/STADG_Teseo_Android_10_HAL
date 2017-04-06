@@ -1,3 +1,10 @@
+/**
+ * @brief Signal/Slot implementation
+ * @file Signal.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_SIGNAL_H
 #define TESEO_HAL_SIGNAL_H
 
@@ -22,10 +29,16 @@
 #define SIG_LOGI(...)
 #endif
 
+/**
+ * @brief      Base class for object that contains slots
+ * @details    The object is tracked through a shared pointer. When registering a slot, a weak
+ * pointer to the instance is saved. Before calling the slot, the weak pointer is tested. If it has 
+ * expired, the connection became invalid and the slot isn't called.
+ */
 class Trackable
 {
 private:
-	std::shared_ptr<Trackable> shptr;
+	std::shared_ptr<Trackable> shptr; ///< Shared pointer to the instance
 
 public:
 	Trackable() :
@@ -40,25 +53,61 @@ public:
 	std::weak_ptr<Trackable> getWeakPtr() const { return shptr; }
 };
 
+/**
+ * @brief      Base class for slots
+ *
+ * @tparam     Treturn  Slot return type
+ * @tparam     Targs    Slot argument list
+ */
 template <typename Treturn, typename... Targs>
 class GenericSlot
 {
 public:
+	/**
+	 * Slot pointer type
+	 */
 	typedef std::shared_ptr<GenericSlot<Treturn, Targs...>> ptr;
 
+	/**
+	 * @brief      Effectively call the slot
+	 *
+	 * @param[in]  args  Arguments to be passed to the slot
+	 *
+	 * @return     Return the return value of the slot
+	 */
 	virtual Treturn call(Targs... args) = 0;
 
+	/**
+	 * Shortcut to `Treturn call(Targs... args)`
+	 */
 	virtual Treturn operator()(Targs... args) { return call(args...); }
 
+	/**
+	 * @brief      Determines if the slot is valid.
+	 *
+	 * @return     True if valid, False otherwise.
+	 */
 	virtual bool isValid() { return true; }
 
+	/**
+	 * @brief      Slot destructor
+	 */
 	virtual ~GenericSlot() { }
 };
 
+/**
+ * @brief      Class for function slot.
+ *
+ * @tparam     Treturn  Slot return type
+ * @tparam     Targs    Slot argument list
+ */
 template <typename Treturn, typename ...Targs>
 class FunctionSlot : public GenericSlot<Treturn, Targs...>
 {
 public:
+	/**
+	 * Slot function type
+	 */
 	typedef Treturn (*SlotType)(Targs...);
 
 	FunctionSlot(SlotType s) :
@@ -70,18 +119,35 @@ public:
 		return slot(args...);
 	}
 
+	/**
+	 * @brief      Determines if the slot is valid.
+	 * 
+	 * @details    The function slot is considered valid if the function pointer isn't null.
+	 *
+	 * @return     True if valid, False otherwise.
+	 */
 	virtual bool isValid() { return slot != nullptr; }
 
 private:
 	SlotType slot;
 };
 
+/**
+ * @brief      Class for member function slot.
+ *
+ * @tparam     Tinstance  Class of the slot method (must derive from Trackable)
+ * @tparam     Treturn    Slot return type
+ * @tparam     Targs      Slot argument list
+ */
 template <class Tinstance, typename Treturn, typename ...Targs>
 class MemberFunctionSlot :
 	public GenericSlot<Treturn, Targs...>,
 	DerivedFrom<Tinstance, Trackable>
 {
 public:
+	/**
+	 * Slot function type
+	 */
 	typedef Treturn (Tinstance::*SlotType)(Targs...);
 
 	MemberFunctionSlot(const Tinstance & i, SlotType s) :
@@ -89,13 +155,23 @@ public:
 		slot(s)
 	{ }
 
+	/**
+	 * @brief      Call the slot method
+	 * 
+	 * @details    The instance is acquired using the weak pointer to Trackable, then by statically
+	 * casting this pointer to Tinstance class.
+	 *
+	 * @param[in]  args  The arguments
+	 *
+	 * @return     Return the value return by the slot
+	 */
 	Treturn call(Targs... args)
 	{
 		// 1. Get trackable ptr
 		Trackable * ti = instance.lock().get();
 
 		// 2. Promote trackable to child class
-		// Static cast performs no type checking (ie it is unsage)
+		// Static cast performs no type checking (i.e.: it is unsafe)
 		// but we are sure that our pointer to Trackable can be
 		// downcasted to Tinstance because of the DerivedFrom
 		// constraint.
@@ -104,6 +180,14 @@ public:
 		return (i->*slot)(args...);
 	}
 
+	/**
+	 * @brief      Determines if the slot is valid.
+	 * 
+	 * @details    The member function slot is considered valid when the weak pointer to the tracked
+	 * object isn't expired.
+	 *
+	 * @return     True if valid, False otherwise.
+	 */	
 	virtual bool isValid()
 	{
 		return !instance.expired();
@@ -145,8 +229,7 @@ namespace SlotFactory
 	template<typename Tfunction>
 	auto create(Tfunction slot)
 	{
-		// Lambda function promoted to function pointer
-		// With * and + operators.
+		// Lambda function promoted to function pointer with * and + operators.
 		return create(*+slot);
 	}
 
@@ -192,10 +275,19 @@ namespace SlotFactory
 
 }
 
+/**
+ * @brief      Base class for signals.
+ *
+ * @tparam     Treturn  Signal return type
+ * @tparam     Targs    Signal argument list
+ */
 template <typename Treturn, typename ...Targs>
 class BaseSignal
 {
 protected:
+	/**
+	 * Slot list type
+	 */
 	typedef std::list<typename GenericSlot<Treturn, Targs...>::ptr> SlotList;
 
 	SlotList slots;
@@ -214,6 +306,11 @@ public:
 	BaseSignal(const char * n) { (void)(n); }
 #endif
 
+	/**
+	 * @brief      Connect signal to slot
+	 *
+	 * @param[in]  slot  The slot
+	 */
 	void connect(const typename GenericSlot<Treturn, Targs...>::ptr & slot)
 	{
 		slots.push_back(slot);
@@ -237,9 +334,25 @@ public:
 
 		return out.str();
 	}
+#else
+	const char * name() const
+	{
+		return "signal-debugging-disabled";
+	}
+
+	std::string toString() const
+	{
+		return "Signal: debugging disabled.";
+	}
 #endif
 };
 
+/**
+ * @brief      Signal class
+ *
+ * @tparam     Treturn  Signal return type
+ * @tparam     Targs    Signal argument list
+ */
 template <typename Treturn, typename ...Targs>
 class Signal :
 	public BaseSignal<Treturn, Targs...>
@@ -255,6 +368,12 @@ protected:
 
 		return out.str();
 	}
+#else
+	std::string printLastResponseHelper(Treturn resp)
+	{
+		(void)(resp);
+		return "Signal debugging disabled.";
+	}
 #endif
 
 public:
@@ -262,6 +381,14 @@ public:
 
 	Signal(const char * n) : BaseSignal<Treturn, Targs...>(n) { }
 
+	/**
+	 * @brief      Emit the signal
+	 *
+	 * @param[in]  args  The arguments
+	 *
+	 * @return     Value returned by the last called slot. Or Treturn default value if no slot is
+	 * attached to this signal. The default value may be a random value in case of an POD type.
+	 */
 	Treturn emit(Targs... args)
 	{
 		SIG_LOGI("emit: %s", this->toString().c_str());
@@ -297,8 +424,18 @@ public:
 		return lastResponse;
 	}
 
+	/**
+	 * @brief      Emit the signal and collect all the responses
+	 *
+	 * @param[in]  args  The arguments
+	 *
+	 * @return     List of all the slots responses
+	 */
 	auto collect(Targs... args);
 
+	/**
+	 * Shortcut to `Treturn emit(Targs... )`
+	 */
 	Treturn operator()(Targs... args);
 };
 
@@ -342,6 +479,11 @@ auto Signal<Treturn, Targs...>::collect(Targs... args)
 	return responses;
 }
 
+/**
+ * @brief      Signal template specialization for void-return signals
+ *
+ * @tparam     Targs  Signal argument list
+ */
 template<typename ...Targs>
 class Signal<void, Targs...> : public BaseSignal<void, Targs...>
 {
@@ -354,6 +496,9 @@ public:
 
 	void operator()(Targs... args);
 	
+	/**
+	 * @brief The collect method is deleted because we can't return a list of void.
+	 */
 	auto collect(Targs... args) = delete;
 };
 

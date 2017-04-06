@@ -1,5 +1,6 @@
 /**
- * @file gps.c
+ * @brief Entry point of the HAL
+ * @file gps.cpp
  * @author Baudouin Feildel <baudouin.feildel@st.com>
  * @copyright 2016, STMicroelectronics, All rights reserved.
  */

@@ -1,3 +1,10 @@
+/**
+ * @brief Provide asynchronous communication between threads
+ * @file Channel.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_THREAD_CHANNEL
 #define TESEO_HAL_THREAD_CHANNEL
 
@@ -25,16 +32,36 @@
 namespace stm {
 namespace thread {
 
+/**
+ * @brief      Asynchronous typed data communication channel for threads
+ * 
+ * @details    This communication channel can be used to send data asynchronously from one thread to
+ * another. This is a one to one communicaton channel. The sent data is stored in a FIFO list. If
+ * there is no data in the FIFO, the reception is a blocking a operation.
+ * Internally the channel use an anonymous pipe to send data.
+ * 
+ * If you want to send class instances through the channel you should only send pointer to instance.
+ * Not the entire object, because the pipe buffer is limited and data bigger than this buffer is not
+ * transmitted atomically.
+ * 
+ * The AbstractDecoder class is a good example on how to use a channel to send complex objects from
+ * a thread to another.
+ *
+ * @tparam     Tdata  Data type
+ */
 template<typename Tdata>
 class Channel {
 private:
-	int pipeInputFd;
-	int pipeOutputFd;
+	int pipeInputFd;  ///< Channel input
+	int pipeOutputFd; ///< Channel output
 
-	std::string name;
+	std::string name; ///< Channel name
 
-	bool opened;
+	bool opened;      ///< Flag that indicates if the channel is opened or not
 
+	/**
+	 * @brief      Opens a the channel pipe.
+	 */
 	void openPipe()
 	{
 		int pipefd[2];
@@ -59,6 +86,9 @@ private:
 		opened = true;
 	}
 
+	/**
+	 * @brief      Closes the channel pipe.
+	 */
 	void closePipe()
 	{
 		if(opened)
@@ -81,6 +111,11 @@ public:
 		closePipe();
 	}
 
+	/**
+	 * @brief      Send data in the channel
+	 *
+	 * @param[in]  data  Data to send
+	 */
 	void send(const Tdata & data) noexcept
 	{
 		int ret = write(pipeInputFd, &data, sizeof(Tdata));
@@ -89,6 +124,18 @@ public:
 			errors::write(ret);
 	}
 
+	/**
+	 * @brief      Receive data from the channel
+	 * 
+	 * @details    If the channel is empty this method block the current thread until data is
+	 * available.
+	 *
+	 * @return     Data received
+	 * 
+	 * @throws     std::system_error System error when the receive fails.
+	 * @throws     std::runtime_error Runtime error if the received byte count is incoherent with
+	 * the data size.
+	 */
 	Tdata receive()
 	{
 		Tdata data;
@@ -104,12 +151,24 @@ public:
 				throw std::system_error(errors::read(ret), std::system_category());
 			else
 			{
-				CHANNEL_LOGE("Channel '%s' readed byte count is incoherent: %d read, %lu waited.", ret, sizeof(Tdata));
+				CHANNEL_LOGE(
+					"Channel '%s' readed byte count is incoherent: %d read, %lu waited.",
+					ret, sizeof(Tdata));
 				throw std::runtime_error("Channel readed byte count is incoherent");
 			}
 		}
 	}
 
+	/**
+	 * @brief      Receive data from the channel
+	 *
+	 * @details    If the channel is empty this method block the current thread until data is
+	 * available.
+	 * 
+	 * @param      buffer  The destination buffer
+	 *
+	 * @return     The received byte count
+	 */
 	int receive(Tdata * buffer) noexcept
 	{
 		return read(pipeOutputFd, buffer, sizeof(Tdata));

@@ -19,22 +19,22 @@ LOCAL_SHARED_LIBRARIES := \
 	libsysutils           \
 	libhardware
 
-LOCAL_SRC_FILES :=            \
-	HalManager.cpp            \
-	errors.cpp                \
-	stream/NmeaStream.cpp     \
-	decoder/IDecoder.cpp      \
-	decoder/NmeaDecoder.cpp   \
-	utils/ByteVector.cpp      \
-	utils/Time.cpp            \
-	model/NmeaMessage.cpp     \
-	model/TalkerId.cpp        \
-	model/Location.cpp        \
-	model/Coordinate.cpp      \
-	LocServiceProxy.cpp       \
-	decoder/nmea/messages.cpp \
-	device/AbstractDevice.cpp \
-	device/NmeaDevice.cpp     \
+LOCAL_SRC_FILES :=              \
+	HalManager.cpp              \
+	errors.cpp                  \
+	stream/NmeaStream.cpp       \
+	decoder/AbstractDecoder.cpp \
+	decoder/NmeaDecoder.cpp     \
+	utils/ByteVector.cpp        \
+	utils/Time.cpp              \
+	model/NmeaMessage.cpp       \
+	model/TalkerId.cpp          \
+	model/Location.cpp          \
+	model/Coordinate.cpp        \
+	LocServiceProxy.cpp         \
+	decoder/nmea/messages.cpp   \
+	device/AbstractDevice.cpp   \
+	device/NmeaDevice.cpp       \
 	thread/Thread.cpp
 
 #LOCAL_COPY_HEADERS_TO:= libteseo/

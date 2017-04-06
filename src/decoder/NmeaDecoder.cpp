@@ -1,3 +1,9 @@
+/**
+ * @file NmeaDecoder.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "NmeaDecoder.h"
 
 #define LOG_TAG "teseo_hal_NmeaDecoder"
@@ -165,8 +171,7 @@ void NmeaDecoder::decode(ByteVectorPtr bytesPtr)
 
 
 	// 2. Split message
-	std::vector<ByteVector> pieces;
-	utils::split(bytes, ',', pieces);
+	std::vector<ByteVector> pieces = utils::split(bytes, ',');
 
 	// 3. Extract TalkerID and SentenceID
 	const ByteVector & id = pieces[0];

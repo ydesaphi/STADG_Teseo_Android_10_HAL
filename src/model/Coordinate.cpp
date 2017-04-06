@@ -1,3 +1,9 @@
+/**
+ * @file Coordinate.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "Coordinate.h"
 
 #include <cmath>
@@ -6,6 +12,14 @@
 
 namespace stm {
 
+/**
+ * @brief      Convert decimal degree coordinate to degree minute
+ *
+ * @param[in]  value  The decimal degree coordinate
+ * @param[in]  lat    true if coordinate is a latitude, false otherwise
+ *
+ * @return     Tuple containing the degree as integer, the minute as double and the direction
+ */
 static std::tuple<int, double, CoordinateDirection>
 	DecimalDegreeToDegreeMinute(double value, bool lat = true)
 {
@@ -29,6 +43,15 @@ static std::tuple<int, double, CoordinateDirection>
 	return std::make_tuple(static_cast<int>(degree), tmpMinutes + (tmpSeconds / 60.), direction);
 }
 
+/**
+ * @brief      Convert degree minute coordinate to decimal degree
+ *
+ * @param[in]  degree  The degree value
+ * @param[in]  minute  The decimal minute value
+ * @param[in]  dir     The direction
+ *
+ * @return     The decimal degree coordinate
+ */
 static double DegreeMinuteToDecimalDegree(int degree, double minute, CoordinateDirection dir)
 {
 	return (degree + minute * 60) *

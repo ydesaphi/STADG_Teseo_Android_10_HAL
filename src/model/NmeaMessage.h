@@ -1,3 +1,9 @@
+/**
+ * @file NmeaMessage.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_NMEA_MESSAGE_H
 #define TESEO_HAL_NMEA_MESSAGE_H
 
@@ -8,6 +14,9 @@
 
 namespace stm {
 
+/**
+ * @brief      NMEA message wrapper
+ */
 struct NmeaMessage {
 public:
 	NmeaMessage(
@@ -26,8 +35,18 @@ public:
 
 	const uint8_t crc;
 
+	/**
+	 * @brief      Returns a string representation of the object.
+	 *
+	 * @return     String representation of the object.
+	 */
 	const std::string & toString() const;
 
+	/**
+	 * @brief      Returns a C-string representation of the object.
+	 *
+	 * @return     C-String representation of the object.
+	 */
 	const char * toCString() const;
 
 private:

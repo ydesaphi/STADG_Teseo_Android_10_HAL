@@ -1,3 +1,10 @@
+/**
+ * @brief Thread wrapper class
+ * @file Thread.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "Thread.h"
 
 #define LOG_TAG "teseo_hal_Thread"
@@ -34,6 +41,7 @@ Thread::~Thread()
 	if(isRunning())
 	{
 		ALOGW("Thread %s is being deleted while running.", name.c_str());
+		// Stop can't be called here as it is a pure virtual method
 	}
 }
 

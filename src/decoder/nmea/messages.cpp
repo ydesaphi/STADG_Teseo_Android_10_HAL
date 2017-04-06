@@ -1,3 +1,9 @@
+/**
+ * @file messages.cpp
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #include "messages.h"
 
 #define LOG_TAG "teseo_hal_nmea_messages"
@@ -17,30 +23,26 @@ namespace nmea {
 using namespace stm::device;
 using namespace stm::utils;
 
+typedef void (*MessageDecoder)(AbstractDevice & dev, const NmeaMessage &);
+
 std::unordered_map<std::string, MessageDecoder> std = {
 	{"GGA", &decoders::gga},
 	{"VTG", &decoders::vtg}
 };
 
+std::unordered_map<std::string, MessageDecoder> stm = { };
+
 std::unordered_map<std::string, MessageDecoder> * decoders[] =
 {
-	&std,   // TalkerId::GP
-	&std,   // TalkerId::GA
-	&std,   // TalkerId::GL
-	&std,   // TalkerId::GN
-	&std,   // TalkerId::GB
-	&std,   // TalkerId::BD
-	&std,   // TalkerId::QZ
-	nullptr // TalkerId::PSTM
+	&std, // TalkerId::GP
+	&std, // TalkerId::GA
+	&std, // TalkerId::GL
+	&std, // TalkerId::GN
+	&std, // TalkerId::GB
+	&std, // TalkerId::BD
+	&std, // TalkerId::QZ
+	&stm  // TalkerId::PSTM
 };
-
-void decode(AbstractDevice & dev, const NmeaMessage & msg)
-{
-	MessageDecoder d = getMessageDecoder(msg);
-
-	if(d != nullptr)
-		d(dev, msg);
-}
 
 MessageDecoder getMessageDecoder(const NmeaMessage & msg)
 {
@@ -57,6 +59,16 @@ MessageDecoder getMessageDecoder(const NmeaMessage & msg)
 	return nullptr;
 }
 
+void decode(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	MessageDecoder d = getMessageDecoder(msg);
+
+	if(d != nullptr)
+		d(dev, msg);
+	else
+		ALOGW("No decoder for message %s%s", TalkerIdToString(msg.talkerId), bytesToString(msg.sentenceId).c_str());
+}
+
 void decoders::gga(AbstractDevice & dev, const NmeaMessage & msg)
 {
 	ALOGI("Decode GGA: %s", msg.toString().c_str());
@@ -71,17 +83,20 @@ void decoders::gga(AbstractDevice & dev, const NmeaMessage & msg)
 
 	dev.setTimestamp(timestamp);
 
+	auto & loc = dev.getLocation();
+
 	if(quality == FixQuality::Invalid)
 	{
-		dev.invalidateLocation();
-		dev.invalidateAltitude();
-		dev.invalidateAccuracy();
+		loc.invalidateLocation();
+		loc.invalidateAltitude();
+		loc.invalidateAccuracy();
 	}
 	else
 	{
-		dev.setLocation(lat.asDecimalDegree().value(), lon.asDecimalDegree().value());
-		dev.setAltitude(altitude);
-		dev.setAccuracy(HDOP * 5);
+		loc.latitude(lat.asDecimalDegree().value());
+		loc.longitude(lon.asDecimalDegree().value());
+		loc.altitude(altitude);
+		loc.accuracy(HDOP);
 	}
 
 	dev.update();
@@ -92,8 +107,8 @@ void decoders::vtg(AbstractDevice & dev, const NmeaMessage & msg)
 	ALOGI("Decode VTG: %s", msg.toString().c_str());
 
 	double TMGT = utils::byteVectorParseDouble(msg.parameters[0]);
-	//double TMGM = utils::byteVectorParseDouble(msg.parameters[2]);
-	//double SoGN = utils::byteVectorParseDouble(msg.parameters[4]);
+	//double TMGM = utils::byteVectorParseDouble(msg.parameters[2]); // unused
+	//double SoGN = utils::byteVectorParseDouble(msg.parameters[4]); // unused
 	double SoGK = utils::byteVectorParseDouble(msg.parameters[6]);
 
 	int faaMode = 'A';
@@ -101,15 +116,17 @@ void decoders::vtg(AbstractDevice & dev, const NmeaMessage & msg)
 	if(msg.parameters.size() > 9)
 		faaMode = utils::byteVectorParseInt(msg.parameters[9]);
 
+	auto & loc = dev.getLocation();
+
 	if(faaMode != 'N')
 	{
-		dev.setSpeed(SoGK / 3.6);
-		dev.setBearing(TMGT);
+		loc.speed(SoGK / 3.6);
+		loc.bearing(TMGT);
 	}
 	else
 	{
-		dev.invalidateSpeed();
-		dev.invalidateBearing();
+		loc.invalidateSpeed();
+		loc.invalidateBearing();
 	}
 	
 	dev.update();

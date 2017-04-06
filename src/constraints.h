@@ -1,3 +1,9 @@
+/**
+ * @brief Template constraint utilities from: http://www.stroustrup.com/bs_faq2.html#constraints
+ * @file constraints.h
+ * @author Bjarne Stroustrup
+ */
+
 #ifndef TESEO_HAL_TEMPLATE_CONSTRAINTS
 #define TESEO_HAL_TEMPLATE_CONSTRAINTS
 

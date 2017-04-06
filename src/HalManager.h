@@ -1,3 +1,10 @@
+/**
+ * @brief HAL Life cycle manager
+ * @file HalManager.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ */
+
 #ifndef TESEO_HAL_HAL_MANAGER_H
 #define TESEO_HAL_HAL_MANAGER_H
 
@@ -10,6 +17,14 @@
 
 namespace stm {
 
+/**
+ * @brief      HAL Manager class
+ * 
+ * @details    This class is responsible of:
+ * - The HAL initialization,
+ * - The virtual device creation,
+ * - The HAL cleanup
+ */
 class HalManager :
 	public Trackable
 {
@@ -23,8 +38,21 @@ public:
 
 	~HalManager();
 
+	/**
+	 * @brief      HAL Initializer
+	 * 
+	 * @details    The initializer create a virtual device using the gps.conf configuration file
+	 * and send the HAL capabilities to the android platform.
+	 *
+	 * @param      cb    Unused
+	 *
+	 * @return     0 on success, 1 on failure
+	 */
 	int init(GpsCallbacks * cb);
 
+	/**
+	 * @brief      HAL Cleanup
+	 */
 	void cleanup();
 
 	static HalManager & getInstance();
