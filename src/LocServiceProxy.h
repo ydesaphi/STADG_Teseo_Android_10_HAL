@@ -10,11 +10,13 @@
 
 #include <cstdint>
 #include <string>
+#include <map>
 #include <hardware/gps.h>
 
 #include "Signal.h"
 #include "model/NmeaMessage.h"
 #include "model/Location.h"
+#include "model/SatInfo.h"
 
 namespace stm {
 
@@ -120,7 +122,13 @@ namespace gps {
 
 	void sendLocationUpdate(Location & loc);
 
+	void sendSatelliteListUpdate(const std::map<SatIdentifier, SatInfo> & satellites);
+
 	void sendCapabilities(uint32_t capabilities);
+
+	void sendStatusUpdate(GpsStatusValue status);
+
+	void sendSystemInfo(uint16_t yearOfHardware);
 
 	void acquireWakelock();
 

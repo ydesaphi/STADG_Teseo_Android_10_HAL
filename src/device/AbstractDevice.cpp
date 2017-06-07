@@ -15,6 +15,8 @@
 namespace stm {
 namespace device {
 
+const ByteVector AbstractDevice::nmeaSequenceStart {'G', 'G', 'A'};
+
 AbstractDevice::AbstractDevice()
 {
 	stream = nullptr;
@@ -27,6 +29,10 @@ AbstractDevice::AbstractDevice()
 
 	onNmea.connect(SlotFactory::create(LocServiceProxy::gps::sendNmea));
 	locationUpdate.connect(SlotFactory::create(LocServiceProxy::gps::sendLocationUpdate));
+	satelliteListUpdate.connect(SlotFactory::create(LocServiceProxy::gps::sendSatelliteListUpdate));
+	statusUpdate.connect(SlotFactory::create(LocServiceProxy::gps::sendStatusUpdate));
+
+	statusUpdate(GPS_STATUS_NONE);
 }
 
 void AbstractDevice::connectStreamToDecoder()
@@ -70,7 +76,49 @@ void AbstractDevice::update()
 {
 	if(location.locationValidity())
 		locationUpdate(location);
+
+	satelliteListUpdate(this->satellites);
 }
+
+void AbstractDevice::updateIfStartSentenceId(const ByteVector & sentenceId)
+{
+	if(sentenceId == nmeaSequenceStart)
+	{
+		update();
+
+		// Clear data before starting new sequence
+		this->satellites.clear();
+	}
+}
+
+/*
+void AbstractDevice::updateSatelliteList()
+{
+	int gpsSats = 0;
+	int gloSats = 0;
+	int galSats = 0;
+	int beiSats = 0;
+	int otherSats = 0;
+	int totalSats = 0;
+
+	auto action = [&] (auto & p) {
+		switch(p.second.getId().getConstellation()) {
+			case Constellation::Gps:     gpsSats++; break;
+			case Constellation::Glonass: gloSats++; break;
+			case Constellation::Galileo: galSats++; break;
+			case Constellation::Beidou:  beiSats++; break;
+			default: otherSats++; break;
+		}
+		totalSats++;
+	};
+
+	std::for_each(this->satellites.begin(), this->satellites.end(), action);
+
+	ALOGI("Send satellite list: %d satellites, %d gps, %d glonass, %d galileo, %d beidou, %d others",
+		totalSats, gpsSats, gloSats, galSats, beiSats, otherSats);
+	satelliteListUpdate(this->satellites);
+}
+*/
 
 int AbstractDevice::start()
 {
@@ -79,6 +127,7 @@ int AbstractDevice::start()
 	LocServiceProxy::gps::requestUtcTime();
 	decoder->start();
 	stream->startReading();
+	statusUpdate(GPS_STATUS_SESSION_BEGIN);
 
 	return 0;
 }
@@ -90,6 +139,7 @@ int AbstractDevice::stop()
 	stream->stopReading();
 	decoder->stop();
 	LocServiceProxy::gps::releaseWakelock();
+	statusUpdate(GPS_STATUS_SESSION_END);
 
 	return 0;
 }

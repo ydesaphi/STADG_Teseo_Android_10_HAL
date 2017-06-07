@@ -6,6 +6,8 @@
 
 #include "Coordinate.h"
 
+#define LOG_TAG "teseo_hal_model_Coordinate"
+#include <cutils/log.h>
 #include <cmath>
 #include <cstdlib>
 #include <tuple>
@@ -54,8 +56,12 @@ static std::tuple<int, double, CoordinateDirection>
  */
 static double DegreeMinuteToDecimalDegree(int degree, double minute, CoordinateDirection dir)
 {
-	return (degree + minute * 60) *
-		((dir == CoordinateDirection::NORTH || dir == CoordinateDirection::EAST) ? 1 : -1);
+	double val = (static_cast<double>(degree) + minute / 60.) *
+		((dir == CoordinateDirection::NORTH || dir == CoordinateDirection::EAST) ? 1. : -1.);
+
+	ALOGI("Decode GGA: convert deg min to decimal deg: %d°%lf = %lf", degree, minute, val);
+
+	return val;
 }
 
 static double DegreeMinuteToDecimalDegree(const DegreeMinuteCoordinate & coord)
@@ -96,24 +102,27 @@ DegreeMinuteCoordinate::DegreeMinuteCoordinate(int deg, double min, CoordinateDi
 	degree(deg), minute(min), direction(dir)
 { }
 
-DegreeMinuteCoordinate::DegreeMinuteCoordinate(const ByteVector & coordinate, uint8_t direction) :
+DegreeMinuteCoordinate::DegreeMinuteCoordinate(const ByteVector & coordinate, uint8_t dir) :
 	ICoordinate(),
-	degree(0), minute(0), direction(CoordinateDirectionParse(direction))
+	degree(0), minute(0), direction(CoordinateDirectionParse(dir))
 {
-	size_t dotPos = 0;
+	std::size_t dotPos = 0;
 
+	
 	for(dotPos = 0; dotPos < coordinate.size() && coordinate[dotPos] != '.'; dotPos++);
 
 	if(dotPos > 4)
 	{
-		degree = utils::byteVectorParseInt(coordinate.begin(), coordinate.begin() + 3);
-		minute = utils::byteVectorParseDouble(coordinate.begin() + 3, coordinate.end());
+		degree = utils::byteVectorParse<int>(coordinate.begin(), coordinate.begin() + 3);
+		minute = utils::byteVectorParse<double>(coordinate.begin() + 3, coordinate.end());
 	}
 	else
 	{
-		degree = utils::byteVectorParseInt(coordinate.begin(), coordinate.begin() + 2);
-		minute = utils::byteVectorParseDouble(coordinate.begin() + 2, coordinate.end());
+		degree = utils::byteVectorParse<int>(coordinate.begin(), coordinate.begin() + 2);
+		minute = utils::byteVectorParse<double>(coordinate.begin() + 2, coordinate.end());
 	}
+	
+	ALOGI("Decode GGA: dotpos=%d coordinate: %d°%lf', %c", (int)dotPos, degree, minute, dir);
 }
 
 DegreeMinuteCoordinate DegreeMinuteCoordinate::asDegreeMinute() const
@@ -148,7 +157,7 @@ DecimalDegreeCoordinate::DecimalDegreeCoordinate(double coordinate) :
 
 DecimalDegreeCoordinate::DecimalDegreeCoordinate(const ByteVector & coordinate) :
 	ICoordinate(),
-	coordinate(utils::byteVectorParseDouble(coordinate))
+	coordinate(utils::byteVectorParse<double>(coordinate))
 { }
 
 DegreeMinuteCoordinate DecimalDegreeCoordinate::asDegreeMinute() const

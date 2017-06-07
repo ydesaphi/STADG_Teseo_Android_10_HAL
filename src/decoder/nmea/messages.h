@@ -42,6 +42,30 @@ public:
 	 * @param[in]  msg   VTG Message to decode
 	 */
 	static void vtg(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      --GSV decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   GSV Message to decode
+	 */
+	static void gsv(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      --GSA decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   GSA Message to decode
+	 */
+	static void gsa(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      PSTMSBAS decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMSBAS Message to decode
+	 */
+	static void sbas(AbstractDevice & dev, const NmeaMessage & msg);
 };
 
 /**

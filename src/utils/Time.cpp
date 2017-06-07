@@ -57,11 +57,11 @@ GpsUtcTime parseTimestamp(const ByteVector & vec)
 GpsUtcTime parseTimestamp(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
 {
 	// Timestamp expected format : hhmmss.msec
-	int hour = byteVectorParseInt(begin, begin + 2);
-	int min = byteVectorParseInt(begin + 2, begin + 4);
-	int sec = byteVectorParseInt(begin + 4, begin + 6);
+	int hour = byteVectorParse<int>(begin, begin + 2);
+	int min = byteVectorParse<int>(begin + 2, begin + 4);
+	int sec = byteVectorParse<int>(begin + 4, begin + 6);
 	// We ignore the '.' before msec field as it make the parse int function crash
-	int msec = byteVectorParseInt(begin + 7, end);
+	int msec = byteVectorParse<int>(begin + 7, end);
 
 	return msec + sec * 1000 + min * 60000 + hour * 3600000 +
 		duration_cast<milliseconds>(utcTodayOffset.time_since_epoch()).count();

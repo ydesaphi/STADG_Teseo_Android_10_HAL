@@ -12,6 +12,8 @@
 #include <memory>
 #include <string>
 #include <ostream>
+#include <stdint.h>
+#include <memory>
 
 namespace stm {
 
@@ -86,51 +88,205 @@ std::string bytesToString(const ByteVector & bytes);
  */
 std::string bytesToString(const ByteVector::const_iterator & start, const ByteVector::const_iterator & end);
 
-/**
- * @brief      Parse integer in an ascii bytes vector
- *
- * @param[in]  bytes  The ascii bytes
- *
- * @return     Parsed integer
- * 
- * @throws     If the string is malformed
- */
-int byteVectorParseInt(const ByteVector & bytes);
+template<typename Tout>
+struct ByteVectorParser
+{
+	Tout operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	{
+		(void)(begin); (void)(end);
+		static_assert(true, "Missing implementation of ByteVectorParser");
+	}
 
-/**
- * @brief      Parse integer in an ascii bytes vector
- *
- * @param[in]  start  Byte vector start
- * @param[in]  end    Byte vector end
- *
- * @return     Parsed integer
- * 
- * @throws     If the string is malformed
- */
-int byteVectorParseInt(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end);
+	Tout operator()(const ByteVector & data)
+	{
+		(void)(data);
+		static_assert(true, "Missing implementation of ByteVectorParser");
+	}
+};
 
-/**
- * @brief      Parse double in an ascii bytes vector
- *
- * @param[in]  bytes  The ascii bytes
- *
- * @return     Parsed double
- * 
- * @throws     If the string is malformed
- */
-double byteVectorParseDouble(const ByteVector & bytes);
+template<>
+struct ByteVectorParser<int>
+{
+	int operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	{
+		if(begin == end)
+			return 0;
 
-/**
- * @brief      Parse double in an ascii bytes vector
- *
- * @param[in]  start  Byte vector start
- * @param[in]  end    Byte vector end
- *
- * @return     Parsed double
- * 
- * @throws     If the string is malformed
- */
-double byteVectorParseDouble(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end);
+		return std::stoi(bytesToString(begin, end));
+	}
+
+	int operator()(const ByteVector & data)
+	{
+		if(data.size() == 0)
+			return 0;
+
+		return std::stoi(bytesToString(data));
+	}
+};
+
+template<>
+struct ByteVectorParser<double>
+{
+	double operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	{
+		if(begin == end)
+			return 0;
+			
+		return std::stod(bytesToString(begin, end));
+	}
+
+	double operator()(const ByteVector & data)
+	{
+		if(data.size() == 0)
+			return 0;
+
+		return std::stod(bytesToString(data));
+	}
+};
+
+template<>
+struct ByteVectorParser<float>
+{
+	float operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	{
+		if(begin == end)
+			return 0;
+			
+		return std::stof(bytesToString(begin, end));
+	}
+
+	float operator()(const ByteVector & data)
+	{
+		if(data.size() == 0)
+			return 0;
+
+		return std::stof(bytesToString(data));
+	}
+};
+
+template<>
+struct ByteVectorParser<int16_t>
+{
+	float operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	{
+		if(begin == end)
+			return 0;
+			
+		return static_cast<int16_t>(std::stoi(bytesToString(begin, end)));
+	}
+
+	float operator()(const ByteVector & data)
+	{
+		if(data.size() == 0)
+			return 0;
+			
+		return static_cast<int16_t>(std::stoi(bytesToString(data)));
+	}
+};
+
+template<>
+struct ByteVectorParser<bool>
+{
+	bool operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	{
+		if(begin == end)
+			return false;
+			
+		return std::stoi(bytesToString(begin, end)) != 0;
+	}
+
+	bool operator()(const ByteVector & data)
+	{
+		if(data.size() == 0)
+			return false;
+			
+		return std::stoi(bytesToString(data)) != 0;
+	}
+};
+
+namespace __private {
+void __bytevector_parse_log_error(const char * format, const char * what, const char * bytes, int size);
+void __bytevector_parse_log_error(const char * format, const char * bytes, int size);
+} // namespace private
+
+template <typename Tout, class Parser=ByteVectorParser<Tout> >
+Tout byteVectorParse(
+	const ByteVector::const_iterator & begin,
+	const ByteVector::const_iterator & end)
+{
+	try
+	{
+		Parser p;
+		return p(begin, end);
+	}
+	catch(const std::invalid_argument & ex)
+	{
+		__private::__bytevector_parse_log_error(
+			"byteVectorParse: Invalid argument: %s, data: '%s' (%d bytes)",
+			ex.what(), bytesToString(begin,end).c_str(), end - begin);
+		throw;
+	}
+	catch(const std::exception & ex)
+	{
+		__private::__bytevector_parse_log_error(
+			"byteVectorParse: exception: %s, data: '%s' (%d bytes)",
+			ex.what(), bytesToString(begin,end).c_str(), end - begin);
+		throw;
+	}
+	catch(...)
+	{
+		__private::__bytevector_parse_log_error(
+			"byteVectorParse: unknown exception data: '%s' (%d bytes)",
+			bytesToString(begin,end).c_str(), end - begin);
+		throw;
+	}
+}
+
+template <typename Tout, class Parser=ByteVectorParser<Tout> >
+Tout byteVectorParse(const ByteVector & value)
+{
+	try
+	{
+		Parser p;
+		return p(value);
+	}
+	catch(const std::invalid_argument & ex)
+	{
+		__private::__bytevector_parse_log_error(
+			"byteVectorParse: Invalid argument: %s, data: '%s' (%d bytes)",
+			ex.what(), bytesToString(value).c_str(), value.size());
+		throw;
+	}
+	catch(const std::exception & ex)
+	{
+		__private::__bytevector_parse_log_error(
+			"byteVectorParse: exception: %s, data: '%s' (%d bytes)",
+			ex.what(), bytesToString(value).c_str(), value.size());
+		throw;
+	}
+	catch(...)
+	{
+		__private::__bytevector_parse_log_error(
+			"byteVectorParse: unknown exception, data: '%s' (%d bytes)",
+			bytesToString(value).c_str(), value.size());
+		throw;
+	}
+}
+
+template <typename Tout>
+void byteVectorParseAndSet(
+	Tout & out,
+	const ByteVector::const_iterator & begin,
+	const ByteVector::const_iterator & end)
+{
+	out = byteVectorParse<Tout>(begin, end);
+}
+
+template <typename Tout>
+void byteVectorParseAndSet(Tout & out, const ByteVector & value)
+{
+	out = byteVectorParse<Tout>(value);
+}
 
 /**
  * @brief      Split byte vector at each separator

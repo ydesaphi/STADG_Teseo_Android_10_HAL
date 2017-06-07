@@ -40,6 +40,8 @@ int HalManager::init(GpsCallbacks * cb)
 {
 	(void)(cb);
 
+	LocServiceProxy::gps::sendSystemInfo(2017);
+
 	ALOGI("Initialize the HAL");
 	device = new device::NmeaDevice();
 

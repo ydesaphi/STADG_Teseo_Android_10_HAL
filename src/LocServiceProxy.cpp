@@ -141,10 +141,74 @@ void sendNmea(GpsUtcTime timestamp, const NmeaMessage & nmea)
 	callbacks.gps.nmea_cb(timestamp, asString.c_str(), asString.size());
 }
 
+void sendStatusUpdate(GpsStatusValue value)
+{
+	static GpsStatus status = { .size = sizeof(GpsStatus) };
+
+	ALOGI("Send status update: %d", value);
+	status.status = value;
+	callbacks.gps.status_cb(&status);
+}
+
+void sendSystemInfo(uint16_t yearOfHardware)
+{
+	static GnssSystemInfo sysInfo = {.size = sizeof(GnssSystemInfo)};
+
+	ALOGI("Send system info (year of hardware): %d", yearOfHardware);
+	sysInfo.year_of_hw = yearOfHardware;
+	callbacks.gps.set_system_info_cb(&sysInfo);
+}
+
 void sendLocationUpdate(Location & loc)
 {
 	ALOGI("Report location: %s", loc.toString().c_str());
 	callbacks.gps.location_cb(loc.getAndroidStruct());
+}
+
+void sendSatelliteListUpdate(const std::map<SatIdentifier, SatInfo> & satellites)
+{
+	static GnssSvStatus status = {.size = sizeof(GnssSvStatus), .num_svs = 0};
+
+	GnssSvInfo * svList = status.gnss_sv_list;
+	status.num_svs = satellites.size();
+
+	int gpsSats = 0;
+	int gloSats = 0;
+	int galSats = 0;
+	int beiSats = 0;
+	int otherSats = 0;
+	int totalSats = 0;
+
+	auto action = [&] (auto & p) {
+		switch(p.second.getId().getConstellation()) {
+			case Constellation::Gps:     gpsSats++; break;
+			case Constellation::Glonass: gloSats++; break;
+			case Constellation::Galileo: galSats++; break;
+			case Constellation::Beidou:  beiSats++; break;
+			default: otherSats++; break;
+		}
+		totalSats++;
+
+		p.second.copyToGnssSvInfo(svList);
+		++svList;
+	};
+
+	if(status.num_svs < GNSS_MAX_SVS)
+	{	
+		std::for_each(satellites.begin(), satellites.end(), action);
+	}
+	else
+	{
+		auto it = satellites.begin();
+		for(int i = 0; i < GNSS_MAX_SVS; i++) {
+			action(*it);
+			++it;
+		}
+	}
+
+	ALOGI("Send satellite list: %d satellites, %d gps, %d glonass, %d galileo, %d beidou, %d others",
+		totalSats, gpsSats, gloSats, galSats, beiSats, otherSats);
+	callbacks.gps.gnss_sv_status_cb(&status);
 }
 
 void sendCapabilities(uint32_t capabilities)
@@ -176,7 +240,7 @@ static Signals signals;
 
 Signals & getSignals() { return signals; }
 
-size_t getInternalState(char * buffer, size_t bufferSize)
+std::size_t getInternalState(char * buffer, std::size_t bufferSize)
 {
 	std::string output;
 

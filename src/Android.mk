@@ -20,22 +20,24 @@ LOCAL_SHARED_LIBRARIES := \
 	libhardware
 
 LOCAL_SRC_FILES :=              \
-	HalManager.cpp              \
-	errors.cpp                  \
-	stream/NmeaStream.cpp       \
+	decoder/nmea/messages.cpp   \
 	decoder/AbstractDecoder.cpp \
 	decoder/NmeaDecoder.cpp     \
-	utils/ByteVector.cpp        \
-	utils/Time.cpp              \
-	model/NmeaMessage.cpp       \
-	model/TalkerId.cpp          \
-	model/Location.cpp          \
-	model/Coordinate.cpp        \
-	LocServiceProxy.cpp         \
-	decoder/nmea/messages.cpp   \
 	device/AbstractDevice.cpp   \
 	device/NmeaDevice.cpp       \
-	thread/Thread.cpp
+	model/Constellations.cpp    \
+	model/Coordinate.cpp        \
+	model/Location.cpp          \
+	model/NmeaMessage.cpp       \
+	model/SatInfo.cpp           \
+	model/TalkerId.cpp          \
+	stream/NmeaStream.cpp       \
+	thread/Thread.cpp           \
+	utils/ByteVector.cpp        \
+	utils/Time.cpp              \
+	HalManager.cpp              \
+	LocServiceProxy.cpp         \
+	errors.cpp                  
 
 #LOCAL_COPY_HEADERS_TO:= libteseo/
 #LOCAL_COPY_HEADERS := \

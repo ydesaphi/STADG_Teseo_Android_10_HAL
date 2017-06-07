@@ -11,6 +11,7 @@
 #include <cutils/log.h>
 
 #include <stdexcept>
+#include <typeinfo>
 
 namespace stm {
 namespace utils {
@@ -66,82 +67,11 @@ std::string bytesToString(const ByteVector::const_iterator & start, const ByteVe
 {
 	std::string out;
 
-	for(ByteVector::const_iterator it = start; it != end; ++it)
-		out.push_back(*it);
+	std::for_each(start, end, [&out] (auto val) {
+		out.push_back(val);
+	});
 
 	return out;
-}
-
-int byteVectorParseInt(const ByteVector & bytes)
-{
-	try
-	{
-		return std::stoi(bytesToString(bytes));
-	}
-	catch(const std::invalid_argument & ex)
-	{
-		ALOGE("byteVectorParseInt: Invalid argument: %s '%s'", ex.what(), bytesToString(bytes).c_str());
-		throw;
-	}
-	catch(...)
-	{
-		ALOGE("byteVectorParseInt: unknown exeception '%s'", bytesToString(bytes).c_str());
-		throw;
-	}
-}
-
-int byteVectorParseInt(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
-{
-	try
-	{
-		return std::stoi(bytesToString(begin, end));
-	}
-	catch(const std::invalid_argument & ex)
-	{
-		ALOGE("byteVectorParseInt: Invalid argument: %s '%s'", ex.what(), bytesToString(begin,end).c_str());
-		throw;
-	}
-	catch(...)
-	{
-		ALOGE("byteVectorParseInt: unknown exeception '%s'", bytesToString(begin,end).c_str());
-		throw;
-	}
-}
-
-double byteVectorParseDouble(const ByteVector & bytes)
-{
-	try
-	{
-		return std::stod(bytesToString(bytes));
-	}
-	catch(const std::invalid_argument & ex)
-	{
-		ALOGE("byteVectorParseDouble: Invalid argument: %s '%s'", ex.what(), bytesToString(bytes).c_str());
-		throw;
-	}
-	catch(...)
-	{
-		ALOGE("byteVectorParseDouble: unknown exeception '%s'", bytesToString(bytes).c_str());
-		throw;
-	}
-}
-
-double byteVectorParseDouble(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
-{
-	try
-	{
-		return std::stod(bytesToString(begin, end));
-	}
-	catch(const std::invalid_argument & ex)
-	{
-		ALOGE("byteVectorParseDouble: Invalid argument: %s '%s'", ex.what(), bytesToString(begin,end).c_str());
-		throw;
-	}
-	catch(...)
-	{
-		ALOGE("byteVectorParseDouble: unknown exeception '%s'", bytesToString(begin,end).c_str());
-		throw;
-	}
 }
 
 std::vector<ByteVector> split(const ByteVector & bytes, uint8_t separator)
@@ -182,6 +112,20 @@ ByteVector createFromString(const char * str)
 
 	return vec;
 }
+
+namespace __private {
+
+void __bytevector_parse_log_error(const char * format, const char * what, const char * bytes, int size)
+{
+	ALOGE(format, what, bytes, size);
+}
+
+void __bytevector_parse_log_error(const char * format, const char * bytes, int size)
+{
+	ALOGE(format, bytes, size);
+}
+
+} // namespace private
 
 } // namespace utils
 } // namespace stm

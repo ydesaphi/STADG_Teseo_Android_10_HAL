@@ -8,11 +8,14 @@
 #define TESEO_HAL_ABSTRACT_DEVICE_H
 
 #include <mutex>
+#include <map>
+#include <unordered_map>
 #include <hardware/gps.h>
 
 #include "../Signal.h"
 #include "../model/NmeaMessage.h"
 #include "../model/Location.h"
+#include "../model/SatInfo.h"
 #include "../decoder/AbstractDecoder.h"
 #include "../stream/IStream.h"
 #include "../thread/Thread.h"
@@ -37,13 +40,19 @@ class AbstractDevice :
 	public Trackable
 {
 private:
-	GpsUtcTime timestamp;
-
 	stream::IStream * stream;
 
 	decoder::AbstractDecoder * decoder;
 
+	// ======================== Data Model =====================
+	
+	GpsUtcTime timestamp;
+
 	Location location;
+
+	std::map<SatIdentifier, SatInfo> satellites;
+
+	const static ByteVector nmeaSequenceStart;
 
 protected:
 
@@ -93,6 +102,13 @@ protected:
 	Location & getLocation() { return location; }
 
 	/**
+	 * @brief      Gets the satellite list.
+	 *
+	 * @return     The satellite list.
+	 */
+	auto & getSatellites() { return satellites; }
+
+	/**
 	 * @brief      Emit a NMEA message
 	 *
 	 * @param[in]  nmea  The nmea message to emit
@@ -105,6 +121,8 @@ protected:
 	 */
 	void update();
 
+	void updateIfStartSentenceId(const ByteVector & sentenceId);
+
 public:
 	virtual ~AbstractDevice() { }
 
@@ -116,6 +134,13 @@ public:
 	 * @return     Const reference to the location.
 	 */
 	const Location & getLocation() const { return location; }
+
+	/**
+	 * @brief      Gets the satellite list.
+	 *
+	 * @return     The satellite list.
+	 */
+	const auto & getSatellites() const { return satellites; }
 
 	/**
 	 * @brief      Start the virtual device
@@ -140,6 +165,13 @@ public:
 	 * Location update signal
 	 */
 	Signal<void, Location &> locationUpdate;
+
+	/**
+	 * Satellite list update signal
+	 */
+	Signal<void, const std::map<SatIdentifier, SatInfo> &> satelliteListUpdate;
+
+	Signal<void, GpsStatusValue> statusUpdate;
 };
 
 } // namespace device

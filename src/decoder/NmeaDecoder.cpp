@@ -190,11 +190,14 @@ void NmeaDecoder::decode(ByteVectorPtr bytesPtr)
 	// 5. Log NMEA message
 	NMEA_DECODER_LOGI("NMEA: '%s'", msg.toCString());
 
+	// 6. Trigger device update before eventually decoding start sequence sentence
+	device.updateIfStartSentenceId(msg.sentenceId);
+
 	// 6. Decode message
 	nmea::decode(device, msg);
 
 	// 7. Emit NMEA message
-	// N.B. Decoding must occur before emit because timestamp is updated during decode
+	// N.B. Decoding must occur before emit because timestamp may be updated during decode
 	device.emitNmea(msg);
 }
 
