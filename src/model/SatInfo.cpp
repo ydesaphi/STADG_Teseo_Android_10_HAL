@@ -218,6 +218,8 @@ void SatInfo::updateSvInfoStruct()
 
 constexpr int16_t PRN_GPS_MIN = 1,
                   PRN_GPS_MAX = 32,
+				  PRN_SBA_MIN = 33,
+				  PRN_SBA_MAX = 64,
                   PRN_GLO_MIN = 65,
                   PRN_GLO_MAX = 98,
                   PRN_BEI_MIN = 141,
@@ -230,6 +232,7 @@ constexpr int16_t PRN_GPS_MIN = 1,
 static Constellation prn2constellation(int16_t prn)
 {
 	if(PRN_GPS_MIN <= prn && prn <= PRN_GPS_MAX) return Constellation::Gps;
+	if(PRN_SBA_MIN <= prn && prn <= PRN_SBA_MAX) return Constellation::Sbas;
 	if(PRN_GLO_MIN <= prn && prn <= PRN_GLO_MAX) return Constellation::Glonass;
 	if(PRN_BEI_MIN <= prn && prn <= PRN_BEI_MAX) return Constellation::Beidou;
 	if(PRN_QZS_MIN <= prn && prn <= PRN_QZS_MAX) return Constellation::Glonass;
