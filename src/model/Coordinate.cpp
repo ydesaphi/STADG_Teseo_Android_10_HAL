@@ -59,8 +59,6 @@ static double DegreeMinuteToDecimalDegree(int degree, double minute, CoordinateD
 	double val = (static_cast<double>(degree) + minute / 60.) *
 		((dir == CoordinateDirection::NORTH || dir == CoordinateDirection::EAST) ? 1. : -1.);
 
-	ALOGI("Decode GGA: convert deg min to decimal deg: %d°%lf = %lf", degree, minute, val);
-
 	return val;
 }
 
@@ -121,8 +119,6 @@ DegreeMinuteCoordinate::DegreeMinuteCoordinate(const ByteVector & coordinate, ui
 		degree = utils::byteVectorParse<int>(coordinate.begin(), coordinate.begin() + 2);
 		minute = utils::byteVectorParse<double>(coordinate.begin() + 2, coordinate.end());
 	}
-	
-	ALOGI("Decode GGA: dotpos=%d coordinate: %d°%lf', %c", (int)dotPos, degree, minute, dir);
 }
 
 DegreeMinuteCoordinate DegreeMinuteCoordinate::asDegreeMinute() const

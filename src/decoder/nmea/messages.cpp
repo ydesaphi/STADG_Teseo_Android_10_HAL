@@ -73,8 +73,8 @@ void decode(AbstractDevice & dev, const NmeaMessage & msg)
 
 	if(d != nullptr)
 		d(dev, msg);
-	else
-		ALOGW("No decoder for message %s%s", TalkerIdToString(msg.talkerId), bytesToString(msg.sentenceId).c_str());
+	//else
+	//	ALOGW("No decoder for message %s%s", TalkerIdToString(msg.talkerId), bytesToString(msg.sentenceId).c_str());
 }
 
 void decoders::gga(AbstractDevice & dev, const NmeaMessage & msg)
@@ -191,7 +191,7 @@ void decoders::gsv(AbstractDevice & dev, const NmeaMessage & msg)
 		gsv_empty_or_set_helper(prn, it, emptyValue);
 		gsv_empty_or_set_helper(elevation, it, emptyValue);
 		gsv_empty_or_set_helper(azimuth, it, emptyValue);
-		// Extract SNR, if snr is empty notTracked is true
+		// Extract SNR, if snr is empty notTracked is set to true
 		gsv_empty_or_set_helper(snr, it, notTracked);
 
 		// If any of PRN, Elevation or azimuth was empty we skip this satellite
