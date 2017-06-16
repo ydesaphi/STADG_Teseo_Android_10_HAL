@@ -167,7 +167,7 @@ void sendLocationUpdate(Location & loc)
 
 void sendSatelliteListUpdate(const std::map<SatIdentifier, SatInfo> & satellites)
 {
-	static GnssSvStatus status = {.size = sizeof(GnssSvStatus), .num_svs = 0};
+	GnssSvStatus status = {.size = sizeof(GnssSvStatus), .num_svs = 0};
 
 	GnssSvInfo * svList = status.gnss_sv_list;
 	status.num_svs = satellites.size();
