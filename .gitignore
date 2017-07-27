@@ -1,7 +1,2 @@
-.tags
-.tags_sorted_by_file
 documentation
-GPATH
-GRTAGS
-GSYMS
-GTAGS
+libstagps
