@@ -11,6 +11,7 @@
 #include <chrono>
 #include <iomanip>
 #include <hardware/gps.h>
+#include <sstream>
 #include "ByteVector.h"
 #include "optional.h"
 
@@ -60,6 +61,17 @@ int injectTime(GpsUtcTime time, int64_t timeReference, int uncertainty);
  * @return     The current system UTC time
  */
 GpsUtcTime systemNow();
+
+template<class ClockT>
+std::string time2string(const std::chrono::time_point<ClockT> & tp)
+{
+	auto tt = ClockT::to_time_t(tp);
+	std::ostringstream oss;
+
+	oss << std::put_time(std::gmtime(&tt), "%c %Z");
+
+	return oss.str();
+}
 
 } // namespace utils
 } // namespace stm

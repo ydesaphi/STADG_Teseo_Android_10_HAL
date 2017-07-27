@@ -40,7 +40,7 @@ int injectTime(GpsUtcTime time, int64_t timeReference, int uncertainty)
 	utcNow.uncertainty = uncertainty;
 	utcNow.timePoint = time_point<system_clock>(milliseconds(utcNow.time));
 
-	log::info() << "Test yolo" << log::endl;
+	ALOGI("Date time: %s", time2string(utcNow.timePoint).c_str());
 
 	time_t timestamp = system_clock::to_time_t(utcNow.timePoint);
 	tm timeInfo;
