@@ -176,7 +176,7 @@ void UartByteStream::write(const uint8_t * data, std::size_t size) throw(StreamE
 			throw StreamException(StreamException::WRITE);
 		}
 
-		if(nbBytes != size)
+		if(static_cast<std::size_t>(nbBytes) != size)
 			ALOGW("Incoherent number of bytes written: %zd != data.size() == %zd", nbBytes, size);
 	}
 	else
