@@ -19,18 +19,27 @@
 * limitations under the License.
 *
 */
-/**
- * @brief Template constraint utilities
- * @file constraints.h
- */
+#ifndef TESEO_HAL_MODEL_STAGPS
+#define TESEO_HAL_MODEL_STAGPS
 
-#ifndef TESEO_HAL_TEMPLATE_CONSTRAINTS
-#define TESEO_HAL_TEMPLATE_CONSTRAINTS
 
-template<class T, class B>
-struct DerivedFrom {
-	static void constraints(T* p) { B* pb = p; (void)(pb); }
-	DerivedFrom() { void(*p)(T*) = constraints; (void)(p); }
+namespace stm {
+namespace model {
+
+enum class Stagps8Answer {
+
+	PasswordReturnOk,
+	PasswordReturnKO
 };
 
-#endif // TESEO_HAL_TEMPLATE_CONSTRAINTS
+enum class StagpsAnswer {
+
+	PasswordReturnOk,
+	PasswordReturnKO
+};
+
+
+} // namespace model
+} // namespace stm
+
+#endif // TESEO_HAL_MODEL_STAGPS

@@ -1,3 +1,24 @@
+/*
+* This file is part of Teseo Android HAL
+*
+* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
+* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+*
+* License terms: Apache 2.0.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+*/
 /**
  * @brief Byte vector utilities
  * @file ByteVector.cpp
@@ -12,6 +33,9 @@
 
 #include <stdexcept>
 #include <typeinfo>
+#include <sstream>
+
+#include <teseo/utils/Time.h>
 
 namespace stm {
 namespace utils {
@@ -113,6 +137,21 @@ ByteVector createFromString(const char * str)
 	return vec;
 }
 
+ByteVector createFromString(const std::string & str)
+{
+	ByteVector vec;
+
+	for(auto c : str)
+	{
+		if(c == '\0')
+			break;
+
+		vec.push_back(static_cast<uint8_t>(c));
+	}
+
+	return vec;
+}
+
 namespace __private {
 
 void __bytevector_parse_log_error(const char * format, const char * what, const char * bytes, int size)
@@ -127,5 +166,182 @@ void __bytevector_parse_log_error(const char * format, const char * bytes, int s
 
 } // namespace private
 
+static constexpr ByteArray<64>
+b64_encode_table = BA("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+
+static constexpr uint8_t b64_pad_char = '=';
+
+static constexpr ByteArray<256> b64_decode_table { {
+    66,66,66,66,66,66,66,66,66,66,64,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+    66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,62,66,66,66,63,52,53,
+    54,55,56,57,58,59,60,61,66,66,66,65,66,66,66, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,66,66,66,66,66,66,26,27,28,
+    29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,66,66,
+    66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+    66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+    66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+    66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+    66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+    66,66,66,66,66,66
+} };
+
+enum class b64_decode_char_type {
+	Valid,
+	Whitespace,
+	PaddingChar,
+	Invalid
+};
+
+constexpr b64_decode_char_type b64_decode_get_char_type(uint8_t c)
+{
+	return c  < 64 ? b64_decode_char_type::Valid       :
+		   c == 64 ? b64_decode_char_type::Whitespace  :
+		   c == 65 ? b64_decode_char_type::PaddingChar :
+		 /*c == 66*/ b64_decode_char_type::Invalid;
+}
+
+ByteVector base64_decode(const std::string & base64)
+{
+	ByteVector bytes;
+
+	uint32_t buffer = 0;
+	uint8_t iteration = 0;
+
+	for(auto encoded : base64)
+	{
+		uint8_t c = b64_decode_table[encoded];
+		
+		switch(b64_decode_get_char_type(c))
+		{
+		case b64_decode_char_type::Whitespace:  // Ignore whitespaces
+		case b64_decode_char_type::PaddingChar: // Padding chars, we are done decoding here
+			break;
+
+		case b64_decode_char_type::Invalid:
+			// Invalid characters, throw an exceptions
+			throw std::runtime_error("Invalid character in base64");
+
+		case b64_decode_char_type::Valid:
+			// Valid char, let's decode
+			buffer = buffer << 6 | static_cast<uint8_t>(c);
+			iteration++;
+
+			if(iteration == 4)
+			{
+				bytes.push_back((buffer >> 16) & 0xFF);
+				bytes.push_back((buffer >> 8) & 0xFF);
+				bytes.push_back(buffer & 0xFF);
+				buffer = 0;
+				iteration = 0;
+			}
+
+			break;
+		}
+	}
+
+	if(iteration == 3)
+	{
+		bytes.push_back((buffer >> 10) & 0xFF);
+		bytes.push_back((buffer >> 2) & 0xFF);
+	}
+	else if(iteration == 2)
+	{
+		bytes.push_back((buffer >> 4) & 0xFF);
+	}
+
+	return bytes;
+}
+
+std::string base64_encode(const ByteVector & bytes)
+{
+	std::string b64;
+	b64.reserve(((bytes.size() / 3) + (bytes.size() % 3 > 0)) * 4);
+	uint32_t buffer;
+
+	auto ptr = bytes.begin();
+
+	for(std::size_t i = 0; i < bytes.size() / 3; i++)
+	{
+		buffer = ((*ptr++) << 16) +
+				 ((*ptr++) <<  8) +
+				 ((*ptr++));
+		
+		b64.push_back(b64_encode_table[(buffer & 0x00FC0000) >> 18]);
+		b64.push_back(b64_encode_table[(buffer & 0x0003F000) >> 12]);
+		b64.push_back(b64_encode_table[(buffer & 0x00000FC0) >>  6]);
+		b64.push_back(b64_encode_table[(buffer & 0x0000003F)      ]);
+	}
+
+	switch(bytes.size() % 3)
+	{
+		case 1:
+			buffer = (*ptr) << 16;
+			b64.push_back(b64_encode_table[(buffer & 0x00FC0000) >> 18]);
+			b64.push_back(b64_encode_table[(buffer & 0x0003F000) >> 12]);
+			b64.push_back(b64_pad_char);
+			b64.push_back(b64_pad_char);
+			break;
+
+		case 2:
+			buffer = ((*ptr++) << 16) +
+			         ((*ptr)   <<  8);
+			b64.push_back(b64_encode_table[(buffer & 0x00FC0000) >> 18]);
+			b64.push_back(b64_encode_table[(buffer & 0x0003F000) >> 12]);
+			b64.push_back(b64_encode_table[(buffer & 0x00000FC0) >>  6]);
+			b64.push_back(b64_pad_char);
+			break;
+	}
+
+	return b64;
+}
+
 } // namespace utils
 } // namespace stm
+
+stm::ByteVector & operator << (stm::ByteVector & bv, const std::string & str)
+{
+	for(auto c : str)
+	{
+		bv.push_back(c);
+	}
+
+	return bv;
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, uint8_t byte)
+{
+	bv.push_back(byte);
+	return bv;
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, char ch)
+{
+	bv.push_back(ch);
+	return bv;
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, const stm::ByteVector & bv2)
+{
+	bv.insert(bv.end(), bv2.begin(), bv2.end());
+	return bv;
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, int value)
+{
+	return (bv << (std::ostringstream() << value).str());
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, unsigned int value)
+{
+	return (bv << (std::ostringstream() << value).str());
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, unsigned long value)
+{
+	return (bv << (std::ostringstream() << value).str());
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, GpsUtcTime timestamp)
+{
+	return (bv << stm::utils::time2string(timestamp));
+}

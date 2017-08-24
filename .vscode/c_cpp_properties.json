@@ -1,25 +1,6 @@
 {
     "configurations": [
         {
-            "name": "Mac",
-            "includePath": [
-                "${workspaceRoot}",
-                "/usr/include",
-                "/usr/local/include"
-            ],
-            "defines": [],
-            "browse": {
-                "path": [
-                    "/usr/include",
-                    "/usr/local/include",
-                    "${workspaceRoot}"
-                ],
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            },
-            "intelliSenseMode": "clang-x64"
-        },
-        {
             "name": "Linux",
             "includePath": [
                 "${workspaceRoot}",
@@ -38,6 +19,8 @@
                 "${workspaceRoot}/../../../libnativehelper/include/nativehelper",
                 "${workspaceRoot}/../../../external/libcxx/include",
                 "${workspaceRoot}/../../../external/libcxxabi/include",
+                "${workspaceRoot}/../../../external/curl/include",
+                "${workspaceRoot}/../../../external/curl/lib",
                 "${workspaceRoot}/../../../system/core/include",
                 "${workspaceRoot}/../../../system/media/audio/include",
                 "${workspaceRoot}/../../../hardware/libhardware/include",
@@ -77,6 +60,8 @@
                     "${workspaceRoot}/../../../libnativehelper/include/nativehelper",
                     "${workspaceRoot}/../../../external/libcxx/include",
                     "${workspaceRoot}/../../../external/libcxxabi/include",
+                    "${workspaceRoot}/../../../external/curl/include",
+                    "${workspaceRoot}/../../../external/curl/lib",
                     "${workspaceRoot}/../../../system/core/include",
                     "${workspaceRoot}/../../../system/media/audio/include",
                     "${workspaceRoot}/../../../hardware/libhardware/include",
@@ -100,26 +85,6 @@
                 "databaseFilename": ""
             },
             "intelliSenseMode": "clang-x64"
-        },
-        {
-            "name": "Win32",
-            "includePath": [
-                "${workspaceRoot}",
-                "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include"
-            ],
-            "defines": [
-                "_DEBUG",
-                "UNICODE"
-            ],
-            "browse": {
-                "path": [
-                    "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include/*",
-                    "${workspaceRoot}"
-                ],
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            },
-            "intelliSenseMode": "msvc-x64"
         }
     ],
     "version": 2

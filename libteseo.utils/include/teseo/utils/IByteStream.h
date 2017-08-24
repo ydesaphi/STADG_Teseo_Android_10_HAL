@@ -1,8 +1,32 @@
+/*
+* This file is part of Teseo Android HAL
+*
+* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
+* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+*
+* License terms: Apache 2.0.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+*/
 #ifndef TESEO_HAL_UTILS_IBYTESTREAM_H
 #define TESEO_HAL_UTILS_IBYTESTREAM_H
 
 #include <stdexcept>
+#include "Signal.h"
 #include "ByteVector.h"
+#include "Thread.h"
+#include "Channel.h"
 
 namespace stm {
 namespace stream {
@@ -84,21 +108,19 @@ STREAM_EXCEPTION(StreamNotOpenedException, NOT_OPENED)
 
 #undef STREAM_EXCEPTION
 
-class IByteStream {
-public:
-	virtual ~IByteStream() { }
+template<bool CatchException>
+class ByteStreamOpener;
 
-	/**
-	 * @brief Get the device name
-	 *
-	 * @return Return the device name
-	 */
-	virtual const std::string & name() const = 0;
+class ByteStreamReader;
+class ByteStreamWrite;
 
-	/**
-	 * @brief Get current stream status
-	 */
-	virtual ByteStreamStatus status() const = 0;
+class IByteStream : public Trackable {
+protected:
+	template<bool CatchException>
+	friend class ByteStreamOpener;
+	
+	friend class ByteStreamReader;
+	friend class ByteStreamWriter;
 
 	/**
 	 * @brief Open device for reading and writing
@@ -120,18 +142,54 @@ public:
 	 *
 	 * @return Vector of bytes read
 	 */
-	virtual ByteVector read() throw(StreamException)  = 0;
+	virtual ByteVector perform_read() throw(StreamException)  = 0;
+
+	virtual void perform_write(const uint8_t * data, std::size_t size) throw(StreamException) = 0;
+
+public:
+	virtual ~IByteStream() { }
+
+	/**
+	 * @brief Get the device name
+	 *
+	 * @return Return the device name
+	 */
+	virtual const std::string & name() const = 0;
+
+	/**
+	 * @brief Get current stream status
+	 */
+	virtual ByteStreamStatus status() const = 0;
 
 	/**
 	 * Write data to device
 	 *
 	 * @param data Data to write to device
+	 * @param size Number of bytes to write
 	 */
-	virtual void write(const ByteVector & data) throw(StreamException) = 0;
+	virtual void write(const uint8_t * data, std::size_t size) = 0;
 
-	virtual void write(const uint8_t * data, std::size_t size) throw(StreamException) = 0;
+	/**
+	 * Start asynchronous read/write
+	 */
+	virtual int start() = 0;
+
+	/**
+	 * Stop asynchronous read/write
+	 */
+	virtual int stop() = 0;
+
+	/**
+	 * New bytes signal
+	 */
+	Signal<void, const ByteVector &> newBytes;
 };
 
+namespace __private_ByteStreamOpenerLog {
+void loge(const char * format, std::string streamName, const char * what);
+} // namespace __private_ByteStreamOpenerLog
+
+template<bool CatchException = false>
 class ByteStreamOpener {
 private:
 	IByteStream & stream;
@@ -143,8 +201,25 @@ public:
 	{
 		if(stream.status() != ByteStreamStatus::OPENED)
 		{
-			stream.open();
-			closeOnDestroy = true;
+			if(CatchException)
+			{
+				try
+				{
+					stream.open();
+					closeOnDestroy = true;
+				}
+				catch(const StreamException & ex)
+				{
+					__private_ByteStreamOpenerLog::loge("Error while opening stream '%s': %s",
+						stream.name(),
+						ex.what());
+				}
+			}
+			else
+			{
+				stream.open();
+				closeOnDestroy = true;
+			}
 		}
 		else
 		{
@@ -160,8 +235,84 @@ public:
 	~ByteStreamOpener()
 	{
 		if(closeOnDestroy)
-			stream.close();
+		{
+			if(CatchException)
+			{
+				try
+				{
+					stream.close();
+				}
+				catch(const StreamException & ex)
+				{
+					__private_ByteStreamOpenerLog::loge("Error while closing stream '%s': %s",
+						stream.name(),
+						ex.what());
+				}
+			}
+			else
+			{
+				stream.close();
+			}
+		}
 	}
+};
+
+class ByteStreamReader : public Thread {
+protected:
+	void run();
+
+	IByteStream & byteStream;
+
+	bool runReader;
+
+public:
+	ByteStreamReader(IByteStream & bs);
+
+	int stop();
+};
+
+class ByteStreamWriter : public Thread {
+private:
+	enum Commands {
+		WRITE,
+		STOP
+	};
+	
+protected:
+	typedef std::pair<const uint8_t *, std::size_t> Array;
+
+	void run();
+
+	IByteStream & byteStream;
+
+	thread::Channel<Commands> com;
+
+	thread::Channel<Array> dataChannel;
+
+public:
+	ByteStreamWriter(IByteStream & bs);
+
+	int stop();
+
+	void write(const uint8_t * data, std::size_t size);
+};
+
+class AbstractByteStream : public IByteStream {
+private:
+	ByteStreamReader reader;
+
+	ByteStreamWriter writer;
+
+public:
+	AbstractByteStream();
+
+	~AbstractByteStream();
+
+	void write(const uint8_t * data, std::size_t size);
+
+	int start();
+
+	int stop();
 };
 
 } // namespace stream

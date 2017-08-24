@@ -1,3 +1,24 @@
+/*
+* This file is part of Teseo Android HAL
+*
+* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
+* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+*
+* License terms: Apache 2.0.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+*/
 /**
  * @brief Byte vector utilities
  * @file ByteVector.h
@@ -17,6 +38,8 @@
 #include <array>
 
 #include "optional.h"
+
+#include <hardware/gps.h>
 
 namespace stm {
 
@@ -322,6 +345,8 @@ std::vector<ByteVector> split(const ByteVector & bytes, uint8_t separator);
  */
 ByteVector createFromString(const char * str);
 
+ByteVector createFromString(const std::string & str);
+
 namespace impl {
 
 template<std::size_t N, std::size_t... I>
@@ -349,6 +374,101 @@ constexpr ByteArray<N> BytestoArray(uint8_t (&a)[N])
 	return impl::BytestoArray(a, std::make_index_sequence<N>{});
 }
 
+template<typename T>
+typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, T>::type
+extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end)
+{
+	std::size_t nbBytes = sizeof(T);
+	T value = 0;
+	int shift = (nbBytes - 1) * 8;
+
+	for(std::size_t i = 0; i < nbBytes && begin != end; i++)
+	{
+		value |= (*begin << shift);
+		shift -= 8;
+		++begin;
+	}
+
+	return value;
+}
+
+template<uint8_t>
+uint8_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end)
+{
+	return begin == end ? 0 : *begin;
+}
+
+template<uint16_t>
+uint16_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end)
+{
+	ByteVector::const_iterator b1, b2;
+	switch(end - begin)
+	{
+		case 0: return 0;
+		case 1: return ((*begin) << 8) & 0xFF00;
+		default:
+			b1 = begin; ++begin;
+			b2 = begin;
+			return 0xFFFF & ((*b1 << 8) & 0xFF00) &
+			                ((*b2     ) & 0x00FF);
+	}
+}
+
+template<uint32_t>
+uint32_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end)
+{
+	ByteVector::const_iterator b1, b2, b3, b4;
+
+	switch(end - begin)
+	{
+		case 0: return 0;
+		case 1: return ((*begin) << 24) & 0xFF00;
+		case 2:
+			b1 = begin; ++begin;
+			b2 = begin;
+			return 0xFFFF0000 & ((*b1 << 24) & 0xFF000000) &
+			                    ((*b2 << 16) & 0x00FF0000);
+
+		case 3:
+			b1 = begin; ++begin;
+			b2 = begin; ++begin;
+			b3 = begin;
+			return 0xFFFFFF00 & ((*b1 << 24) & 0xFF000000) &
+			                    ((*b2 << 16) & 0x00FF0000) &
+			                    ((*b3 <<  8) & 0x0000FF00);
+
+		default:
+			b1 = begin; ++begin;
+			b2 = begin; ++begin;
+			b3 = begin; ++begin;
+			b4 = begin;
+			return 0xFFFFFFFF & ((*b1 << 24) & 0xFF000000) &
+				                ((*b2 << 16) & 0x00FF0000) &
+				                ((*b3 <<  8) & 0x0000FF00) &
+				                ((*b4      ) & 0x000000FF);
+	}
+}
+
+
+
+/**
+ * Decodes a string containing base64 encoded data
+ *
+ * @param base64 Base 64 encoded data
+ *
+ * @return Decoded bytes
+ */
+ByteVector base64_decode(const std::string & base64);
+
+/**
+ * Encodes bytes to base 64 data
+ *
+ * @param bytes Bytes to encode
+ *
+ * @return Encoded bytes as a string
+ */
+std::string base64_encode(const ByteVector & bytes);
+
 } // namespace utils
 } // namespace stm
 
@@ -373,6 +493,28 @@ std::basic_ostream<CharT, Traits> & operator << (
 	}
 
 	return stream;
+}
+
+stm::ByteVector & operator << (stm::ByteVector & bv, const std::string & str);
+
+stm::ByteVector & operator << (stm::ByteVector & bv, const stm::ByteVector & bv2);
+
+stm::ByteVector & operator << (stm::ByteVector & bv, uint8_t byte);
+
+stm::ByteVector & operator << (stm::ByteVector & bv, char ch);
+
+stm::ByteVector & operator << (stm::ByteVector & bv, int value);
+
+stm::ByteVector & operator << (stm::ByteVector & bv, unsigned int value);
+
+stm::ByteVector & operator << (stm::ByteVector & bv, unsigned long value);
+
+stm::ByteVector & operator << (stm::ByteVector & bv, GpsUtcTime timestamp);
+
+template<typename T>
+stm::ByteVector operator << (stm::ByteVector && bv, T data)
+{
+	return bv << data;
 }
 
 constexpr std::size_t operator"" _length(const char * , std::size_t N)

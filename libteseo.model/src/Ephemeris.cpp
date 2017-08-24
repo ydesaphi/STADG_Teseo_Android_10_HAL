@@ -19,18 +19,17 @@
 * limitations under the License.
 *
 */
-/**
- * @brief Template constraint utilities
- * @file constraints.h
- */
+#include <teseo/model/Ephemeris.h>
 
-#ifndef TESEO_HAL_TEMPLATE_CONSTRAINTS
-#define TESEO_HAL_TEMPLATE_CONSTRAINTS
+stm::ByteVector operator << (stm::ByteVector && bv, const stm::model::GpsEphemeris & eph)
+{
+	return (bv << eph);
+}
 
-template<class T, class B>
-struct DerivedFrom {
-	static void constraints(T* p) { B* pb = p; (void)(pb); }
-	DerivedFrom() { void(*p)(T*) = constraints; (void)(p); }
-};
-
-#endif // TESEO_HAL_TEMPLATE_CONSTRAINTS
+stm::ByteVector & operator << (stm::ByteVector & bv, const stm::model::GpsEphemeris & eph)
+{
+	for(std::size_t i = 0; i < sizeof(stm::model::GpsEphemerisData); i++)
+		bv.push_back(eph.raw[i]);
+	
+	return bv;
+}

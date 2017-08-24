@@ -19,18 +19,17 @@
 * limitations under the License.
 *
 */
-/**
- * @brief Template constraint utilities
- * @file constraints.h
- */
+#include <teseo/model/Almanac.h>
 
-#ifndef TESEO_HAL_TEMPLATE_CONSTRAINTS
-#define TESEO_HAL_TEMPLATE_CONSTRAINTS
+stm::ByteVector operator << (stm::ByteVector && bv, const stm::model::GpsAlmanac & alm)
+{
+	return (bv << alm);
+}
 
-template<class T, class B>
-struct DerivedFrom {
-	static void constraints(T* p) { B* pb = p; (void)(pb); }
-	DerivedFrom() { void(*p)(T*) = constraints; (void)(p); }
-};
+stm::ByteVector & operator << (stm::ByteVector & bv, const stm::model::GpsAlmanac & alm)
+{
+	for(std::size_t i = 0; i < sizeof(stm::model::GpsAlmanacData); i++)
+		bv.push_back(alm.raw[i]);
 
-#endif // TESEO_HAL_TEMPLATE_CONSTRAINTS
+	return bv;
+}
