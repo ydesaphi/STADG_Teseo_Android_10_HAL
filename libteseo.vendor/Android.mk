@@ -16,6 +16,15 @@ LOCAL_SHARED_LIBRARIES := \
 	libsysutils           \
 	libhardware
 
+LOCAL_SRC_FILES :=                            \
+	src/boost/gregorian/date_generators.cpp   \
+	src/boost/gregorian/greg_month.cpp        \
+	src/boost/gregorian/greg_weekday.cpp      \
+	src/boost/gregorian/gregorian_types.cpp   \
+	src/boost/posix_time/posix_time_types.cpp
+
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 LOCAL_PRELINK_MODULE := false
