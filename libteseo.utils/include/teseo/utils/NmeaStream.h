@@ -30,6 +30,7 @@
 
 #include <string>
 
+#include <teseo/utils/ByteVector.h>
 #include <teseo/utils/Thread.h>
 #include <teseo/utils/Signal.h>
 
@@ -75,7 +76,7 @@ public:
 	 * @param[in]  data  The bytes
 	 * @param[in]  size  The number of bytes
 	 */
-	virtual void write(const uint8_t * data, std::size_t size);
+	virtual void write(ByteVectorPtr bytes);
 };
 
 } // namespace stream

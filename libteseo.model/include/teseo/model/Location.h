@@ -31,6 +31,9 @@
 #include <hardware/gps.h>
 #include <teseo/utils/ByteVector.h>
 
+#include "FixAndOperatingModes.h"
+#include "FixQuality.h"
+
 namespace stm {
 
 /**
@@ -38,6 +41,12 @@ namespace stm {
  */
 class Location {
 private:
+
+	/** Location quality */
+	FixQuality _fixQuality;
+
+	/** Fix mode */
+	model::FixMode _fixMode;
 
 	/** Represents latitude in degrees. */
     double          _latitude;
@@ -74,23 +83,6 @@ private:
 
 public:
 	Location();
-
-	Location(GpsUtcTime timestamp, double lat, double lon);
-
-	Location(GpsUtcTime timestamp, double lat, double lon, double alt);
-
-	Location(GpsUtcTime timestamp, double lat, double lon, double alt, float speed);
-
-	Location(GpsUtcTime timestamp, double lat, double lon, double alt, float speed, float bearing);
-
-	Location(
-		GpsUtcTime timestamp,
-		double lat,
-		double lon,
-		double alt,
-		float speed,
-		float bearing,
-		float accuracy);
 
 	/**
 	 * @brief      Get location validity
@@ -148,6 +140,16 @@ public:
 	void invalidateAccuracy();
 
 	/**
+	 * @brief      Get the fix quality
+	 */
+	FixQuality quality() const;
+
+	/**
+	 * @brief      Get the fix mode
+	 */
+	model::FixMode fixMode() const;
+
+	/**
 	 * @brief      Get latitude and longitude values
 	 */
 	std::pair<double, double> location() const;
@@ -186,6 +188,16 @@ public:
 	 * @brief      Get timestamp value
 	 */
 	GpsUtcTime timestamp() const;
+
+	/**
+	 * @brief      Set the fix quality
+	 */
+	FixQuality quality(FixQuality value);
+
+	/**
+	 * @brief      Set the fix mode
+	 */
+	model::FixMode fixMode(model::FixMode value);
 
 	/**
 	 * @brief      Set and get latitude and longitude value

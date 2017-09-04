@@ -34,6 +34,7 @@ void ByteStreamReader::run()
 	if(!bsOpener)
 	{
 		ALOGE("Unable to open byte stream, ByteStreamReader will exit early.");
+		return;
 	}
 
 	runReader = true;
@@ -63,6 +64,7 @@ void ByteStreamWriter::run()
 	if(!bsOpener)
 	{
 		ALOGE("Unable to open byte stream, ByteStreamWriter will exit early.");
+		return;
 	}
 
 	bool runWriter = true;
@@ -71,10 +73,7 @@ void ByteStreamWriter::run()
 		switch(com.receive())
 		{
 			case WRITE:
-				{
-					auto p = dataChannel.receive();
-					byteStream.perform_write(p.first, p.second);
-				}
+				byteStream.perform_write(dataChannel.receive());
 				break;
 
 			case STOP:
@@ -97,9 +96,9 @@ int ByteStreamWriter::stop()
 	return 0;
 }
 
-void ByteStreamWriter::write(const uint8_t * data, std::size_t size)
+void ByteStreamWriter::write(const ByteVectorPtr bytes)
 {
-	dataChannel << std::make_pair(data, size);
+	dataChannel << bytes;
 	com << WRITE;
 }
 
@@ -118,13 +117,14 @@ AbstractByteStream::~AbstractByteStream()
 		reader.stop();
 }
 
-void AbstractByteStream::write(const uint8_t * data, std::size_t size)
+void AbstractByteStream::write(const ByteVectorPtr bytes)
 {
-	writer.write(data, size);
+	writer.write(bytes);
 }
 
 int AbstractByteStream::start()
 {
+	ALOGV("Start byte stream");
 	int rw = writer.start();
 	int rr = reader.start();
 	return rr == 0 && rw == 0 ? 0 : 1;
@@ -132,6 +132,7 @@ int AbstractByteStream::start()
 
 int AbstractByteStream::stop()
 {
+	ALOGV("Stop byte stream");
 	int rw = writer.stop();
 	int rr = reader.stop();
 	return rr == 0 && rw == 0 ? 0 : 1;

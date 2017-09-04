@@ -90,6 +90,13 @@ std::string time2string(GpsUtcTime tp)
 	return time2string(time_point<system_clock>(milliseconds(tp)));
 }
 
+GpsUtcTime utc_timestamp_to_gps_timestamp(GpsUtcTime tp)
+{
+	// Not a magic number, juste the timestamp of GPS Time origin
+	// GPS Time origin is : 1980-01-06T00:00:00.000
+	return tp - 315964800000;
+}
+
 // Timestamp expected format : hhmmss.msec
 //                             0123456789.
 // We ignore the '.' before msec field as it make the parse int function crash

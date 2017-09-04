@@ -50,6 +50,22 @@
         "fstream": "cpp",
         "cstddef": "cpp",
         "__split_buffer": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "__tuple": "cpp",
+        "__bit_reference": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp",
+        "forward_list": "cpp",
+        "memory": "cpp",
+        "regex": "cpp",
+        "set": "cpp",
+        "thread": "cpp",
+        "unordered_set": "cpp",
+        "strstream": "cpp",
+        "__functional_base": "cpp",
+        "__functional_base_03": "cpp",
+        "any": "cpp",
+        "algorithm": "cpp",
+        "__mutex_base": "cpp"
     }
 }

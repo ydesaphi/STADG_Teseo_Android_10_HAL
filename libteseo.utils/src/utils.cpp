@@ -19,35 +19,31 @@
 * limitations under the License.
 *
 */
-#ifndef TESEO_HAL_PROTOCOL_NMEA_ENCODER_H
-#define TESEO_HAL_PROTOCOL_NMEA_ENCODER_H
 
-#include "IEncoder.h"
+#include <teseo/utils/utils.h>
 
-#include <teseo/model/Message.h>
+namespace stm::utils {
 
-namespace stm {
-namespace protocol {
-
-class NmeaEncoder : public IEncoder
+std::vector<std::string> split(
+	std::string::const_iterator begin,
+	std::string::const_iterator end,
+	std::string::const_reference sep)
 {
-private:
-	template<class TByteArray>
-	void fireEncodedBytes(const TByteArray & ba)
-	{
-		this->encodedBytes(ba.data(), ba.size());
-	}
-public:
-	NmeaEncoder();
+	return impl::split<
+				std::string,
+				std::string::const_iterator,
+				std::string::const_reference>(begin, end, sep);
+}
 
-	virtual ~NmeaEncoder();
+std::vector<std::string> split(
+	std::string::iterator begin,
+	std::string::iterator end,
+	std::string::const_reference sep)
+{
+	return impl::split<
+				std::string,
+				std::string::iterator,
+				std::string::const_reference>(begin, end, sep);
+}
 
-	virtual void encode(
-		const device::AbstractDevice & device,
-		const model::Message & message);
-};
-
-} // namespace protocol
-} // namespace stm
-
-#endif // TESEO_HAL_PROTOCOL_NMEA_ENCODER_H
+} // namespace stm::utils

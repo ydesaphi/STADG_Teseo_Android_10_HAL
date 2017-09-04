@@ -43,6 +43,8 @@ class string {
 
   constexpr std::size_t size() const { return size_; }
 
+  constexpr char const * data() const { return data_; }
+
   constexpr char operator[](std::size_t i) const { return data_[i]; }
 
   constexpr bool operator==(string other) const {

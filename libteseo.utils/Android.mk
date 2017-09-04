@@ -42,32 +42,36 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_SRC_FILES :=             \
 	src/AbstractByteStream.cpp \
 	src/ByteVector.cpp         \
+	src/DebugOutputStream.cpp  \
 	src/errors.cpp             \
 	src/http.cpp               \
 	src/NmeaStream.cpp         \
+	src/Signal.cpp             \
 	src/Thread.cpp             \
 	src/Time.cpp               \
 	src/UartByteStream.cpp     \
+	src/utils.cpp              \
 	src/Wakelock.cpp
 
 LOCAL_COPY_HEADERS_TO:= teseo/utils/
-LOCAL_COPY_HEADERS :=                    \
-	include/teseo/utils/any.h            \
-	include/teseo/utils/ByteVector.h     \
-	include/teseo/utils/Channel.h        \
-	include/teseo/utils/constraints.h    \
-	include/teseo/utils/errors.h         \
-	include/teseo/utils/http.h           \
-	include/teseo/utils/IByteStream.h    \
-	include/teseo/utils/IStream.h        \
-	include/teseo/utils/NmeaStream.h     \
-	include/teseo/utils/optional.h       \
-	include/teseo/utils/result.h         \
-	include/teseo/utils/Signal.h         \
-	include/teseo/utils/Thread.h         \
-	include/teseo/utils/Time.h           \
-	include/teseo/utils/UartByteStream.h \
-	include/teseo/utils/utils.h          \
+LOCAL_COPY_HEADERS :=                       \
+	include/teseo/utils/any.h               \
+	include/teseo/utils/ByteVector.h        \
+	include/teseo/utils/Channel.h           \
+	include/teseo/utils/constraints.h       \
+	include/teseo/utils/DebugOutputStream.h \
+	include/teseo/utils/errors.h            \
+	include/teseo/utils/http.h              \
+	include/teseo/utils/IByteStream.h       \
+	include/teseo/utils/IStream.h           \
+	include/teseo/utils/NmeaStream.h        \
+	include/teseo/utils/optional.h          \
+	include/teseo/utils/result.h            \
+	include/teseo/utils/Signal.h            \
+	include/teseo/utils/Thread.h            \
+	include/teseo/utils/Time.h              \
+	include/teseo/utils/UartByteStream.h    \
+	include/teseo/utils/utils.h             \
 	include/teseo/utils/Wakelock.h
 
 LOCAL_PRELINK_MODULE := false

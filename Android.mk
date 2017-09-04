@@ -26,7 +26,12 @@ TESEO_GLOBAL_CPPFLAGS := -Wall -Wextra -std=c++1z -fexceptions -frtti
 
 # Extra flags
 # These flags can be commented or not to enable or disable some features of the HAL
-TESEO_GLOBAL_CPP_FLAGS += -DDEBUG_NMEA_DECODER
+#TESEO_GLOBAL_CPPFLAGS += -DDEBUG_NMEA_DECODER             # Debug the NMEA Decoder
+#TESEO_GLOBAL_CPPFLAGS += -DDISABLE_ALL_MESSAGE_DEBUGGING  # Disable all message debuggers (see messages.cpp)
+TESEO_GLOBAL_CPPFLAGS += -DLOG_NDEBUG=0                   # Display ALOGV and ALOGD messages
+#TESEO_GLBOAL_CPPFLAGS += -DDEBUG_HTTP_CLIENT              # Enable HTTP client debug messages
+#TESEO_GLOBAL_CPPFLAGS += -DSIGNAL_DEBUGGING               # Display signal debugging messages
+#TESEO_GLOBAL_CPPFLAGS += -DENABLE_DEBUG_OUTPUT_STREAM     # Enable debug output stream
 
 # Auto-detect optional modules
 ifeq ($(shell test -d $(LOCAL_PATH)/libstagps && echo true),true)

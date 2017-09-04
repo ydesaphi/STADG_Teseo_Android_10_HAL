@@ -43,11 +43,20 @@ UartByteStream::UartByteStream(const std::string & ttyDevice) :
 	AbstractByteStream(),
 	fd(-1),
 	ttyDevice(ttyDevice),
-	streamStatus(ByteStreamStatus::CLOSED)
-{ }
+	streamStatus(ByteStreamStatus::CLOSED),
+	dbgRx(13370),
+	dbgTx(13371),
+	openCount(0)
+{
+	dbgRx.start();
+	dbgTx.start();
+}
 
 UartByteStream::~UartByteStream()
 {
+	dbgRx.stop();
+	dbgTx.stop();
+
 	if(streamStatus == ByteStreamStatus::OPENED)
 	{
 		try
@@ -74,9 +83,14 @@ ByteStreamStatus UartByteStream::status() const
 
 void UartByteStream::open() throw(StreamException)
 {
+	// Because we use a open count we must synchronize access to open
+	std::unique_lock<std::mutex> lock(openMutex);
+
 	if(streamStatus == ByteStreamStatus::OPENED)
 	{
 		ALOGW("UART %s already opened.", ttyDevice.c_str());
+		ALOGV("Increment UART open count");
+		openCount++;
 		return;
 	}
 
@@ -111,6 +125,7 @@ void UartByteStream::open() throw(StreamException)
 	streamStatus = ByteStreamStatus::OPENED;
 
 	flush();
+	openCount++;
 }
 
 void UartByteStream::flush() throw(StreamException)
@@ -127,21 +142,33 @@ void UartByteStream::flush() throw(StreamException)
 
 void UartByteStream::close() throw(StreamException)
 {
-	if(streamStatus == ByteStreamStatus::OPENED)
+	// Because we use a open count we must synchronize access to close
+	std::unique_lock<std::mutex> lock(openMutex);
+
+	if(streamStatus == ByteStreamStatus::OPENED && openCount != 0)
 	{
-		auto ret = ::close(fd);
-		CHECK_ERROR(ret, errors::close, "UART %s closed successfully.", ttyDevice.c_str());
-
-		fd = -1;
-
-		if(ret == -1)
+		if(openCount > 1)
 		{
-			streamStatus = ByteStreamStatus::ERROR;
-			throw StreamException(StreamException::CLOSE);
+			ALOGV("Decrement UART Byte Stream open count");
+			openCount--;
 		}
 		else
 		{
-			streamStatus = ByteStreamStatus::CLOSED;
+			auto ret = ::close(fd);
+			CHECK_ERROR(ret, errors::close, "UART %s closed successfully.", ttyDevice.c_str());
+
+			fd = -1;
+			openCount--;
+
+			if(ret == -1)
+			{
+				streamStatus = ByteStreamStatus::ERROR;
+				throw StreamException(StreamException::CLOSE);
+			}
+			else
+			{
+				streamStatus = ByteStreamStatus::CLOSED;
+			}
 		}
 	}
 	else
@@ -171,6 +198,7 @@ ByteVector UartByteStream::perform_read() throw(StreamException)
 		for(ssize_t i = 0; i < nbBytes; i++)
 			output.push_back(bytes[i]);
 
+		dbgRx.send(output);
 		return output;
 	}
 	else
@@ -180,11 +208,12 @@ ByteVector UartByteStream::perform_read() throw(StreamException)
 	}
 }
 
-void UartByteStream::perform_write(const uint8_t * data, std::size_t size) throw(StreamException)
+void UartByteStream::perform_write(const ByteVectorPtr bytes) throw(StreamException)
 {
 	if(streamStatus == ByteStreamStatus::OPENED)
 	{
-		ssize_t nbBytes = ::write(fd, data, size);
+		dbgTx.send(bytes->data(), bytes->size());
+		ssize_t nbBytes = ::write(fd, bytes->data(), bytes->size());
 
 		if(nbBytes == -1)
 		{
@@ -192,8 +221,9 @@ void UartByteStream::perform_write(const uint8_t * data, std::size_t size) throw
 			throw StreamException(StreamException::WRITE);
 		}
 
-		if(static_cast<std::size_t>(nbBytes) != size)
-			ALOGW("Incoherent number of bytes written: %zd != data.size() == %zd", nbBytes, size);
+		if(static_cast<std::size_t>(nbBytes) != bytes->size())
+			ALOGW("Incoherent number of bytes written: %zd != bytes->size() == %zd",
+				nbBytes, bytes->size());
 	}
 	else
 	{

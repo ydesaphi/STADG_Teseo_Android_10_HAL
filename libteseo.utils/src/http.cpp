@@ -27,17 +27,23 @@
 #include <sstream>
 #include <curl/curl.h>
 
+#include <teseo/utils/DebugOutputStream.h>
+
 namespace stm {
 namespace utils {
+
+debug::DebugOutputStream dbgHttp(13372);
 
 void http_init()
 {
 	curl_global_init(CURL_GLOBAL_ALL);
+	dbgHttp.start();
 }
 
 void http_cleanup()
 {
 	curl_global_cleanup();
+	dbgHttp.stop();
 }
 
 struct curl_slist * headers_to_curl_slist(const std::vector<Header> & headers)
@@ -63,6 +69,10 @@ size_t curl_write_callback(char * ptr, size_t size, size_t nmemb, void * userdat
 		return 0;
 	}
 	
+	#ifdef DEBUG_HTTP_CLIENT
+		dbgHttp.send(ptr, size * nmemb);
+	#endif
+
 	while(i < size * nmemb)
 	{
 		req->response.content.push_back(ptr[i]);
@@ -181,7 +191,13 @@ void HttpRequest::run()
 
 	if(verb == HttpRequest::POST)
 	{
+		ALOGD("Setting request verb to POST");
+		ALOGD("Setting payload to: %s", content.c_str());
 		curl_easy_setopt(curlHandle, CURLOPT_POSTFIELDS, content.c_str());
+	}
+	else
+	{
+		ALOGD("Not a POST request.");
 	}
 	// If we need to support HTTP verbs we should switch the verb
 	// to set the correct cURL options here.
@@ -215,6 +231,48 @@ void HttpRequest::run()
 		curl_easy_cleanup(curlHandle);
 		return;
 	}
+
+	#ifdef DEBUG_HTTP_CLIENT
+		ALOGD("Perform HTTP request: %s %s",
+			verb == HttpRequest::GET  ? "GET"  :
+			verb == HttpRequest::POST ? "POST" : "UnknownVerb",
+			uri.c_str()
+		);
+
+		dbgHttp.send("\r\nNew request\r\n");
+		dbgHttp.send(verb == HttpRequest::GET  ? "GET "  :
+					 verb == HttpRequest::POST ? "POST " : "UnknownVerb ");
+		dbgHttp.send(uri);
+		dbgHttp.send("\r\n");
+
+
+		ALOGD("Headers:");
+		ALOGD("User-Agent: %s", userAgent.c_str());
+		dbgHttp.send("User-Agent: ");
+		dbgHttp.send(userAgent);
+		dbgHttp.send("\r\n");
+		
+		for(auto h : headers)
+		{
+			ALOGD("%s: %s", h.name.c_str(), h.value.c_str());
+			dbgHttp.send(h.name);
+			dbgHttp.send(": ");
+			dbgHttp.send(h.value);
+			dbgHttp.send("\r\n");
+		}
+
+		if(verb == HttpRequest::POST)
+		{
+			ALOGD("Payload: %s", content.c_str());
+			dbgHttp.send("\r\n");
+			dbgHttp.send(content);
+		}
+		else
+		{
+			ALOGD("Request without payload");
+			dbgHttp.send("\r\n");
+		}
+	#endif
 
 	curlResponse = curl_easy_perform(curlHandle);
 	

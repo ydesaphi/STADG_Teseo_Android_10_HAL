@@ -27,6 +27,7 @@
 
 #include "IByteStream.h"
 #include "Thread.h"
+#include "DebugOutputStream.h"
 
 namespace stm {
 namespace stream {
@@ -47,6 +48,13 @@ private:
 	 * Stream status
 	 */
 	ByteStreamStatus streamStatus;
+
+	debug::DebugOutputStream dbgRx;
+	debug::DebugOutputStream dbgTx;
+
+	unsigned int openCount;
+
+	std::mutex openMutex;
 
 protected:
 
@@ -72,7 +80,7 @@ protected:
 	 */
 	virtual ByteVector perform_read() throw(StreamException);
 
-	virtual void perform_write(const uint8_t * data, std::size_t size) throw(StreamException);
+	virtual void perform_write(const ByteVectorPtr bytes) throw(StreamException);
 
 public:
 	explicit UartByteStream(const std::string& ttyDevice);

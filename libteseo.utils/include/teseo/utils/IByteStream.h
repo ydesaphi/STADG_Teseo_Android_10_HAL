@@ -144,7 +144,7 @@ protected:
 	 */
 	virtual ByteVector perform_read() throw(StreamException)  = 0;
 
-	virtual void perform_write(const uint8_t * data, std::size_t size) throw(StreamException) = 0;
+	virtual void perform_write(const ByteVectorPtr bytes) throw(StreamException) = 0;
 
 public:
 	virtual ~IByteStream() { }
@@ -167,7 +167,7 @@ public:
 	 * @param data Data to write to device
 	 * @param size Number of bytes to write
 	 */
-	virtual void write(const uint8_t * data, std::size_t size) = 0;
+	virtual void write(const ByteVectorPtr bytes) = 0;
 
 	/**
 	 * Start asynchronous read/write
@@ -279,22 +279,20 @@ private:
 	};
 	
 protected:
-	typedef std::pair<const uint8_t *, std::size_t> Array;
-
 	void run();
 
 	IByteStream & byteStream;
 
 	thread::Channel<Commands> com;
 
-	thread::Channel<Array> dataChannel;
+	thread::Channel<const ByteVectorPtr> dataChannel;
 
 public:
 	ByteStreamWriter(IByteStream & bs);
 
 	int stop();
 
-	void write(const uint8_t * data, std::size_t size);
+	void write(const ByteVectorPtr bytes);
 };
 
 class AbstractByteStream : public IByteStream {
@@ -306,9 +304,9 @@ private:
 public:
 	AbstractByteStream();
 
-	~AbstractByteStream();
+	virtual ~AbstractByteStream();
 
-	void write(const uint8_t * data, std::size_t size);
+	void write(const ByteVectorPtr bytes);
 
 	int start();
 

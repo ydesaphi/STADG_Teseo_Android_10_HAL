@@ -108,6 +108,21 @@ int HalManager::init(GpsCallbacks * cb)
 
 void HalManager::cleanup(void)
 {
+#ifdef STAGPS_ENABLED
+	if(config::get().stagps.enable)
+	{	
+		stagpsEngine->cleanup();
+		delete stagpsEngine;
+		stagpsEngine = nullptr;
+	}
+	else
+	{
+		ALOGV("Do not cleanup STAGPS engine, it is disabled");
+	}
+#else
+	ALOGD("STAGPS Engine is not compiled, do not cleanup");
+#endif
+
 	delete stream;
 	delete byteStream;
 	delete decoder;
@@ -183,10 +198,10 @@ void HalManager::initStagps()
 		stagpsEngine = new stm::stagps::StagpsEngine();
 
 		device->startNavigation.connect(
-			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::start));
+			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStartNavigation));
 
 		device->stopNavigation.connect(
-			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::stop));
+			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStopNavigation));
 
 		device->onVersionNumber.connect(
 			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onNewVersionAvailable));
@@ -194,14 +209,13 @@ void HalManager::initStagps()
 		device->onStagps8Answer.connect(
 			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStagps8Answer));
 
-		stagpsEngine->requestVersions.connect(
-			SlotFactory::create(*device, &device::AbstractDevice::requestVersionNumbers));
-
 		stagpsEngine->sendMessageRequest.connect(
 			SlotFactory::create(*device, &device::AbstractDevice::sendMessageRequest));
 
+		device->locationUpdate.connect(
+			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onLocationAvailable));
 
-		
+		stagpsEngine->init();
 	}
 	else
 	{

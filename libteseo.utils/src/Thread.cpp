@@ -74,8 +74,16 @@ Thread::~Thread()
 
 int Thread::start()
 {
-	handle = createThread(name.c_str(), &priv::threadStart, this);
-	return handle != 0;
+	if(!running)
+	{
+		handle = createThread(name.c_str(), &priv::threadStart, this);
+		return handle != 0;
+	}
+	else
+	{
+		ALOGW("Try to start a running thread");
+		return 1;
+	}
 }
 
 void Thread::setCreateThreadCb(CreateThreadCb cb)

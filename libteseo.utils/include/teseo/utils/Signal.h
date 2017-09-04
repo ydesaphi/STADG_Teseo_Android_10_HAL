@@ -39,15 +39,25 @@
 #include "constraints.h"
 
 #ifdef SIGNAL_DEBUGGING
-#ifndef LOG_TAG
-#define LOG_TAG "teseo_hal_Signal"
-#define UNDEF_LOG_TAG
-#endif
+namespace signal_debug {
+void signal_log_verbose(const char * fmt, ...);
+void signal_log_debug(const char * fmt, ...);
+void signal_log_info(const char * fmt, ...);
+void signal_log_warning(const char * fmt, ...);
+void signal_log_error(const char * fmt, ...);
+} // namespace signal_debug
 
-#include <cutils/log.h>
-#define SIG_LOGI(...) ALOGI(__VA_ARGS__)
+#define SIG_LOGV(...) signal_debug::signal_log_verbose(__VA_ARGS__)
+#define SIG_LOGD(...) signal_debug::signal_log_debug(__VA_ARGS__)
+#define SIG_LOGI(...) signal_debug::signal_log_info(__VA_ARGS__)
+#define SIG_LOGW(...) signal_debug::signal_log_warning(__VA_ARGS__)
+#define SIG_LOGE(...) signal_debug::signal_log_error(__VA_ARGS__)
 #else
-#define SIG_LOGI(...)
+#define SIG_LOGV(...) 
+#define SIG_LOGD(...) 
+#define SIG_LOGI(...) 
+#define SIG_LOGW(...) 
+#define SIG_LOGE(...) 
 #endif
 
 /**
@@ -74,6 +84,8 @@ public:
 	std::weak_ptr<Trackable> getWeakPtr() const { return shptr; }
 };
 
+template<class Tfunc> class GenericSlot;
+
 /**
  * @brief      Base class for slots
  *
@@ -81,13 +93,13 @@ public:
  * @tparam     Targs    Slot argument list
  */
 template <typename Treturn, typename... Targs>
-class GenericSlot
+class GenericSlot<Treturn(Targs...)>
 {
 public:
 	/**
 	 * Slot pointer type
 	 */
-	typedef std::shared_ptr<GenericSlot<Treturn, Targs...>> ptr;
+	typedef std::shared_ptr<GenericSlot<Treturn(Targs...)>> ptr;
 
 	/**
 	 * @brief      Effectively call the slot
@@ -123,13 +135,13 @@ public:
  * @tparam     Targs    Slot argument list
  */
 template <typename Treturn, typename ...Targs>
-class FunctionSlot : public GenericSlot<Treturn, Targs...>
+class FunctionSlot : public GenericSlot<Treturn (Targs...)>
 {
 public:
 	/**
 	 * Slot function type
 	 */
-	typedef Treturn (*SlotType)(Targs...);
+	using SlotType = std::function<Treturn (Targs...)>;
 
 	FunctionSlot(SlotType s) :
 		slot(s)
@@ -147,22 +159,22 @@ public:
 	 *
 	 * @return     True if valid, False otherwise.
 	 */
-	virtual bool isValid() { return slot != nullptr; }
+	virtual bool isValid() { return static_cast<bool>(slot); }
 
 private:
 	SlotType slot;
 };
 
 /**
- * @brief      Class for member function slot.
+ * @brief      Class for class method slot.
  *
  * @tparam     Tinstance  Class of the slot method (must derive from Trackable)
  * @tparam     Treturn    Slot return type
  * @tparam     Targs      Slot argument list
  */
 template <class Tinstance, typename Treturn, typename ...Targs>
-class MemberFunctionSlot :
-	public GenericSlot<Treturn, Targs...>,
+class ClassMethodSlot :
+	public GenericSlot<Treturn (Targs...)>,
 	DerivedFrom<Tinstance, Trackable>
 {
 public:
@@ -171,10 +183,13 @@ public:
 	 */
 	typedef Treturn (Tinstance::*SlotType)(Targs...);
 
-	MemberFunctionSlot(const Tinstance & i, SlotType s) :
+	ClassMethodSlot(const Tinstance & i, SlotType s) :
 		instance(i.getWeakPtr()),
 		slot(s)
-	{ }
+	{
+		if(slot == nullptr)
+			throw std::runtime_error("Can't register ClassMethodSlot with nullptr slot.");
+	}
 
 	/**
 	 * @brief      Call the slot method
@@ -222,9 +237,9 @@ private:
 namespace SlotFactory
 {
 	/**
-	 * @brief      Create slot from function pointer
+	 * @brief      Create slot from function
 	 *
-	 * @param[in]  slot     The slot callback
+	 * @param[in]  slot       The function slot
 	 *
 	 * @tparam     Treturn  The slot return type
 	 * @tparam     Targs    The slot arguments types
@@ -232,26 +247,16 @@ namespace SlotFactory
 	 * @return     The created slot object
 	 */
 	template<typename Treturn, typename ...Targs>
-	auto create(Treturn (*slot)(Targs...))
+	auto create(std::function<Treturn (Targs...)> slot)
 	{
-		return typename GenericSlot<Treturn, Targs...>::ptr(
+		return typename GenericSlot<Treturn (Targs...)>::ptr(
 			new FunctionSlot<Treturn, Targs...>(slot));
 	}
 
-	/**
-	 * @brief      Create slot from lambda function
-	 *
-	 * @param[in]  slot       The lambda function callback
-	 *
-	 * @tparam     Tfunction  Lambda type
-	 *
-	 * @return     The created slot object
-	 */
-	template<typename Tfunction>
-	auto create(Tfunction slot)
+	template<typename Treturn, typename ...Targs>
+	auto create(Treturn (*slot)(Targs...))
 	{
-		// Lambda function promoted to function pointer with * and + operators.
-		return create(*+slot);
+		return create(std::function<Treturn (Targs...)>(slot));
 	}
 
 	/**
@@ -269,8 +274,8 @@ namespace SlotFactory
 	template<typename Tinstance, typename Treturn, typename ...Targs>
 	auto create(const Tinstance & instance, Treturn (Tinstance::*slot)(Targs...))
 	{
-		return typename GenericSlot<Treturn, Targs...>::ptr(
-			new MemberFunctionSlot<Tinstance, Treturn, Targs...>(instance, slot));
+		return typename GenericSlot<Treturn (Targs...)>::ptr(
+			new ClassMethodSlot<Tinstance, Treturn, Targs...>(instance, slot));
 	}
 
 	/**
@@ -290,55 +295,125 @@ namespace SlotFactory
 	auto create(const Tinstance & instance, Treturn (TinstanceParent::*slot)(Targs...))
 	{
 		DerivedFrom<Tinstance, TinstanceParent> constraint;
-		return typename GenericSlot<Treturn, Targs...>::ptr(
-			new MemberFunctionSlot<Tinstance, Treturn, Targs...>(instance, slot));
+		return typename GenericSlot<Treturn (Targs...)>::ptr(
+			new ClassMethodSlot<Tinstance, Treturn, Targs...>(instance, slot));
 	}
 
 }
 
-/**
- * @brief      Base class for signals.
- *
- * @tparam     Treturn  Signal return type
- * @tparam     Targs    Signal argument list
- */
-template <typename Treturn, typename ...Targs>
-class BaseSignal
+namespace signal_implementation {
+
+template <bool Debug=false>
+struct SignalDebugger {
+	template<typename ...T>
+	void logv(const char *, T...)
+	{ }
+
+	template<typename ...T>
+	void logd(const char *, T...)
+	{ }
+
+	template<typename ...T>
+	void logi(const char *, T...)
+	{ }
+
+	template<typename ...T>
+	void logw(const char *, T...)
+	{ }
+
+	template<typename ...T>
+	void loge(const char *, T...)
+	{ }
+};
+
+template <>
+struct SignalDebugger<true> {
+	template<typename ...T>
+	void logv(const char * fmt, T... args)
+	{
+		SIG_LOGV(fmt, args...);
+	}
+
+	template<typename ...T>
+	void logd(const char * fmt, T... args)
+	{
+		SIG_LOGD(fmt, args...);
+	}
+
+	template<typename ...T>
+	void logi(const char * fmt, T... args)
+	{
+		SIG_LOGI(fmt, args...);
+	}
+
+	template<typename ...T>
+	void logw(const char * fmt, T... args)
+	{
+		SIG_LOGW(fmt, args...);
+	}
+
+	template<typename ...T>
+	void loge(const char * fmt, T... args)
+	{
+		SIG_LOGE(fmt, args...);
+	}
+};
+	
+template <bool DebugFlag, typename Treturn, typename ...Targs>
+class AbstractSignal :
+	public GenericSlot<Treturn (Targs...)>
 {
 protected:
+	SignalDebugger<DebugFlag> dbg;
+
 	/**
 	 * Slot list type
 	 */
-	typedef std::list<typename GenericSlot<Treturn, Targs...>::ptr> SlotList;
-
+	typedef std::list<typename GenericSlot<Treturn (Targs...)>::ptr> SlotList;
+	 
 	SlotList slots;
 
-#ifdef SIGNAL_DEBUGGING
+	typename GenericSlot<Treturn (Targs...)>::ptr thisShPtr;
+
 	std::string signalName;
-#endif
+
+	friend class AbstractSignal<!DebugFlag, Treturn, Targs...>;
 
 public:
+	AbstractSignal() :
+		thisShPtr(static_cast<GenericSlot<Treturn (Targs...)> *>(this)), signalName("no-name")
+	{
+		this->dbg.logw("You are debugging a Signal without giving him a name. "
+			           "This can be hard, good luck.");
+	}
 
-#ifdef SIGNAL_DEBUGGING
-	BaseSignal() : signalName("no-name") { }
-	BaseSignal(const char * n) : signalName(n) { }
-#else
-	BaseSignal() { }
-	BaseSignal(const char * n) { (void)(n); }
-#endif
+	AbstractSignal(const char * n) :
+		thisShPtr(static_cast<GenericSlot<Treturn (Targs...)> *>(this)), signalName(n)
+	{ }
+
+	virtual ~AbstractSignal()
+	{
+		thisShPtr.reset();
+	}
 
 	/**
 	 * @brief      Connect signal to slot
 	 *
 	 * @param[in]  slot  The slot
 	 */
-	void connect(const typename GenericSlot<Treturn, Targs...>::ptr & slot)
+	void connect(const typename GenericSlot<Treturn (Targs...)>::ptr & slot)
 	{
 		slots.push_back(slot);
-		SIG_LOGI("Add slot %p to %s", slot.get(), toString().c_str());
+		this->dbg.logi("Add slot %p to %s", slot.get(), toString().c_str());
+	}
+ 
+	template<bool OtherSignalDebugFlag>
+	void connect(const AbstractSignal<OtherSignalDebugFlag, Treturn, Targs...> & otherSignal)
+	{
+		slots.push_back(otherSignal.thisShPtr);
+		this->dbg.logi("Add Signal %s as a slot to %s", otherSignal.name(), toString().c_str());
 	}
 
-#ifdef SIGNAL_DEBUGGING
 	const char * name() const
 	{
 		return signalName.c_str();
@@ -349,58 +424,38 @@ public:
 		std::ostringstream out;
 
 		out << "Signal: '"
-		    << signalName
-		    << "', connected slots: "
-		    << slots.size();
+			<< signalName
+			<< "', connected slots: "
+			<< slots.size();
 
 		return out.str();
 	}
-#else
-	const char * name() const
-	{
-		return "signal-debugging-disabled";
-	}
-
-	std::string toString() const
-	{
-		return "Signal: debugging disabled.";
-	}
-#endif
 };
 
 /**
- * @brief      Signal class
+ * @brief      Base class for signals.
  *
  * @tparam     Treturn  Signal return type
  * @tparam     Targs    Signal argument list
  */
-template <typename Treturn, typename ...Targs>
-class Signal :
-	public BaseSignal<Treturn, Targs...>
+template <bool DebugFlag, typename Treturn, typename ...Targs>
+class BaseSignal :
+	public AbstractSignal<DebugFlag, Treturn, Targs...>
 {
 protected:
-
-#ifdef SIGNAL_DEBUGGING
-	std::string printLastResponseHelper(Treturn resp)
+	Treturn call(Targs... args)
 	{
-		std::ostringstream out;
-
-		out << resp;
-
-		return out.str();
+		this->dbg.logd("Signal forwarded to %s", this->toString().c_str());
+		return emit(args...);
 	}
-#else
-	std::string printLastResponseHelper(Treturn resp)
-	{
-		(void)(resp);
-		return "Signal debugging disabled.";
-	}
-#endif
 
 public:
-	Signal() : BaseSignal<Treturn, Targs...>() { }
 
-	Signal(const char * n) : BaseSignal<Treturn, Targs...>(n) { }
+	BaseSignal() : AbstractSignal<DebugFlag, Treturn, Targs...>()
+	{ }
+
+	BaseSignal(const char * n) : AbstractSignal<DebugFlag, Treturn, Targs...>(n)
+	{ }
 
 	/**
 	 * @brief      Emit the signal
@@ -412,39 +467,40 @@ public:
 	 */
 	Treturn emit(Targs... args)
 	{
-		SIG_LOGI("emit: %s", this->toString().c_str());
-		std::deque<typename Signal<Treturn, Targs...>::SlotList::iterator> toErase;
+		this->dbg.logi("emit: %s", this->toString().c_str());
+		std::deque<typename AbstractSignal<DebugFlag, Treturn, Targs...>::SlotList::iterator> toErase;
 		Treturn lastResponse;
 
 		for(auto it = this->slots.begin(); it != this->slots.end(); ++it)
 		{
 			auto slot = *it;
-			SIG_LOGI("Slot: %p", slot.get());
+			this->dbg.logi("Slot: %p", slot.get());
 
 			if(slot->isValid())
 			{
-				SIG_LOGI("Slot is valid, call slot.");
+				this->dbg.logi("Slot is valid, call slot.");
 				lastResponse = slot->call(args...);
-				SIG_LOGI("Slot response: %s", printLastResponseHelper(lastResponse).c_str());
+				this->dbg.logi("Slot response: %s",
+					(std::ostringstream() << lastResponse).str().c_str());
 			}
 			else
 			{
-				SIG_LOGI("Slot is not valid, erase slot.");
+				this->dbg.logi("Slot is not valid, erase slot.");
 				toErase.push_back(it);
 			}
 		}
 
 		for(auto e : toErase)
 		{
-			SIG_LOGI("Erase slot %p", e->get());
+			this->dbg.logi("Erase slot %p", e->get());
 			this->slots.erase(e);
 		}
 
-		SIG_LOGI("End of emit, return last response: %s",
-			printLastResponseHelper(lastResponse).c_str());
+		this->dbg.logi("End of emit, return last response: %s",
+			(std::ostringstream() << lastResponse).str().c_str());
 		return lastResponse;
 	}
-
+ 
 	/**
 	 * @brief      Emit the signal and collect all the responses
 	 *
@@ -453,50 +509,50 @@ public:
 	 * @return     List of all the slots responses
 	 */
 	auto collect(Targs... args);
-
+ 
 	/**
 	 * Shortcut to `Treturn emit(Targs... )`
 	 */
 	Treturn operator()(Targs... args);
 };
 
-template<typename Treturn, typename ...Targs>
-Treturn Signal<Treturn, Targs...>::operator()(Targs... args)
+template<bool DebugFlag, typename Treturn, typename ...Targs>
+Treturn BaseSignal<DebugFlag, Treturn, Targs...>::operator()(Targs... args)
 {
 	return emit(args...);
 }
 
-template<typename Treturn, typename ...Targs>
-auto Signal<Treturn, Targs...>::collect(Targs... args)
+template<bool DebugFlag, typename Treturn, typename ...Targs>
+auto BaseSignal<DebugFlag, Treturn, Targs...>::collect(Targs... args)
 {
-	SIG_LOGI("emit: %s", this->toString().c_str());
-	std::deque<typename Signal<Treturn, Targs...>::SlotList::iterator> toErase;
+	this->dbg.logi("emit: %s", this->toString().c_str());
+	std::deque<typename AbstractSignal<DebugFlag, Treturn, Targs...>::SlotList::iterator> toErase;
 	std::list<Treturn> responses;
 
 	for(auto it = this->slots.begin(); it != this->slots.end(); ++it)
 	{
 		auto slot = *it;
-		SIG_LOGI("Slot: %p", slot.get());
+		this->dbg.logi("Slot: %p", slot.get());
 
 		if(slot->isValid())
 		{
-			SIG_LOGI("Slot is valid, call slot.");
+			this->dbg.logi("Slot is valid, call slot.");
 			responses.push_back(slot->call(args...));
 		}
 		else
 		{
-			SIG_LOGI("Slot is not valid, erase slot.");
+			this->dbg.logi("Slot is not valid, erase slot.");
 			toErase.push_back(it);
 		}
 	}
 
 	for(auto e : toErase)
 	{
-		SIG_LOGI("Erase slot %p", e->get());
+		this->dbg.logi("Erase slot %p", e->get());
 		this->slots.erase(e);
 	}
 
-	SIG_LOGI("End of emit, return %d responses.", (unsigned int)responses.size());
+	this->dbg.logi("End of emit, return %d responses.", (unsigned int)responses.size());
 	return responses;
 }
 
@@ -505,64 +561,103 @@ auto Signal<Treturn, Targs...>::collect(Targs... args)
  *
  * @tparam     Targs  Signal argument list
  */
-template<typename ...Targs>
-class Signal<void, Targs...> : public BaseSignal<void, Targs...>
-{
-public:	
-	Signal() : BaseSignal<void, Targs...>() { }
+ template<bool DebugFlag, typename ...Targs>
+ class BaseSignal<DebugFlag, void, Targs...> :
+	public AbstractSignal<DebugFlag, void, Targs...>
+ {
+ protected:
+	void call(Targs... args)
+	{
+		this->dbg.logd("Signal forwarded to %s", this->toString().c_str());
+		emit(args...);
+	}
+ 
+ public:
 
-	Signal(const char * n) : BaseSignal<void, Targs...>(n) { }
+	BaseSignal() : AbstractSignal<DebugFlag, void, Targs...>()
+	{ }
+
+	BaseSignal(const char * n) : AbstractSignal<DebugFlag, void, Targs...>(n)
+	{ }
 
 	void emit(Targs... args);
-
+ 
 	void operator()(Targs... args);
-	
+	 
 	/**
 	 * @brief The collect method is deleted because we can't return a list of void.
 	 */
 	auto collect(Targs... args) = delete;
-};
-
-template<typename ...Targs>
-void Signal<void, Targs...>::emit(Targs... args)
+ };
+ 
+template<bool DebugFlag, typename ...Targs>
+void BaseSignal<DebugFlag, void, Targs...>::emit(Targs... args)
 {
-	SIG_LOGI("emit: %s", this->toString().c_str());
-	std::deque<typename Signal<void, Targs...>::SlotList::iterator> toErase;
+	this->dbg.logi("emit: %s", this->toString().c_str());
+	std::deque<typename AbstractSignal<DebugFlag, void, Targs...>::SlotList::iterator> toErase;
 
 	for(auto it = this->slots.begin(); it != this->slots.end(); ++it)
 	{
 		auto slot = *it;
-		SIG_LOGI("Slot: %p", slot.get());
+		this->dbg.logi("Slot: %p", slot.get());
 
 		if(slot->isValid())
 		{
-			SIG_LOGI("Slot is valid, call slot.");
+			this->dbg.logi("Slot is valid, call slot.");
 			slot->call(args...);
 		}
 		else
 		{
-			SIG_LOGI("Slot is not valid, erase slot.");
+			this->dbg.logi("Slot is not valid, erase slot.");
 			toErase.push_back(it);
 		}
 	}
 
 	for(auto e : toErase)
 	{
-		SIG_LOGI("Erase slot %p", e->get());
+		this->dbg.logi("Erase slot %p", e->get());
 		this->slots.erase(e);
 	}
 
-	SIG_LOGI("End of emit.");
+	this->dbg.logi("End of emit.");
 }
 
-template<typename ...Targs>
-void Signal<void, Targs...>::operator()(Targs... args)
+template<bool DebugFlag, typename ...Targs>
+void BaseSignal<DebugFlag, void, Targs...>::operator()(Targs... args)
 {
 	emit(args...);
 }
 
-#ifdef UNDEF_LOG_TAG
-#undef LOG_TAG
-#endif
+} // namespace signal_implementation
+
+/**
+ * @brief      Signal class
+ *
+ * @tparam     Treturn  Signal return type
+ * @tparam     Targs    Signal argument list
+ */
+template <typename Treturn, typename ...Targs>
+class Signal :
+	public signal_implementation::BaseSignal<false, Treturn, Targs...>
+{
+public:
+	Signal() :
+	signal_implementation::BaseSignal<false, Treturn, Targs...>()
+	{ }
+
+	Signal(const char * n) :
+	signal_implementation::BaseSignal<false, Treturn, Targs...>(n)
+	{ }
+};
+
+template<typename Treturn, typename ...Targs>
+class SignalToDebug :
+	public signal_implementation::BaseSignal<true, Treturn, Targs...>
+{
+public:
+	SignalToDebug(const char * n) :
+	signal_implementation::BaseSignal<true, Treturn, Targs...>(n)
+	{ }
+};
 
 #endif // TESEO_HAL_SIGNAL_H

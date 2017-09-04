@@ -360,6 +360,51 @@ constexpr ByteArray<N> str2ba(const char * data, std::index_sequence<I...>)
 {
 	return { {(static_cast<uint8_t>(data[I]))...} };
 }
+
+ByteArray<2> to_ascii(uint8_t byte, bool uppercase);
+
+template<std::size_t N>
+constexpr ByteArray<N> join_array(ByteArray<N> & output, std::size_t & pos, const ByteArray<2> array)
+{
+	if(pos > output.size())
+		return output;
+
+	output[pos++] = array[0];
+	output[pos++] = array[1];
+
+	return output;
+}
+
+template<std::size_t N, typename ...Rest>
+constexpr ByteArray<N> join_array(ByteArray<N> & output, std::size_t & pos, const ByteArray<2> array, Rest... arrays)
+{
+	if(pos > output.size())
+		return output;
+
+	output[pos++] = array[0];
+	output[pos++] = array[1];
+
+	return join_array(output, pos, arrays...);
+}
+
+template<std::size_t N, typename ...Rest>
+constexpr ByteArray<N> join_arrays(const ByteArray<2> & array, Rest... arrays)
+{
+	ByteArray<N> output;
+	std::size_t pos = 2;
+
+	output[0] = array[0];
+	output[1] = array[1];
+
+	return join_array(output, pos, arrays...);
+}
+
+template<std::size_t N, std::size_t... I>
+ByteArray<2*N> to_ascii(const ByteArray<N> bytes, bool uppercase, std::index_sequence<I...>)
+{
+	return join_arrays<2*N>((to_ascii(bytes.at(I), uppercase))...);
+}
+
 } // namespace impl
 
 template<std::size_t N>
@@ -468,6 +513,16 @@ ByteVector base64_decode(const std::string & base64);
  * @return Encoded bytes as a string
  */
 std::string base64_encode(const ByteVector & bytes);
+
+template<std::size_t N>
+constexpr ByteArray<2*N> to_ascii(const ByteArray<N> & bytes, bool uppercase = false)
+{
+	return impl::to_ascii<N>(bytes, uppercase, std::make_index_sequence<N>{});
+}
+
+ByteVector to_ascii(const ByteVector & bytes, bool uppercase = false);
+
+ByteVector to_ascii(uint8_t byte, bool uppercase = false);
 
 } // namespace utils
 } // namespace stm

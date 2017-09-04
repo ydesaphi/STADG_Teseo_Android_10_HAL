@@ -37,6 +37,7 @@
 #include <teseo/vendor/frozen/unordered_map.h>
 #include <teseo/vendor/frozen/string.h>
 #include <teseo/model/Coordinate.h>
+#include <teseo/model/FixAndOperatingModes.h>
 #include <teseo/model/FixQuality.h>
 #include <teseo/model/TalkerId.h>
 #include <teseo/utils/ByteVector.h>
@@ -46,7 +47,6 @@
 using namespace frozen::string_literals;
 
 // Messages to debug
-//#define DISABLE_ALL_MESSAGE_DEBUGGING
 #ifndef DISABLE_ALL_MESSAGE_DEBUGGING
 	// NMEA std. messages
 	//#define MSG_DBG_GGA
@@ -55,7 +55,7 @@ using namespace frozen::string_literals;
 	//#define MSG_DBG_GSA
 	// STMicro proprietary messages
 	//#define MSG_DBG_SBAS
-	//#define MSG_DBG_PSTMVER
+	#define MSG_DBG_PSTMVER
 	#define MSG_DBG_STAGPS8PASSRTN
 #endif
 
@@ -81,6 +81,7 @@ frozen::unordered_map<frozen::string, MessageDecoder, 3> stm = {
 	{"SBAS"_s, &decoders::sbas},
 	{"VER"_s,  &decoders::pstmver},
 	{"STAGPS8PASSRTN"_s,  &decoders::pstmstagps8passrtn},
+	{"STAGPS8PASSGENERROR"_s, &decoders::pstmstagps8passrtn}
 	// Do not forget to update number of elements in map declaration
 };
 
@@ -166,6 +167,7 @@ void decoders::gga(AbstractDevice & dev, const NmeaMessage & msg)
 	auto locResult = dev.getLocation();
 	Location loc = locResult ? *locResult : Location();
 
+	loc.quality(quality);
 	loc.timestamp(timestamp);
 
 	if(quality == FixQuality::Invalid)
@@ -369,14 +371,22 @@ void decoders::gsa(AbstractDevice & dev, const NmeaMessage & msg)
 	GSA_LOGI("Decode GSA: %s", msg.toString().c_str());
 
 	// First two parameters are unused
-	auto it = msg.parameters.begin() + 2;
+	auto it = msg.parameters.begin() + 1;
 
 	// Selection mode: Auto or Manual - unused
 	//char selectionMode = (*it).at(0);
 
 	// Mode: 1 = no fix / 2 = 2D fix / 3 = 3D fix - unused
-	//int mode = utils::byteVectorParse<int>(*it);
+	FixMode mode = FixModeFromChar((*it).at(0));
+	++it;
 
+	// Update fix mode
+	auto locResult = dev.getLocation();
+	Location loc = locResult ? *locResult : Location();
+	loc.fixMode(mode);
+	dev.setLocation(loc);
+
+	// Update satellites usage informations
 	for(int i = 0; i < 12; i++)
 	{
 		if((*it).size() > 0)
@@ -491,11 +501,17 @@ catch(...)
 #endif
 void decoders::pstmstagps8passrtn(AbstractDevice & dev, const NmeaMessage & msg)
 {
-	STAGPS8PASSRTN_LOGI("Decode PSTMSTAGPS8PASSRTN: %s", msg.toCString());
-
-	STAGPS8PASSRTN_LOGI("Password string: %s", bytesToString(msg.parameters.at(0)).c_str());
-
-	dev.onStagps8Answer(model::Stagps8Answer::PasswordReturnOk, { msg.parameters.at(0) });
+	if(msg.sentenceId == utils::createFromString("STAGPS8PASSGENERROR"))
+	{
+		STAGPS8PASSRTN_LOGI("Decode PSTMSTAGPS8PASSGENERROR");
+		dev.onStagps8Answer(model::Stagps8Answer::PasswordReturnKO, { });
+	}
+	else
+	{
+		STAGPS8PASSRTN_LOGI("Decode PSTMSTAGPS8PASSRTN: %s", msg.toCString());
+		STAGPS8PASSRTN_LOGI("Password string: %s", bytesToString(msg.parameters.at(0)).c_str());
+		dev.onStagps8Answer(model::Stagps8Answer::PasswordReturnOk, { msg.parameters.at(0) });
+	}
 }
 
 } // namespace nmea

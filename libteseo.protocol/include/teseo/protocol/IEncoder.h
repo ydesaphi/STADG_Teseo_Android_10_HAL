@@ -36,11 +36,10 @@ public:
 	virtual ~IEncoder() { }
 
 	virtual void encode(
-		model::MessageId id,
 		const device::AbstractDevice & device,
-		const std::vector<ByteVector> & parameters) = 0;
+		const model::Message & message) = 0;
 
-	Signal<void, const uint8_t *, std::size_t> encodedBytes;
+	Signal<void, ByteVectorPtr> encodedBytes;
 };
 
 } // namespace protocol

@@ -177,19 +177,28 @@ void NmeaDecoder::decode(ByteVectorPtr bytesPtr)
 	if(multipleChecksum)
 	{
 		// Find first '*'
-		for(ByteVector::size_type i = 0; i < bytes.size(); i++)
+		for(auto it = bytes.cbegin(); it != bytes.end(); ++it)
 		{
-			if(bytes.at(i) == '*')
+			if(*it == '*')
 			{
-				bytes.resize(i);
+				bytes.erase(it - 1, bytes.cend());
 				break;
 			}
 		}
 	}
 	else
 	{
-		// Remove last three characters
-		bytes.erase(bytes.end() - 3, bytes.end());
+		// Find last '*'
+		for(auto rit = bytes.crbegin(); rit != bytes.crend(); ++rit)
+		{
+			if(*rit == '*')
+			{
+				++rit; // <-- Move the iterator to also remove the star
+				// it.base() convert reverse iterator to "normal" iterator
+				bytes.erase(rit.base(), bytes.cend());
+				break;
+			}	
+		}
 	}
 
 

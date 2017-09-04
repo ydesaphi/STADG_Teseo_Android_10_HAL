@@ -39,6 +39,9 @@
 #include <teseo/utils/errors.h>
 #include <teseo/utils/Wakelock.h>
 
+#define LOG_STREAM(...) \
+ALOG(LOG_VERBOSE, "stm_tools_stream_export", __VA_ARGS__)
+
 namespace stm {
 namespace stream {
 
@@ -98,6 +101,10 @@ void NmeaStream::onNewBytes(const ByteVector & bytes)
 				// Append data to buffer
 				if(start < end)
 					buffer.insert(buffer.end(), start, end);
+				
+				#ifdef LOG_STREAM
+					LOG_STREAM("%s", utils::bytesToString(buffer).c_str());
+				#endif
 
 				// Send and clear buffer
 				newSentence(ByteVectorPtr(new ByteVector(buffer.begin(), buffer.end())));
@@ -118,36 +125,26 @@ void NmeaStream::onNewBytes(const ByteVector & bytes)
 	}
 }
 
-static const uint8_t dollar[1] = {'$'};
-
-void NmeaStream::write(const uint8_t * data, std::size_t size)
+void NmeaStream::write(ByteVectorPtr bytes)
 {
 	uint8_t crc = 0;
 	std::string logStr;
 
-	for(std::size_t i = 0; i < size; i++)
+	ByteVectorPtr toWritePtr = std::make_shared<ByteVector>();
+	ByteVector & toWrite = *toWritePtr;
+
+	toWrite.push_back('$');
+
+	for(uint8_t b : *bytes)
 	{
-		crc ^= data[i];
-		logStr.push_back(data[i]);
+		crc ^= b;
+		toWrite.push_back(b);
 	}
 
-	uint8_t crc1 = ((crc & static_cast<uint8_t>(0xF0)) >> 4);
-	uint8_t crc2 = (crc & static_cast<uint8_t>(0x0F));
+	toWrite << '*' << utils::to_ascii(crc) << "\r\n";
 
-	uint8_t endOfSentence[5] = {
-		'*',
-		static_cast<uint8_t>(crc1 > 9 ? crc1 + static_cast<uint8_t>('A') : crc1 + static_cast<uint8_t>('0')),
-		static_cast<uint8_t>(crc2 > 9 ? crc2 + static_cast<uint8_t>('A') : crc2 + static_cast<uint8_t>('0')),
-		'\r', '\n'
-	};
-
-	ALOGI("CRC: crc == 0x%X; crc1 == 0x%X; crc2 == 0x%X", crc, crc1, crc2);
-	ALOGI("CRC: crc1 == %c (%d); crc2 == %c (%d)", endOfSentence[1], endOfSentence[1], endOfSentence[2], endOfSentence[2]);
-
-	ALOGI("Out NMEA: '$%s*%c%c'", logStr.c_str(), endOfSentence[1], endOfSentence[2]);
-	newBytesToWrite(dollar, 1);
-	newBytesToWrite(data, size);
-	newBytesToWrite(endOfSentence, 5);
+	ALOGI("Out NMEA: '%s'", utils::bytesToString(toWrite).c_str());
+	newBytesToWrite(toWritePtr);
 }
 
 } // namespace stream

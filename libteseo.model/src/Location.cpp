@@ -30,67 +30,23 @@
 
 namespace stm {
 
+using namespace model;
+
 Location::Location()
 {
 	this->invalidateAll();
+	this->_fixQuality = FixQuality::Invalid;
+	this->_fixMode = FixMode::NoFix;
 }
 
-Location::Location(GpsUtcTime timestamp, double lat, double lon)
+FixQuality Location::quality() const
 {
-	this->invalidateAll();
-	this->timestamp(timestamp);
-	this->location(lat, lon);
+	return this->_fixQuality;
 }
 
-Location::Location(GpsUtcTime timestamp, double lat, double lon, double alt)
+FixMode Location::fixMode() const
 {
-	this->invalidateAll();
-	this->timestamp(timestamp);
-	this->location(lat, lon);
-	this->altitude(alt);
-}
-
-Location::Location(GpsUtcTime timestamp, double lat, double lon, double alt, float speed)
-{
-	this->invalidateAll();
-	this->timestamp(timestamp);
-	this->location(lat, lon);
-	this->altitude(alt);
-	this->speed(speed);
-}
-
-Location::Location(
-	GpsUtcTime timestamp,
-	double lat,
-	double lon,
-	double alt,
-	float speed,
-	float bearing)
-{
-	this->invalidateAll();
-	this->timestamp(timestamp);
-	this->location(lat, lon);
-	this->altitude(alt);
-	this->speed(speed);
-	this->bearing(bearing);
-}
-
-Location::Location(
-	GpsUtcTime timestamp,
-	double lat,
-	double lon,
-	double alt,
-	float speed,
-	float bearing,
-	float accuracy)
-{
-	this->invalidateAll();
-	this->timestamp(timestamp);
-	this->location(lat, lon);
-	this->altitude(alt);
-	this->speed(speed);
-	this->bearing(bearing);
-	this->accuracy(accuracy);
+	return this->_fixMode;
 }
 
 double Location::latitude() const
@@ -131,6 +87,18 @@ float Location::accuracy() const
 GpsUtcTime Location::timestamp() const
 {
 	return _timestamp;
+}
+
+FixQuality Location::quality(FixQuality value)
+{
+	this->_fixQuality = value;
+	return this->_fixQuality;
+}
+
+FixMode Location::fixMode(FixMode value)
+{
+	this->_fixMode = value;
+	return this->_fixMode;
 }
 
 std::pair<double, double> Location::location(double latitude, double longitude)

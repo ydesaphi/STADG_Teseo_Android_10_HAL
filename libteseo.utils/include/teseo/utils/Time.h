@@ -96,6 +96,8 @@ std::string time2string(const std::chrono::time_point<ClockT> & tp)
 
 std::string time2string(GpsUtcTime tp);
 
+GpsUtcTime utc_timestamp_to_gps_timestamp(GpsUtcTime tp);
+
 } // namespace utils
 } // namespace stm
 

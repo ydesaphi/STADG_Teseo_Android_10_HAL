@@ -40,6 +40,24 @@
 namespace stm {
 namespace utils {
 
+namespace impl {
+
+constexpr const ByteArray<16> uppercase_hex_digits = BA("0123456789ABCDEF");
+
+constexpr const ByteArray<16> lowercase_hex_digits = BA("0123456789abcdef");
+
+ByteArray<2> to_ascii(uint8_t byte, bool uppercase)
+{
+	const ByteArray<16> & hex_digits = uppercase ? uppercase_hex_digits : lowercase_hex_digits;
+
+	const uint8_t b1 = (byte & 0xF0) >> 4;
+	const uint8_t b2 = byte & 0x0F;
+
+	return { { hex_digits[b1], hex_digits[b2] } };
+}
+
+} // namespace impl
+
 uint8_t hexCharToValue(uint8_t ch)
 {
 	bool invalidChar = false;
@@ -295,6 +313,27 @@ std::string base64_encode(const ByteVector & bytes)
 	return b64;
 }
 
+ByteVector to_ascii(const ByteVector & bytes, bool uppercase)
+{
+	ByteVector ascii;
+	ascii.reserve(bytes.size() * 2);
+
+	for(uint8_t b : bytes)
+	{
+		auto bytes = impl::to_ascii(b, uppercase);
+		ascii.push_back(bytes[0]);
+		ascii.push_back(bytes[1]);
+	}
+
+	return ascii;
+}
+
+ByteVector to_ascii(uint8_t byte, bool uppercase)
+{
+	ByteArray<2> ascii = impl::to_ascii(byte, uppercase);
+	return { ascii[0], ascii[1] };
+}
+
 } // namespace utils
 } // namespace stm
 
@@ -343,5 +382,5 @@ stm::ByteVector & operator << (stm::ByteVector & bv, unsigned long value)
 
 stm::ByteVector & operator << (stm::ByteVector & bv, GpsUtcTime timestamp)
 {
-	return (bv << stm::utils::time2string(timestamp));
+	return (bv << (std::ostringstream() << timestamp).str());
 }

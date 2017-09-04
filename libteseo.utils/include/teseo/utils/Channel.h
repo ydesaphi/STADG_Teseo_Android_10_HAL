@@ -29,9 +29,10 @@
 #ifndef TESEO_HAL_THREAD_CHANNEL
 #define TESEO_HAL_THREAD_CHANNEL
 
-#include <stdexcept>
-#include <system_error>
-#include <unistd.h>
+#include <type_traits>
+#include <queue>
+#include <list>
+
 
 #include "errors.h"
 
@@ -71,65 +72,52 @@ namespace thread {
  *
  * @tparam     Tdata  Data type
  */
-template<typename Tdata>
-class Channel {
-private:
-	int pipeInputFd;  ///< Channel input
-	int pipeOutputFd; ///< Channel output
+template<typename T>
+class Channel
+{
+public:
 
+	static_assert(!std::is_reference<T>::value,
+		"Channel doesn't works with references.");
+
+	using Tval = typename
+		std::conditional<std::is_const<T>::value, typename std::remove_cv<T>::type, T>::type;
+
+	using Tconst_val = typename
+		std::conditional<std::is_const<T>::value, T, typename std::add_const<T>::type>::type;
+
+	using Tlvalue_ref = typename std::add_lvalue_reference<Tval>::type;
+
+	using Tconst_lvalue_ref = typename
+		std::conditional<std::is_const<T>::value,        // If (T is const) add reference to T
+			typename std::add_lvalue_reference<T>::type, // else add const and reference to T
+			typename std::add_const<typename std::add_lvalue_reference<T>::type>::type>::type;
+
+	using Trvalue_ref = typename std::add_rvalue_reference<Tval>::type;
+	
+private:
 	std::string name; ///< Channel name
 
-	bool opened;      ///< Flag that indicates if the channel is opened or not
+	std::mutex mutex;
+	std::condition_variable cond;
 
-	/**
-	 * @brief      Opens a the channel pipe.
-	 */
-	void openPipe()
-	{
-		int pipefd[2];
-
-		opened = false;
-
-		if(pipe(pipefd) != 0)
-		{
-			int err = errno;
-			CHANNEL_LOGI("Error while opening channel '%s'", name.c_str())
-			throw std::system_error(errors::pipe(err), std::system_category());
-		}
-		else
-		{
-			CHANNEL_LOGI("Channel '%s' opened successfully.", name.c_str());
-		}
-
-		pipeInputFd = pipefd[1];
-		pipeOutputFd = pipefd[0];
-
-		opened = true;
-	}
-
-	/**
-	 * @brief      Closes the channel pipe.
-	 */
-	void closePipe()
-	{
-		if(opened)
-		{
-			close(pipeInputFd);
-			close(pipeOutputFd);
-			CHANNEL_LOGI("Channel '%s' closed successfully.", name.c_str());
-		}
-	}
+	std::queue<T, std::list<T>> queue;
 
 public:
+
 	Channel(const char * name) :
 		name(name)
+	{ }
+
+	std::size_t size() const
 	{
-		openPipe();
+		return queue.size();
 	}
 
-	~Channel()
+	void clear()
 	{
-		closePipe();
+		std::unique_lock<std::mutex> lock(mutex);
+		while(!queue.empty()) queue.pop();
 	}
 
 	/**
@@ -137,15 +125,19 @@ public:
 	 *
 	 * @param[in]  data  Data to send
 	 */
-	void send(const Tdata & data) throw(std::system_error)
+	void send(Tconst_lvalue_ref data)
 	{
-		int ret = write(pipeInputFd, &data, sizeof(Tdata));
-
-		if(ret == -1)
 		{
-			int errno_ = errno;
-			throw std::system_error(errors::write(errno_), std::system_category());
+			std::unique_lock<std::mutex> lock(mutex);
+			queue.push(data);
 		}
+
+		cond.notify_one();
+	}
+
+	void send(Trvalue_ref data)
+	{
+		send(data);
 	}
 
 	/**
@@ -155,59 +147,33 @@ public:
 	 * available.
 	 *
 	 * @return     Data received
-	 * 
-	 * @throws     std::system_error System error when the receive fails.
-	 * @throws     std::runtime_error Runtime error if the received byte count is incoherent with
-	 * the data size.
 	 */
-	Tdata receive() throw(std::system_error, std::runtime_error)
+	T receive()
 	{
-		Tdata data;
-		int ret = read(pipeOutputFd, &data, sizeof(Tdata));
+		std::unique_lock<std::mutex> lock(mutex);
 
-		if(ret == sizeof(Tdata))
-		{
-			return data;
-		}
-		else
-		{
-			if(ret == -1)
-			{
-				int errno_ = errno;
-				throw std::system_error(errors::read(errno_), std::system_category());
-			}
-			else
-			{
-				CHANNEL_LOGE(
-					"Channel '%s' readed byte count is incoherent: %d read, %lu waited.",
-					ret, sizeof(Tdata));
-				throw std::runtime_error("Channel readed byte count is incoherent");
-			}
-		}
+		if(queue.empty())
+			cond.wait(lock, [this] { return !this->queue.empty(); });
+
+		T data = queue.front();
+		queue.pop();
+
+		return data;
 	}
 
-	/**
-	 * @brief      Receive data from the channel
-	 *
-	 * @details    If the channel is empty this method block the current thread until data is
-	 * available.
-	 * 
-	 * @param      buffer  The destination buffer
-	 *
-	 * @return     The received byte count
-	 */
-	int receive(Tdata * buffer) noexcept
-	{
-		return read(pipeOutputFd, buffer, sizeof(Tdata));
-	}
-
-	Channel & operator << (const Tdata & data) throw (std::system_error)
+	Channel & operator << (Tconst_lvalue_ref data)
 	{
 		send(data);
 		return *this;
 	}
 
-	Channel & operator >> (Tdata & data) throw(std::system_error, std::runtime_error)
+	Channel & operator << (Trvalue_ref data)
+	{
+		send(data);
+		return *this;
+	}
+
+	Channel & operator >> (Tlvalue_ref data)
 	{
 		data = receive();
 		return *this;

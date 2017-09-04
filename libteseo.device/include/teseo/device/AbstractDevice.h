@@ -180,11 +180,11 @@ public:
 		getProductVersion(const std::string & productName) const;
 
 	/**
-	 * @brief      Request version numbers from device
+	 * Request to send a message to the Teseo
+	 *
+	 * @param message The message to send
 	 */
-	void requestVersionNumbers();
-
-	void sendMessageRequest(model::MessageId id, const std::vector<ByteVector> & parameters);
+	void sendMessageRequest(const model::Message & message);
 
 	/**
 	 * @brief      Start the navigation
@@ -233,7 +233,7 @@ public:
 
 	Signal<void, const model::Version &> onVersionNumber;
 
-	Signal<void, model::MessageId, const AbstractDevice &, const std::vector<ByteVector> &> sendMessage;
+	Signal<void, const AbstractDevice &, const model::Message &> sendMessage;
 
 	Signal<void, model::Stagps8Answer, const std::vector<ByteVector> &> onStagps8Answer;
 };

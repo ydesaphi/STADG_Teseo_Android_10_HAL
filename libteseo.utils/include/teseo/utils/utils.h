@@ -24,37 +24,11 @@
 
 #include <iterator>
 #include <queue>
+#include <string>
+#include <sstream>
 
 namespace stm {
 namespace utils {
-
-template<typename T>
-class PopOnlyQueue {
-private:
-	std::queue<T> & queue;
-
-public:
-	PopOnlyQueue(std::queue<T> & queue) :
-		queue(queue)
-	{ }
-
-	T pop()
-	{
-		T tmp = queue.front();
-		queue.pop();
-		return tmp;
-	}
-
-	bool empty() const
-	{
-		return queue.empty();
-	}
-
-	auto size() const
-	{
-		return queue.size();
-	}
-};
 
 template<class Container, class UnaryPredicate>
 void erase_if(Container & c, typename Container::iterator begin, typename Container::iterator end, UnaryPredicate p)
@@ -133,24 +107,12 @@ std::vector<OutputValueType> split(InputIterator begin, InputIterator end, const
 std::vector<std::string> split(
 	std::string::const_iterator begin,
 	std::string::const_iterator end,
-	std::string::const_reference sep)
-{
-	return impl::split<
-				std::string,
-				std::string::const_iterator,
-				std::string::const_reference>(begin, end, sep);
-}
+	std::string::const_reference sep);
 
 std::vector<std::string> split(
 	std::string::iterator begin,
 	std::string::iterator end,
-	std::string::const_reference sep)
-{
-	return impl::split<
-				std::string,
-				std::string::iterator,
-				std::string::const_reference>(begin, end, sep);
-}
+	std::string::const_reference sep);
 
 template<class OutputValueType, class InputIterator, class Functor>
 auto split_if(InputIterator begin, InputIterator end, Functor pred)

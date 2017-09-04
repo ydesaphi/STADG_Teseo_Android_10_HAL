@@ -65,7 +65,7 @@ public:
 	/**
 	 * Signal emitted when new bytes are ready to write
 	 */
-	Signal<void, const uint8_t *, std::size_t> newBytesToWrite; 
+	Signal<void, ByteVectorPtr> newBytesToWrite;
 
 	/**
 	 * @brief      Write bytes to the stream
@@ -73,7 +73,7 @@ public:
 	 * @param[in]  data   The bytes
 	 * @param[in]  size   Number of bytes
 	 */
-	virtual void write(const uint8_t * data, std::size_t size) = 0;
+	virtual void write(ByteVectorPtr bytes) = 0;
 };
 
 } // namespace stream

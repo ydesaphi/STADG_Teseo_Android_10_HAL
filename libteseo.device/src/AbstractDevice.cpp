@@ -184,14 +184,9 @@ void AbstractDevice::newVersionNumber(const model::Version & version)
 	onVersionNumber(version);
 }
 
-void AbstractDevice::requestVersionNumbers()
+void AbstractDevice::sendMessageRequest(const model::Message & message)
 {
-	sendMessage(model::MessageId::GetVersions, *this, {});
-}
-
-void AbstractDevice::sendMessageRequest(model::MessageId id, const std::vector<ByteVector> & parameters)
-{
-	sendMessage(id, *this, parameters);
+	sendMessage(*this, message);
 }
 
 } // namespace device
