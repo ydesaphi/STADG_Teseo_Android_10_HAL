@@ -113,9 +113,22 @@ uint8_t asciiToByte(uint8_t ch1, uint8_t ch2, bool & invalidChar);
  * @param[in]  bytes  The bytes
  *
  * @return     ASCII bytes as string
+ *
+ * @details The following bytes : `{102, 111, 111}` will be converted to the following
+ * string: "foo", or `{'b', 'a', 'r'}` to "bar".
  */
 std::string bytesToString(const ByteVector & bytes);
 
+/**
+ * @brief      Convert an ascii bytes array to a string
+ *
+ * @param[in]  bytes  The bytes
+ *
+ * @return     ASCII bytes as string
+ *
+ * @details The following bytes : ``{102, 111, 111}` will be converted to the following
+ * string: "foo", or `{'b', 'a', 'r'}` to "bar".
+ */
 template<std::size_t N>
 std::string bytesToString(const ByteArray<N> & bytes)
 {
@@ -134,19 +147,49 @@ std::string bytesToString(const ByteArray<N> & bytes)
  * @param[in]  end    Byte vector end
  *
  * @return     ASCII bytes as string
+ *
+ * @details The following bytes : ``{102, 111, 111}` will be converted to the following
+ * string: "foo", or `{'b', 'a', 'r'}` to "bar".
  */
-std::string bytesToString(const ByteVector::const_iterator & start, const ByteVector::const_iterator & end);
+std::string bytesToString(
+	const ByteVector::const_iterator & start,
+	const ByteVector::const_iterator & end);
 
+/**
+ * @brief Template for byte vector parser
+ *
+ * @tparam Tout Parser output type
+ *
+ * @details A ByteVectorParser will parse values from ByteVector containing ASCII characters.
+ * To add another parser you need to specialize the template. See ByteVectorParser<int> for example.
+ */
 template<typename Tout>
 struct ByteVectorParser
 {
-	std::optional<Tout> operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	/**
+	 * Parse a byte vector
+	 *
+	 * @param[in]  begin Byte vector begin
+	 * @param[in]  end   Byte vector end
+	 *
+	 * @return     The parsed value, or an empty value.
+	 */
+	std::optional<Tout> operator()(
+		const ByteVector::const_iterator & begin,
+		const ByteVector::const_iterator & end)
 	{
 		(void)(begin); (void)(end);
 		static_assert(true, "Missing implementation of ByteVectorParser");
 		return {};
 	}
 
+	/**
+	 * Parse a byte vector
+	 *
+	 * @param[in]  data The byte vector
+	 *
+	 * @return     The parsed value, or an empty value.
+	 */
 	std::optional<Tout> operator()(const ByteVector & data)
 	{
 		(void)(data);
@@ -155,10 +198,17 @@ struct ByteVectorParser
 	}
 };
 
+/**
+ * @brief Byte vector integer parser.
+ *
+ * @todo Avoid string convertion, directly parse the byte vector.
+ */
 template<>
 struct ByteVectorParser<int>
 {
-	std::optional<int> operator()(const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end)
+	std::optional<int> operator()(
+		const ByteVector::const_iterator & begin,
+		const ByteVector::const_iterator & end)
 	{
 		if(begin == end)
 			return {};
@@ -175,6 +225,11 @@ struct ByteVectorParser<int>
 	}
 };
 
+/**
+ * @brief Byte vector double precision number parser.
+ *
+ * @todo Avoid string convertion, directly parse the byte vector.
+ */
 template<>
 struct ByteVectorParser<double>
 {
@@ -195,6 +250,11 @@ struct ByteVectorParser<double>
 	}
 };
 
+/**
+ * @brief Byte vector single precision number parser.
+ *
+ * @todo Avoid string convertion, directly parse the byte vector.
+ */
 template<>
 struct ByteVectorParser<float>
 {
@@ -215,6 +275,11 @@ struct ByteVectorParser<float>
 	}
 };
 
+/**
+ * @brief Byte vector short integer (16 bits, 2 bytes) parser.
+ *
+ * @todo Avoid string convertion, directly parse the byte vector.
+ */
 template<>
 struct ByteVectorParser<int16_t>
 {
@@ -235,6 +300,13 @@ struct ByteVectorParser<int16_t>
 	}
 };
 
+/**
+ * @brief Byte vector boolean parser.
+ *
+ * @details Parse numeric boolean, 0 is false, all other values are true.
+ *
+ * @todo Avoid string convertion, directly parse the byte vector.
+ */
 template<>
 struct ByteVectorParser<bool>
 {
@@ -260,10 +332,21 @@ void __bytevector_parse_log_error(const char * format, const char * what, const 
 void __bytevector_parse_log_error(const char * format, const char * bytes, int size);
 } // namespace private
 
+/**
+ * @brief Generic byte vector parser function
+ *
+ * @param begin   Iterator to the begining of the byte vector to parse
+ * @param end     Iterator to the end of the byte vector to parse
+ * 
+ * @tparam Tout   The type of value to parse
+ * @tparam Parser The parser to use, automatically deduced from Tout
+ *
+ * @return        The parsed value, or empty value.
+ */
 template <typename Tout, class Parser=ByteVectorParser<Tout> >
 std::optional<Tout> byteVectorParse(
 	const ByteVector::const_iterator & begin,
-	const ByteVector::const_iterator & end)
+	const ByteVector::const_iterator & end) noexcept
 {
 	try
 	{
@@ -293,8 +376,18 @@ std::optional<Tout> byteVectorParse(
 	}
 }
 
+/**
+ * @brief Generic byte vector parser function
+ *
+ * @param value   The byte vector to parse
+ * 
+ * @tparam Tout   The type of value to parse
+ * @tparam Parser The parser to use, automatically deduced from Tout
+ *
+ * @return        The parsed value, or empty value.
+ */
 template <typename Tout, class Parser=ByteVectorParser<Tout> >
-std::optional<Tout> byteVectorParse(const ByteVector & value)
+std::optional<Tout> byteVectorParse(const ByteVector & value) noexcept
 {
 	try
 	{
@@ -342,68 +435,86 @@ std::vector<ByteVector> split(const ByteVector & bytes, uint8_t separator);
  * @param[in]  str   The C-String to convert
  *
  * @return     The converted byte vector
+ *
+ * @details    This function outputs ASCII encoded string
  */
 ByteVector createFromString(const char * str);
 
+/**
+ * @brief      Convert a std::string to a byte vector
+ *
+ * @param[in]  str   The std::string to convert
+ *
+ * @return     The converted byte vector
+ *
+ * @details    This function outputs ASCII encoded string
+ */
 ByteVector createFromString(const std::string & str);
 
 namespace impl {
 
-template<std::size_t N, std::size_t... I>
-constexpr ByteArray<N> BytestoArray(uint8_t (&a)[N], std::index_sequence<I...>)
-{
-	return { {a[I]...} };
-}
+	template<std::size_t N, std::size_t... I>
+	constexpr ByteArray<N> BytestoArray(uint8_t (&a)[N], std::index_sequence<I...>)
+	{
+		return { {a[I]...} };
+	}
 
-template<std::size_t N, std::size_t... I>
-constexpr ByteArray<N> str2ba(const char * data, std::index_sequence<I...>)
-{
-	return { {(static_cast<uint8_t>(data[I]))...} };
-}
+	template<std::size_t N, std::size_t... I>
+	constexpr ByteArray<N> str2ba(const char * data, std::index_sequence<I...>)
+	{
+		return { {(static_cast<uint8_t>(data[I]))...} };
+	}
 
-ByteArray<2> to_ascii(uint8_t byte, bool uppercase);
+	constexpr ByteArray<2> to_ascii(uint8_t byte, bool uppercase);
 
-template<std::size_t N>
-constexpr ByteArray<N> join_array(ByteArray<N> & output, std::size_t & pos, const ByteArray<2> array)
-{
-	if(pos > output.size())
+	template<std::size_t N>
+	constexpr ByteArray<N> join_array(
+		ByteArray<N> & output,
+		std::size_t & pos,
+		const ByteArray<2> array)
+	{
+		if(pos > output.size())
+			return output;
+
+		output[pos++] = array[0];
+		output[pos++] = array[1];
+
 		return output;
+	}
 
-	output[pos++] = array[0];
-	output[pos++] = array[1];
+	template<std::size_t N, typename ...Rest>
+	constexpr ByteArray<N> join_array(
+		ByteArray<N> & output,
+		std::size_t & pos,
+		const ByteArray<2> array,
+		Rest... arrays)
+	{
+		if(pos > output.size())
+			return output;
 
-	return output;
-}
+		output[pos++] = array[0];
+		output[pos++] = array[1];
 
-template<std::size_t N, typename ...Rest>
-constexpr ByteArray<N> join_array(ByteArray<N> & output, std::size_t & pos, const ByteArray<2> array, Rest... arrays)
-{
-	if(pos > output.size())
-		return output;
+		return join_array(output, pos, arrays...);
+	}
 
-	output[pos++] = array[0];
-	output[pos++] = array[1];
+	template<std::size_t N, typename ...Rest>
+	constexpr ByteArray<N> join_arrays(const ByteArray<2> & array, Rest... arrays)
+	{
+		ByteArray<N> output;
+		std::size_t pos = 2;
 
-	return join_array(output, pos, arrays...);
-}
+		output[0] = array[0];
+		output[1] = array[1];
 
-template<std::size_t N, typename ...Rest>
-constexpr ByteArray<N> join_arrays(const ByteArray<2> & array, Rest... arrays)
-{
-	ByteArray<N> output;
-	std::size_t pos = 2;
+		return join_array(output, pos, arrays...);
+	}
 
-	output[0] = array[0];
-	output[1] = array[1];
-
-	return join_array(output, pos, arrays...);
-}
-
-template<std::size_t N, std::size_t... I>
-ByteArray<2*N> to_ascii(const ByteArray<N> bytes, bool uppercase, std::index_sequence<I...>)
-{
-	return join_arrays<2*N>((to_ascii(bytes.at(I), uppercase))...);
-}
+	template<std::size_t N, std::size_t... I>
+	constexpr ByteArray<2*N> to_ascii(const ByteArray<N> bytes, bool uppercase, std::index_sequence<I...>)
+	{
+		return join_arrays<2*N>((to_ascii(bytes.at(I), uppercase))...);
+	}
 
 } // namespace impl
 
@@ -494,8 +605,6 @@ uint32_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_ite
 	}
 }
 
-
-
 /**
  * Decodes a string containing base64 encoded data
  *
@@ -514,14 +623,51 @@ ByteVector base64_decode(const std::string & base64);
  */
 std::string base64_encode(const ByteVector & bytes);
 
+/**
+ * @brief Convert bytes to their hexadecimal values in ASCII.
+ *
+ * @param bytes      Byte array to convert
+ * @param uppercase  Convert to uppercase hexadecimal, or not
+ *
+ * @tparam N         Size of the array
+ *
+ * @return A ByteArray containing the hexadecimal bytes values in ASCII.
+ *
+ * @details This function convert the following bytes `{0, 15, 16, 42, 19, 55}` to the following
+ * bytes: `{0x30, 0x30, 0x30, 0x66, 0x31, 0x30, 0x32, 0x61, 0x31, 0x33, 0x33, 0x37} alternatively
+ * said: `{'0', '0', '0', 'f', '1', '0', '2', 'a', '1', '3', '3', '7'}`.
+ */
 template<std::size_t N>
 constexpr ByteArray<2*N> to_ascii(const ByteArray<N> & bytes, bool uppercase = false)
 {
 	return impl::to_ascii<N>(bytes, uppercase, std::make_index_sequence<N>{});
 }
 
+/**
+ * @brief Convert bytes to their hexadecimal values in ASCII.
+ *
+ * @param bytes      Byte vector to convert
+ * @param uppercase  Convert to uppercase hexadecimal, or not
+ *
+ * @return A ByteVector containing the hexadecimal bytes values in ASCII.
+ *
+ * @details This function convert the following bytes `{0, 15, 16, 42, 19, 55}` to the following
+ * bytes: `{0x30, 0x30, 0x30, 0x66, 0x31, 0x30, 0x32, 0x61, 0x31, 0x33, 0x33, 0x37} alternatively
+ * said: `{'0', '0', '0', 'f', '1', '0', '2', 'a', '1', '3', '3', '7'}`.
+ */
 ByteVector to_ascii(const ByteVector & bytes, bool uppercase = false);
 
+/**
+ * @brief Convert byte to his hexadecimal value in ASCII.
+ *
+ * @param bytes      Byte to convert
+ * @param uppercase  Convert to uppercase hexadecimal, or not
+ *
+ * @return A ByteVector containing the hexadecimal bytes values in ASCII.
+ *
+ * @details This function convert the following byte `42` to the following bytes: `{0x32, 0x61}`
+ * alternatively said: `{'2', 'a'}`.
+ */
 ByteVector to_ascii(uint8_t byte, bool uppercase = false);
 
 } // namespace utils

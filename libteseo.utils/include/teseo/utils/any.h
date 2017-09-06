@@ -19,10 +19,16 @@
 * limitations under the License.
 *
 */
+/**
+ * @brief Wrapper for the standard any class
+ * @file any.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ * @details This file detect which version of any is available, includes it and export it as
+ * `std::any` if needed.
+ */
 #ifndef TESEO_HAL_UTILS_ANY_H
 #define TESEO_HAL_UTILS_ANY_H
-
-#include <stdexcept>
 
 #if __has_include(<optional>) && __cplusplus > 201402L
 #include <any>

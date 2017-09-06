@@ -32,18 +32,27 @@
 namespace stm {
 namespace utils {
 
-debug::DebugOutputStream dbgHttp(13372);
+#ifdef DEBUG_HTTP_CLIENT
+debug::DebugOutputStream * dbgHttp = nullptr;
+#endif
 
 void http_init()
 {
 	curl_global_init(CURL_GLOBAL_ALL);
-	dbgHttp.start();
+	#ifdef DEBUG_HTTP_CLIENT
+	dbgHttp = new debug::DebugOutputStream(13372);
+	dbgHttp->start();
+	#endif
 }
 
 void http_cleanup()
 {
 	curl_global_cleanup();
-	dbgHttp.stop();
+	#ifdef DEBUG_HTTP_CLIENT
+	dbgHttp->stop();
+	delete dbgHttp;
+	dbgHttp = nullptr;
+	#endif
 }
 
 struct curl_slist * headers_to_curl_slist(const std::vector<Header> & headers)
@@ -70,7 +79,7 @@ size_t curl_write_callback(char * ptr, size_t size, size_t nmemb, void * userdat
 	}
 	
 	#ifdef DEBUG_HTTP_CLIENT
-		dbgHttp.send(ptr, size * nmemb);
+		dbgHttp->send(ptr, size * nmemb);
 	#endif
 
 	while(i < size * nmemb)
@@ -239,38 +248,38 @@ void HttpRequest::run()
 			uri.c_str()
 		);
 
-		dbgHttp.send("\r\nNew request\r\n");
-		dbgHttp.send(verb == HttpRequest::GET  ? "GET "  :
+		dbgHttp->send("\r\nNew request\r\n");
+		dbgHttp->send(verb == HttpRequest::GET  ? "GET "  :
 					 verb == HttpRequest::POST ? "POST " : "UnknownVerb ");
-		dbgHttp.send(uri);
-		dbgHttp.send("\r\n");
+		dbgHttp->send(uri);
+		dbgHttp->send("\r\n");
 
 
 		ALOGD("Headers:");
 		ALOGD("User-Agent: %s", userAgent.c_str());
-		dbgHttp.send("User-Agent: ");
-		dbgHttp.send(userAgent);
-		dbgHttp.send("\r\n");
+		dbgHttp->send("User-Agent: ");
+		dbgHttp->send(userAgent);
+		dbgHttp->send("\r\n");
 		
 		for(auto h : headers)
 		{
 			ALOGD("%s: %s", h.name.c_str(), h.value.c_str());
-			dbgHttp.send(h.name);
-			dbgHttp.send(": ");
-			dbgHttp.send(h.value);
-			dbgHttp.send("\r\n");
+			dbgHttp->send(h.name);
+			dbgHttp->send(": ");
+			dbgHttp->send(h.value);
+			dbgHttp->send("\r\n");
 		}
 
 		if(verb == HttpRequest::POST)
 		{
 			ALOGD("Payload: %s", content.c_str());
-			dbgHttp.send("\r\n");
-			dbgHttp.send(content);
+			dbgHttp->send("\r\n");
+			dbgHttp->send(content);
 		}
 		else
 		{
 			ALOGD("Request without payload");
-			dbgHttp.send("\r\n");
+			dbgHttp->send("\r\n");
 		}
 	#endif
 

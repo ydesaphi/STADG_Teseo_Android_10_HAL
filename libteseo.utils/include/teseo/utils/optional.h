@@ -19,6 +19,14 @@
 * limitations under the License.
 *
 */
+/**
+ * @brief Wrapper for the standard optional class
+ * @file optional.h
+ * @author Baudouin Feildel <baudouin.feildel@st.com>
+ * @copyright 2016, STMicroelectronics, All rights reserved.
+ * @details This file detect which version of optional is available, includes it and export it as
+ * `std::optional` if needed.
+ */
 #ifndef TESEO_HAL_UTILS_OPTIONAL_H
 #define TESEO_HAL_UTILS_OPTIONAL_H
 

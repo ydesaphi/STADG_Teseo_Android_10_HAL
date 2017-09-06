@@ -39,9 +39,6 @@
 #include <teseo/utils/errors.h>
 #include <teseo/utils/Wakelock.h>
 
-#define LOG_STREAM(...) \
-ALOG(LOG_VERBOSE, "stm_tools_stream_export", __VA_ARGS__)
-
 namespace stm {
 namespace stream {
 
@@ -102,10 +99,6 @@ void NmeaStream::onNewBytes(const ByteVector & bytes)
 				if(start < end)
 					buffer.insert(buffer.end(), start, end);
 				
-				#ifdef LOG_STREAM
-					LOG_STREAM("%s", utils::bytesToString(buffer).c_str());
-				#endif
-
 				// Send and clear buffer
 				newSentence(ByteVectorPtr(new ByteVector(buffer.begin(), buffer.end())));
 				buffer.clear();

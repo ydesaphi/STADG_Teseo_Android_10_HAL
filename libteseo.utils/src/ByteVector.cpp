@@ -46,7 +46,7 @@ constexpr const ByteArray<16> uppercase_hex_digits = BA("0123456789ABCDEF");
 
 constexpr const ByteArray<16> lowercase_hex_digits = BA("0123456789abcdef");
 
-ByteArray<2> to_ascii(uint8_t byte, bool uppercase)
+constexpr ByteArray<2> to_ascii(uint8_t byte, bool uppercase)
 {
 	const ByteArray<16> & hex_digits = uppercase ? uppercase_hex_digits : lowercase_hex_digits;
 
