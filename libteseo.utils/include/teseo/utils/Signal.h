@@ -60,6 +60,24 @@ void signal_log_error(const char * fmt, ...);
 #define SIG_LOGE(...) 
 #endif
 
+template<typename T>
+struct EmptyDeleter {
+	void operator()(T * ptr)
+	{
+		#ifdef TESEO_UNIT_TEST
+		std::cout << "Empty deleter called on " << ptr << "." << std::endl;
+		#else
+		SIG_LOGD("Empty deleter called on %p.", ptr);
+		#endif
+	}
+};
+
+template<typename T>
+auto make_empty_deleter(T *)
+{
+	return EmptyDeleter<T>();
+}
+
 /**
  * @brief      Base class for object that contains slots
  * @details    The object is tracked through a shared pointer. When registering a slot, a weak
@@ -72,16 +90,15 @@ private:
 	std::shared_ptr<Trackable> shptr; ///< Shared pointer to the instance
 
 public:
-	Trackable() :
-		shptr(this)
+	Trackable() : shptr(this, EmptyDeleter<Trackable>())
 	{ }
 
 	~Trackable()
-	{
-		shptr.reset();
-	}
+	{ }
 
-	std::weak_ptr<Trackable> getWeakPtr() const { return shptr; }
+	using weak_ptr = std::weak_ptr<Trackable>;
+
+	weak_ptr getWeakPtr() const { return shptr; }
 };
 
 template<class Tfunc> class GenericSlot;
@@ -230,76 +247,9 @@ public:
 	}
 
 private:
-	std::weak_ptr<Trackable> instance;
+	Trackable::weak_ptr instance;
 	SlotType slot;
 };
-
-namespace SlotFactory
-{
-	/**
-	 * @brief      Create slot from function
-	 *
-	 * @param[in]  slot       The function slot
-	 *
-	 * @tparam     Treturn  The slot return type
-	 * @tparam     Targs    The slot arguments types
-	 *
-	 * @return     The created slot object
-	 */
-	template<typename Treturn, typename ...Targs>
-	auto create(std::function<Treturn (Targs...)> slot)
-	{
-		return typename GenericSlot<Treturn (Targs...)>::ptr(
-			new FunctionSlot<Treturn, Targs...>(slot));
-	}
-
-	template<typename Treturn, typename ...Targs>
-	auto create(Treturn (*slot)(Targs...))
-	{
-		return create(std::function<Treturn (Targs...)>(slot));
-	}
-
-	/**
-	 * @brief      Create slot from instance and method pointer
-	 *
-	 * @param[in]  instance   The instance
-	 * @param[in]  slot       The slot callback
-	 *
-	 * @tparam     Tinstance  The instance type
-	 * @tparam     Treturn    The slot return type
-	 * @tparam     Targs      The slot arguments types
-	 *
-	 * @return     The created slot object
-	 */
-	template<typename Tinstance, typename Treturn, typename ...Targs>
-	auto create(const Tinstance & instance, Treturn (Tinstance::*slot)(Targs...))
-	{
-		return typename GenericSlot<Treturn (Targs...)>::ptr(
-			new ClassMethodSlot<Tinstance, Treturn, Targs...>(instance, slot));
-	}
-
-	/**
-	 * @brief      Create slot from instance and parent class method pointer
-	 *
-	 * @param[in]  instance         The instance
-	 * @param[in]  slot             The slot callback
-	 *
-	 * @tparam     Tinstance        The instance type
-	 * @tparam     TinstanceParent  The instance parent type
-	 * @tparam     Treturn          The slot return type
-	 * @tparam     Targs            The slot arguments types
-	 *
-	 * @return     The created slot object
-	 */
-	template<typename Tinstance, typename TinstanceParent, typename Treturn, typename ...Targs>
-	auto create(const Tinstance & instance, Treturn (TinstanceParent::*slot)(Targs...))
-	{
-		DerivedFrom<Tinstance, TinstanceParent> constraint;
-		return typename GenericSlot<Treturn (Targs...)>::ptr(
-			new ClassMethodSlot<Tinstance, Treturn, Targs...>(instance, slot));
-	}
-
-}
 
 namespace signal_implementation {
 
@@ -360,8 +310,7 @@ struct SignalDebugger<true> {
 };
 	
 template <bool DebugFlag, typename Treturn, typename ...Targs>
-class AbstractSignal :
-	public GenericSlot<Treturn (Targs...)>
+class AbstractSignal
 {
 protected:
 	SignalDebugger<DebugFlag> dbg;
@@ -373,28 +322,24 @@ protected:
 	 
 	SlotList slots;
 
-	typename GenericSlot<Treturn (Targs...)>::ptr thisShPtr;
-
 	std::string signalName;
 
 	friend class AbstractSignal<!DebugFlag, Treturn, Targs...>;
 
 public:
 	AbstractSignal() :
-		thisShPtr(static_cast<GenericSlot<Treturn (Targs...)> *>(this)), signalName("no-name")
+		signalName("no-name")
 	{
 		this->dbg.logw("You are debugging a Signal without giving him a name. "
 			           "This can be hard, good luck.");
 	}
 
 	AbstractSignal(const char * n) :
-		thisShPtr(static_cast<GenericSlot<Treturn (Targs...)> *>(this)), signalName(n)
+		signalName(n)
 	{ }
 
 	virtual ~AbstractSignal()
-	{
-		thisShPtr.reset();
-	}
+	{ }
 
 	/**
 	 * @brief      Connect signal to slot
@@ -405,13 +350,6 @@ public:
 	{
 		slots.push_back(slot);
 		this->dbg.logi("Add slot %p to %s", slot.get(), toString().c_str());
-	}
- 
-	template<bool OtherSignalDebugFlag>
-	void connect(const AbstractSignal<OtherSignalDebugFlag, Treturn, Targs...> & otherSignal)
-	{
-		slots.push_back(otherSignal.thisShPtr);
-		this->dbg.logi("Add Signal %s as a slot to %s", otherSignal.name(), toString().c_str());
 	}
 
 	const char * name() const
@@ -659,5 +597,211 @@ public:
 	signal_implementation::BaseSignal<true, Treturn, Targs...>(n)
 	{ }
 };
+
+namespace SlotFactory
+{
+	/**
+	 * @brief      Create slot from function object
+	 *
+	 * @param[in]  slot       The function object
+	 *
+	 * @tparam     Treturn  The slot return type
+	 * @tparam     Targs    The slot arguments types
+	 *
+	 * @return     The created slot object
+	 */
+	template<typename Treturn, typename ...Targs>
+	auto create(std::function<Treturn (Targs...)> && slot)
+	{
+		return typename GenericSlot<Treturn (Targs...)>::ptr(
+			new FunctionSlot<Treturn, Targs...>(slot));
+	}
+
+	/**
+	 * @brief      Create slot from function pointer
+	 *
+	 * @param[in]  slot       The function slot
+	 *
+	 * @tparam     Treturn  The slot return type
+	 * @tparam     Targs    The slot arguments types
+	 *
+	 * @return     The created slot object
+	 */
+	template<typename Treturn, typename ...Targs>
+	auto create(Treturn (*slot)(Targs...))
+	{
+		return create(std::function<Treturn (Targs...)>(slot));
+	}
+
+	/**
+	 * @brief      Create slot from a signal
+	 *
+	 * @param[in]  sig      The signal to create a slot from
+	 *
+	 * @tparam     Treturn  The signal return type
+	 *
+	 * @return     The created slot object
+	 *
+	 * @details    Works only for signal with no arguments.
+	 */
+	template<typename Treturn>
+	auto create(Signal<Treturn> & sig)
+	{
+		auto fn = std::bind(&Signal<Treturn>::emit, &sig);
+		return create(std::function<Treturn ()>(fn));
+	}
+
+	/**
+	 * @brief      Create slot from a signal
+	 *
+	 * @param[in]  sig      The signal to create a slot from
+	 *
+	 * @tparam     Treturn  The signal return type
+	 * @tparam     T1       The first parameter type
+	 *
+	 * @return     The created slot object
+	 *
+	 * @details    Works only for signal with one argument.
+	 */
+	template<typename Treturn, typename T1>
+	auto create(Signal<Treturn, T1> & sig)
+	{
+		using namespace std::placeholders;
+		auto fn = std::bind(&Signal<Treturn, T1>::emit, &sig, _1);
+		return create(std::function<Treturn (T1)>(fn));
+	}
+
+	/**
+	 * @brief      Create slot from a signal
+	 *
+	 * @param[in]  sig      The signal to create a slot from
+	 *
+	 * @tparam     Treturn  The signal return type
+	 * @tparam     T1       The first parameter type
+	 * @tparam     T2       The second parameter type
+	 *
+	 * @return     The created slot object
+	 *
+	 * @details    Works only for signal with two arguments.
+	 */
+	template<typename Treturn, typename T1, typename T2>
+	auto create(Signal<Treturn, T1, T2> & sig)
+	{
+		using namespace std::placeholders;
+		auto fn = std::bind(&Signal<Treturn, T1, T2>::emit, &sig, _1, _2);
+		return create(std::function<Treturn (T1, T2)>(fn));
+	}
+
+	/**
+	 * @brief      Create slot from a signal
+	 *
+	 * @param[in]  sig      The signal to create a slot from
+	 *
+	 * @tparam     Treturn  The signal return type
+	 * @tparam     T1       The first parameter type
+	 * @tparam     T2       The second parameter type
+	 * @tparam     T3       The third parameter type
+	 *
+	 * @return     The created slot object
+	 *
+	 * @details    Works only for signal with three arguments.
+	 */
+	template<typename Treturn, typename T1, typename T2, typename T3>
+	auto create(Signal<Treturn, T1, T2, T3> & sig)
+	{
+		using namespace std::placeholders;
+		auto fn = std::bind(&Signal<Treturn, T1, T2, T3>::emit, &sig, _1, _2, _3);
+		return create(std::function<Treturn (T1, T2, T3)>(fn));
+	}
+	
+	/**
+	 * @brief      Create slot from a signal
+	 *
+	 * @param[in]  sig      The signal to create a slot from
+	 *
+	 * @tparam     Treturn  The signal return type
+	 * @tparam     T1       The first parameter type
+	 * @tparam     T2       The second parameter type
+	 * @tparam     T3       The third parameter type
+	 * @tparam     T4       The fourth parameter type
+	 *
+	 * @return     The created slot object
+	 *
+	 * @details    Works only for signal with four arguments.
+	 */
+	template<typename Treturn, typename T1, typename T2, typename T3, typename T4>
+	auto create(Signal<Treturn, T1, T2, T3, T4> & sig)
+	{
+		using namespace std::placeholders;
+		auto fn = std::bind(&Signal<Treturn, T1, T2, T3, T4>::emit, &sig, _1, _2, _3, _4);
+		return create(std::function<Treturn (T1, T2, T3, T4)>(fn));
+	}
+	
+	/**
+	 * @brief      Create slot from a signal
+	 *
+	 * @param[in]  sig      The signal to create a slot from
+	 *
+	 * @tparam     Treturn  The signal return type
+	 * @tparam     T1       The first parameter type
+	 * @tparam     T2       The second parameter type
+	 * @tparam     T3       The third parameter type
+	 * @tparam     T4       The fourth parameter type
+	 * @tparam     T5       The fith parameter type
+	 *
+	 * @return     The created slot object
+	 *
+	 * @details    Works only for signal with five arguments. To create a slot from a signal with
+	 * more than five arguments you must add a `create` overload.
+	 */
+	template<typename Treturn, typename T1, typename T2, typename T3, typename T4, typename T5>
+	auto create(Signal<Treturn, T1, T2, T3, T4, T5> & sig)
+	{
+		using namespace std::placeholders;
+		auto fn = std::bind(&Signal<Treturn, T1, T2, T3, T4, T5>::emit, &sig, _1, _2, _3, _4, _5);
+		return create(std::function<Treturn (T1, T2, T3, T4, T5)>(fn));
+	}
+
+	/**
+	 * @brief      Create slot from instance and method pointer
+	 *
+	 * @param[in]  instance   The instance
+	 * @param[in]  slot       The slot callback
+	 *
+	 * @tparam     Tinstance  The instance type
+	 * @tparam     Treturn    The slot return type
+	 * @tparam     Targs      The slot arguments types
+	 *
+	 * @return     The created slot object
+	 */
+	template<typename Tinstance, typename Treturn, typename ...Targs>
+	auto create(const Tinstance & instance, Treturn (Tinstance::*slot)(Targs...))
+	{
+		return typename GenericSlot<Treturn (Targs...)>::ptr(
+			new ClassMethodSlot<Tinstance, Treturn, Targs...>(instance, slot));
+	}
+
+	/**
+	 * @brief      Create slot from instance and parent class method pointer
+	 *
+	 * @param[in]  instance         The instance
+	 * @param[in]  slot             The slot callback
+	 *
+	 * @tparam     Tinstance        The instance type
+	 * @tparam     TinstanceParent  The instance parent type
+	 * @tparam     Treturn          The slot return type
+	 * @tparam     Targs            The slot arguments types
+	 *
+	 * @return     The created slot object
+	 */
+	template<typename Tinstance, typename TinstanceParent, typename Treturn, typename ...Targs>
+	auto create(const Tinstance & instance, Treturn (TinstanceParent::*slot)(Targs...))
+	{
+		DerivedFrom<Tinstance, TinstanceParent> constraint;
+		return typename GenericSlot<Treturn (Targs...)>::ptr(
+			new ClassMethodSlot<Tinstance, Treturn, Targs...>(instance, slot));
+	}
+
+}
 
 #endif // TESEO_HAL_SIGNAL_H
