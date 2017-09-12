@@ -67,6 +67,7 @@ const Configuration & read(const string & path)
 
     ALOGI("Read configuration");
     READ_VAL(device.tty, CFG_DEF_DEVICE_TTY);
+    READ_VAL(device.speed, CFG_DEF_DEVICE_SPEED);
 
     READ_VAL(constellations.gps,     CFG_DEF_CONSTELLATIONS_GPS);
     READ_VAL(constellations.glonass, CFG_DEF_CONSTELLATIONS_GLONASS);
