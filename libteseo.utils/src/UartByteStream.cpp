@@ -33,16 +33,18 @@
 
 #include <teseo/config/config.h>
 #include <teseo/utils/errors.h>
+#include <unordered_map>
 
 #define UART_BYTE_STREAM_BUFFER_SIZE 255
 
 namespace stm {
 namespace stream {
 
-UartByteStream::UartByteStream(const std::string & ttyDevice) :
+UartByteStream::UartByteStream(const std::string & ttyDevice, unsigned int speedDevice) :
 	AbstractByteStream(),
 	fd(-1),
 	ttyDevice(ttyDevice),
+	speedDevice(speedDevice),
 	streamStatus(ByteStreamStatus::CLOSED),
 	dbgRx(13370),
 	dbgTx(13371),
@@ -81,6 +83,13 @@ ByteStreamStatus UartByteStream::status() const
 	return streamStatus;
 }
 
+static const std::unordered_map<unsigned int, speed_t> mDeviceSpeed = {
+	{9600,   B9600},
+	{115200, B115200},
+	{460800, B460800},
+	{921600, B921600}
+};
+
 void UartByteStream::open() throw(StreamException)
 {
 	// Because we use a open count we must synchronize access to open
@@ -109,8 +118,15 @@ void UartByteStream::open() throw(StreamException)
 	tcgetattr(fd, &attr);
 
 	// Set input/output baudrate
-	cfsetispeed(&attr, B115200);
-	cfsetospeed(&attr, B115200);
+	auto it = mDeviceSpeed.find(speedDevice);
+	if(it == mDeviceSpeed.end())
+	{
+		ALOGE("Error: wrong UART baud rate");
+		streamStatus = ByteStreamStatus::ERROR;
+		throw StreamOpenException();
+	}
+	cfsetispeed(&attr, it->second);
+	cfsetospeed(&attr, it->second);
 
 	// Disable stream modifications by kernel
 	cfmakeraw(&attr);

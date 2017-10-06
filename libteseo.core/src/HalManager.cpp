@@ -150,7 +150,7 @@ void HalManager::initDevice()
 	device = new NmeaDevice();
 	decoder = new decoder::NmeaDecoder(*device);
 	encoder = new protocol::NmeaEncoder();
-	byteStream = new stream::UartByteStream(config::get().device.tty.c_str());
+	byteStream = new stream::UartByteStream(config::get().device.tty, config::get().device.speed);
 	stream = new stream::NmeaStream();
 
 	// Bytes read stream

@@ -46,6 +46,7 @@ struct Configuration {
      */
     struct Device {
         std::string tty; ///< TTY connected to Teseo
+        unsigned int speed; ///< Serial port baudrate
     } device;
 
     /**

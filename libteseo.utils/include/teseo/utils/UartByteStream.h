@@ -45,6 +45,11 @@ private:
 	std::string ttyDevice;
 
 	/**
+	 * TTY speed
+	 */
+	unsigned int speedDevice;
+
+	/**
 	 * Stream status
 	 */
 	ByteStreamStatus streamStatus;
@@ -83,7 +88,7 @@ protected:
 	virtual void perform_write(const ByteVectorPtr bytes) throw(StreamException);
 
 public:
-	explicit UartByteStream(const std::string& ttyDevice);
+	explicit UartByteStream(const std::string& ttyDevice, unsigned int speedDevice);
 
 	virtual ~UartByteStream();
 
