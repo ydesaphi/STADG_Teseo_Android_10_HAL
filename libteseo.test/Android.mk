@@ -49,7 +49,9 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 
 LOCAL_SRC_FILES :=             \
 	src/main.cpp               \
-	src/utils/ByteVector.cpp
+	src/utils/ByteVector.cpp   \
+	src/utils/Channel.cpp      \
+	src/utils/Time.cpp
 
 LOCAL_PRELINK_MODULE := false
 
