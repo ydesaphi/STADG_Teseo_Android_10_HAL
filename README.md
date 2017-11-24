@@ -29,7 +29,7 @@ The STM Teseo HAL provides the following features:
 
 Hardware
 ========
-The [\[HiKey from Lenovator\]](http://www.lenovator.com/product/90.html#params) has been used as the reference development platform for the Teseo HAL. If you are using another development platform, be sure that you can  connect it properly to the UART of your Teseo chip.
+The [\[HiKey from Lenovator\]](http://www.lenovator.com/product/90.html#params) has been used as the reference development platform for the Teseo HAL. If you are using another development platform, be sure that you can connect it properly to the UART of your Teseo chip.
 
 In the following sections, the terms *Hikey* and *Teseo Chip* refers, respectively, to the HiKey development platform and to any GNSS IC of the Teseo family.
 
@@ -42,7 +42,7 @@ As soon as the navigation is started by an application, the _HAL Virtual device_
 
 When not used by any application the Teseo chip isn’t sleeping. It is up to you to wake up and suspend the Teseo chip when the navigation is started and stopped.
 
-### STM GPS source code download
+### STM Teseo HAL source code download
 You must place the source in the correct location in the android source tree. Then you have to download the source from the repositories. The following commands will do all:
 
 ```bash
@@ -89,6 +89,8 @@ And the following line to `device/linaro/hikey/ueventd.hikey.rc`:
 ```
 /dev/ttyXX 0660 system root
 ```
+
+where `/dev/ttyXX` is the serial console where the Teseo chip sits.
 
 Finally to **ease development**, add this line to `device/linaro/hikey/BoardConfig.mk`:
 
