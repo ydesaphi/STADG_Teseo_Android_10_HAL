@@ -1,3 +1,6 @@
+# Version 0.3.1
+- [ADDED] README file
+
 # Version 0.3.0
 - [ADDED]  UART Baudrate configuration
 
