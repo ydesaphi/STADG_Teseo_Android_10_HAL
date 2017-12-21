@@ -103,6 +103,22 @@ public:
 	 * @param[in]  msg   PSTMSTAGPS8PASSRTN Message to decode
 	 */
 	static void pstmstagps8passrtn(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      PSTMSTAGPSPASSRTN decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMSTAGPSPASSRTN Message to decode
+	 */
+	 static void pstmstagpspassrtn(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      PSTMSTAGPSSATSEEDOK and PSTMSTAGPSSATSEEDERROR decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMSTAGPSSATSEEDOK/ PSTMSTAGPSSATSEEDERRORMessage to decode
+	 */
+	 static void pstmstagpssatseedresponse(AbstractDevice & dev, const NmeaMessage & msg);
 };
 
 /**

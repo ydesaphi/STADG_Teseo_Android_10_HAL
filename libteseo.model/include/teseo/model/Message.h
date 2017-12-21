@@ -72,6 +72,16 @@ enum class MessageId {
 	 * - Data
 	 */
 	 Stagps_RealTime_Almanac,
+
+	/**
+	 * Send seed for PGPS7 Assisted GNSS
+	 * Parameters:
+	 * - Satellite Id
+	 * - Size of data
+	 * - Data
+	 */
+	Stagps_PGPS7_Seed,
+
 };
 
 struct Message {

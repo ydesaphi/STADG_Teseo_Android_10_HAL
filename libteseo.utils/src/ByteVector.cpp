@@ -58,6 +58,44 @@ constexpr ByteArray<2> to_ascii(uint8_t byte, bool uppercase)
 
 } // namespace impl
 
+// Extracts a byte from a byte array at specified position, where the position is expressed in bit
+void extract_byte(uint8_t &byte, const ByteVector & buffer, uint32_t pos)
+{
+	unsigned int byte_pos, bit_pos, i;
+	uint8_t bit;
+
+	byte_pos = pos / 8;
+	bit_pos = pos % 8;
+	byte = 0;
+
+	for (i = 0; i < 8; i++)
+	{
+		if (i + bit_pos < 8)
+		{
+			bit = (buffer[byte_pos] & (1 << (7 - (i + bit_pos)))) != 0 ? 1 : 0;
+		}
+		else
+		{
+			bit = (buffer[byte_pos + 1] & (1 << (7 - (i + bit_pos - 8)))) != 0 ? 1 : 0;
+		}
+		byte += bit << (7 - i);
+	}
+}
+
+// Extracts a 32-bit word from a byte array at specified position, where the position is expressed in bit
+void extract_dword(uint32_t & dword, const ByteVector & buffer, uint32_t pos)
+{
+	ByteVector local_buffer(4);
+
+	dword = 0;
+	for (unsigned int i = 0; i <= 3; i++)
+	{
+		extract_byte(local_buffer[i], buffer, pos);
+		pos += 8;
+	}
+	dword += local_buffer[0] * 256 * 256 * 256 + local_buffer[1] * 256 * 256 + local_buffer[2] * 256 + local_buffer[3];
+}
+
 uint8_t hexCharToValue(uint8_t ch)
 {
 	bool invalidChar = false;

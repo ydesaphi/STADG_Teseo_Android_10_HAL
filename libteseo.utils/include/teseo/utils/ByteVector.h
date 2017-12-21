@@ -65,7 +65,12 @@ using ByteVectorPtr = std::shared_ptr<ByteVector>;
 template<std::size_t N>
 using ByteArrayPtr = std::shared_ptr<ByteArray<N>>;
 
+
 namespace utils {
+
+void extract_byte(uint8_t &byte, const ByteVector & buffer, uint32_t pos);
+void extract_dword(uint32_t & dword, const ByteVector & buffer, uint32_t pos);
+
 
 /**
  * @brief      Convert hexadecimal character to its value
@@ -548,6 +553,15 @@ extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end
 	return value;
 }
 
+/*
+template<uint6_msb_t>
+uint6_msb_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end)
+{
+	return 0;
+
+}
+//*/
+
 template<uint8_t>
 uint8_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end)
 {
@@ -603,6 +617,53 @@ uint32_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_ite
 				                ((*b3 <<  8) & 0x0000FF00) &
 				                ((*b4      ) & 0x000000FF);
 	}
+}
+
+
+/**
+ * @brief Generic function to extract a byte from a byte vector
+ *
+ * @param begin   Iterator to the begining of the range to extract
+ * @param end     Iterator to the end of the range to extract
+ * @param iteratorShift  Shift iterator
+ * 
+ * @return        The parsed value, or empty value.
+ */
+template<typename T>
+T extract_value(
+	ByteVector::const_iterator & ptr,
+	ByteVector::const_iterator end,
+	int iteratorShift = sizeof(T))
+{
+	if(ptr == end)
+	throw std::overflow_error("ptr is a dangling iterator.");
+
+	// Extract value
+	T tmp = extract_from_bv<T>(ptr, end);
+	// Shift iterator
+	ptr += iteratorShift;
+
+	return tmp;
+}
+
+/**
+ * @brief Generic function to extract a byte from a byte vector
+ *
+ * @param dest    pointer to the destination 
+ * @param ptr     Iterator to the begining of the range to extract
+ * @param end     Iterator to the end of the range to extract
+ * @param iteratorShift  Shift iterator
+ * 
+ * @return        null
+ */
+template<typename T>
+void extract_value(
+	T & dest,
+	ByteVector::const_iterator & ptr,
+	ByteVector::const_iterator end,
+	int iteratorShift = sizeof(T))
+{
+	dest = extract_value<T>(ptr, end, iteratorShift);
 }
 
 /**

@@ -209,6 +209,9 @@ void HalManager::initStagps()
 		device->onStagps8Answer.connect(
 			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStagps8Answer));
 
+		device->onStagpsAnswer.connect(
+			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStagpsAnswer));	
+
 		stagpsEngine->sendMessageRequest.connect(
 			SlotFactory::create(*device, &device::AbstractDevice::sendMessageRequest));
 

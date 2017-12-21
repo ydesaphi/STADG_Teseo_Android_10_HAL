@@ -36,13 +36,15 @@ namespace protocol {
 namespace messages {
 constexpr const auto get_versions = BA("PSTMGETSWVER,255");
 
-constexpr const auto stagps_password_generate = BA("PSTMSTAGPSPASSWGEN");
+constexpr const auto stagps_password_generate = BA("PSTMSTAGPSPASSGEN");
 
 constexpr const auto stagps8_password_generate = BA("PSTMSTAGPS8PASSGEN");
 
 constexpr const auto stagps_realtime_ephemeris = BA("PSTMEPHEM");
 
 constexpr const auto stagps_realtime_almanac = BA("PSTMALMANAC");
+
+constexpr const auto stagps_pgps7_seed = BA("PSTMSTAGPSSATSEED");
 } // namespace messages
 
 template<std::size_t N>
@@ -93,9 +95,12 @@ ByteVectorPtr get_versions(
 }
 
 ByteVectorPtr stagps_password_generate(
-	const device::AbstractDevice & device,
+	const device::AbstractDevice &,
 	const std::vector<ByteVector> & parameters)
 {
+
+	ALOGI("Encode ST-AGPS Password generate message");
+
 	ByteVectorPtr messagePtr = std::make_shared<ByteVector>();
 	ByteVector & message = *messagePtr;
 
@@ -103,17 +108,8 @@ ByteVectorPtr stagps_password_generate(
 		messages::stagps_password_generate.begin(),
 		messages::stagps_password_generate.end());
 
-	if(auto timestamp = device.getTimestamp())
-	{
-		message << ',' << *timestamp << ',';
-	}
-	else
-	{
-		auto t = utils::systemNow();
-		ALOGW("Timestamp wasn't received, use system timestamp: %s",
-			utils::time2string(t).c_str());
-		message << ',' << t << ',';
-	}
+	auto t = utils::systemNow();
+	message << ',' << utils::utc_timestamp_to_gps_timestamp(t) / 1000 << ',';
 
 	if(parameters.size() != 2)
 	{
@@ -158,7 +154,7 @@ ByteVectorPtr stagps8_password_generate(
 
 	message << vendorId << ','
 			<< modelId  << ','
-			; //<< deviceId;
+			<< deviceId;
 
 	return messagePtr;
 }
@@ -178,6 +174,16 @@ ByteVectorPtr stagps_realtime_almanac(
 	ALOGI("Encode ST-AGPS Ephemeris injection message");
 	return generic_encoder(messages::stagps_realtime_almanac, 3, parameters);
 }
+
+ByteVectorPtr stagps_pgps7_seed(
+	const device::AbstractDevice &,
+	const std::vector<ByteVector> & parameters)
+{
+	ALOGI("Encode ST-AGPS pgps7 seed injection message");
+	return generic_encoder(messages::stagps_pgps7_seed, 7, parameters);
+}
+
+
 } // namespace encoders
 
 void NmeaEncoder::encode(
@@ -205,6 +211,10 @@ void NmeaEncoder::encode(
 
 		case MessageId::Stagps_RealTime_Almanac:
 			encodedBytes(encoders::stagps_realtime_almanac(device, message.parameters));
+			break;
+
+		case MessageId::Stagps_PGPS7_Seed:
+			encodedBytes(encoders::stagps_pgps7_seed(device, message.parameters));
 			break;
 
 		default:

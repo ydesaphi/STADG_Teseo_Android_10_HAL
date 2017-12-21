@@ -236,6 +236,8 @@ public:
 	Signal<void, const AbstractDevice &, const model::Message &> sendMessage;
 
 	Signal<void, model::Stagps8Answer, const std::vector<ByteVector> &> onStagps8Answer;
+
+	Signal<void, model::StagpsAnswer, const std::vector<ByteVector> &> onStagpsAnswer;
 };
 
 } // namespace device

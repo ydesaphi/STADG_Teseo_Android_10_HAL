@@ -34,7 +34,7 @@
 
 #include "nmea/messages.h"
 
-#ifdef DEBUG_NMEA_DECODER
+#ifdef DEBUG_NMEA_LOG_OUTPUT
 #define NMEA_DECODER_LOGE(...) ALOGE(__VA_ARGS__)
 #define NMEA_DECODER_LOGI(...) ALOGI(__VA_ARGS__)
 #define NMEA_DECODER_LOGW(...) ALOGW(__VA_ARGS__)

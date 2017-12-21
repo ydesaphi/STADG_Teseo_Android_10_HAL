@@ -61,6 +61,7 @@ struct HttpResponse {
 	std::string statusMessage;
 
 	std::string content;
+	std::vector<char> buffer;
 };
 
 struct Header {
@@ -97,6 +98,7 @@ protected:
 private:
 
 	friend size_t curl_write_callback(char *, size_t, size_t, void *);
+    friend size_t curl_write_response_cb(char *ptr, size_t size, size_t nmemb, void *data);
 
 	Verb verb;
 	std::string uri;

@@ -57,6 +57,8 @@ using namespace frozen::string_literals;
 	//#define MSG_DBG_SBAS
 	#define MSG_DBG_PSTMVER
 	#define MSG_DBG_STAGPS8PASSRTN
+	#define MSG_DBG_STAGPSPASSRTN
+	#define MSG_DBG_STAGPSSATSEEDRESP
 #endif
 
 namespace stm {
@@ -69,7 +71,7 @@ using namespace stm::model;
 
 typedef void (*MessageDecoder)(AbstractDevice & dev, const NmeaMessage &);
 
-frozen::unordered_map<frozen::string, MessageDecoder, 4> std = {
+constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 4> std = {
 	{"GGA"_s, &decoders::gga},
 	{"VTG"_s, &decoders::vtg},
 	{"GSV"_s, &decoders::gsv},
@@ -77,11 +79,15 @@ frozen::unordered_map<frozen::string, MessageDecoder, 4> std = {
 	// Do not forget to update number of elements in map declaration
 };
 
-frozen::unordered_map<frozen::string, MessageDecoder, 3> stm = {
+constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 8> stm = {
 	{"SBAS"_s, &decoders::sbas},
 	{"VER"_s,  &decoders::pstmver},
 	{"STAGPS8PASSRTN"_s,  &decoders::pstmstagps8passrtn},
-	{"STAGPS8PASSGENERROR"_s, &decoders::pstmstagps8passrtn}
+	{"STAGPS8PASSGENERROR"_s, &decoders::pstmstagps8passrtn},
+	{"STAGPSPASSRTN"_s,  &decoders::pstmstagpspassrtn},
+	{"STAGPSPASSGENERROR"_s, &decoders::pstmstagpspassrtn},
+	{"STAGPSSATSEEDOK"_s, &decoders::pstmstagpssatseedresponse},
+	{"STAGPSSATSEEDERROR"_s, &decoders::pstmstagpssatseedresponse}
 	// Do not forget to update number of elements in map declaration
 };
 
@@ -511,6 +517,53 @@ void decoders::pstmstagps8passrtn(AbstractDevice & dev, const NmeaMessage & msg)
 		STAGPS8PASSRTN_LOGI("Decode PSTMSTAGPS8PASSRTN: %s", msg.toCString());
 		STAGPS8PASSRTN_LOGI("Password string: %s", bytesToString(msg.parameters.at(0)).c_str());
 		dev.onStagps8Answer(model::Stagps8Answer::PasswordReturnOk, { msg.parameters.at(0) });
+	}
+}
+
+
+#ifdef MSG_DBG_STAGPSPASSRTN
+#define STAGPSPASSRTN_LOGI(...) ALOGI(__VA_ARGS__)
+#define STAGPSPASSRTN_LOGW(...) ALOGW(__VA_ARGS__)
+#define STAGPSPASSRTN_LOGE(...) ALOGE(__VA_ARGS__)
+#else
+#define STAGPSPASSRTN_LOGI(...)
+#define STAGPSPASSRTN_LOGW(...)
+#define STAGPSPASSRTN_LOGE(...)
+#endif
+void decoders::pstmstagpspassrtn(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	if(msg.sentenceId == utils::createFromString("STAGPSPASSGENERROR"))
+	{
+		STAGPSPASSRTN_LOGI("Decode PSTMSTAGPSPASSGENERROR");
+		dev.onStagpsAnswer(model::StagpsAnswer::PasswordReturnKO, { });
+	}
+	else
+	{
+		STAGPSPASSRTN_LOGI("Decode PSTMSTAGPSPASSRTN: %s", msg.toCString());
+		STAGPSPASSRTN_LOGI("Password string: %s", bytesToString(msg.parameters.at(0)).c_str());
+		dev.onStagpsAnswer(model::StagpsAnswer::PasswordReturnOk, { msg.parameters.at(0) });
+	}
+}
+
+
+#ifdef MSG_DBG_STAGPSSATSEEDRESP
+#define STAGPSSATSEEDRESP_LOGI(...) ALOGI(__VA_ARGS__)
+#define STAGPSSATSEEDRESP_LOGW(...) ALOGW(__VA_ARGS__)
+#define STAGPSSATSEEDRESP_LOGE(...) ALOGE(__VA_ARGS__)
+#else
+#define STAGPSSATSEEDRESP_LOGI(...)
+#define STAGPSSATSEEDRESP_LOGW(...)
+#define STAGPSSATSEEDRESP_LOGE(...)
+#endif
+void decoders::pstmstagpssatseedresponse(AbstractDevice &, const NmeaMessage & msg)
+{
+	if(msg.sentenceId == utils::createFromString("STAGPSSATSEEDERROR"))
+	{
+		STAGPSSATSEEDRESP_LOGI("Device sent STAGPSSATSEEDERROR");
+	}
+	if(msg.sentenceId == utils::createFromString("STAGPSSATSEEDOK"))
+	{
+		STAGPSSATSEEDRESP_LOGI("Device sent STAGPSSATSEEDOK");
 	}
 }
 

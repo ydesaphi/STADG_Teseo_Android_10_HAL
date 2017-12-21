@@ -29,6 +29,8 @@
 
 #include <teseo/utils/DebugOutputStream.h>
 
+#define DEBUG_HTTP_CLIENT
+
 namespace stm {
 namespace utils {
 
@@ -89,6 +91,24 @@ size_t curl_write_callback(char * ptr, size_t size, size_t nmemb, void * userdat
 	}
 
 	return i;
+}
+
+size_t curl_write_response_cb(char *ptr, size_t size, size_t nmemb, void *data)
+{
+	HttpRequest * req = static_cast<HttpRequest *>(data);
+	size_t i = 0;
+
+  	if(req->stopped == true)
+	{
+		return 0;
+	}
+
+	while(i < size * nmemb)
+	{
+		req->response.buffer.push_back(ptr[i]);
+		i++;
+	}
+ return i;
 }
 
 HttpRequest::HttpRequest() :
@@ -188,7 +208,7 @@ void HttpRequest::run()
 		response.statusMessage = "cURL Handle is null";
 		return;
 	}
-		
+	
 	CURLcode curlResponse;
 	struct curl_slist * headers_slist = headers_to_curl_slist(headers);
 
@@ -228,8 +248,17 @@ void HttpRequest::run()
 	curl_easy_setopt(curlHandle, CURLOPT_NOSIGNAL, 1); // Avoid signals to be raised by cURL
 
 	// Register the write function and the write destination
-	curl_easy_setopt(curlHandle, CURLOPT_WRITEFUNCTION, curl_write_callback);
+	if(verb == HttpRequest::POST)
+	{
+		curl_easy_setopt(curlHandle, CURLOPT_WRITEFUNCTION, curl_write_callback);
+	}
+	else //else (verb == HttpRequest::GET)
+	{
+ 		curl_easy_setopt(curlHandle, CURLOPT_WRITEFUNCTION, curl_write_response_cb);
+	}
+
 	curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, static_cast<void *>(this));
+
 	// == End of cURL options ==
 
 	// == Perform the request ==
