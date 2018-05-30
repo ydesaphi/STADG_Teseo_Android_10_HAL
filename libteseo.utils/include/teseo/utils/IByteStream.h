@@ -125,26 +125,26 @@ protected:
 	/**
 	 * @brief Open device for reading and writing
 	 */
-	virtual void open() throw(StreamException) = 0;
+	virtual void open() noexcept(false) = 0;
 
 	/**
 	 * @brief Close device
 	 */
-	virtual void close() throw(StreamException) = 0;
+	virtual void close() noexcept(false) = 0;
 
 	/**
 	 * @brief Flush device
 	 */
-	virtual void flush() throw(StreamException) = 0;
+	virtual void flush() noexcept(false) = 0;
 
 	/**
 	 * Read data from device
 	 *
 	 * @return Vector of bytes read
 	 */
-	virtual ByteVector perform_read() throw(StreamException)  = 0;
+	virtual ByteVector perform_read() noexcept(false)  = 0;
 
-	virtual void perform_write(const ByteVectorPtr bytes) throw(StreamException) = 0;
+	virtual void perform_write(const ByteVectorPtr bytes) noexcept(false) = 0;
 
 public:
 	virtual ~IByteStream() { }

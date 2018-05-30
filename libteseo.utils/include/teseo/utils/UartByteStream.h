@@ -66,26 +66,26 @@ protected:
 	/**
 	 * @brief Open device for reading and writing
 	 */
-	virtual void open() throw(StreamException);
+	virtual void open() noexcept(false);
 
 	/**
 	 * @brief Close device
 	 */
-	virtual void close() throw(StreamException);
+	virtual void close() noexcept(false);
 
 	/**
 	 * @brief Flush the device
 	 */
-	virtual void flush() throw(StreamException);
+	virtual void flush() noexcept(false);
 
 	/**
 	 * Read data from device
 	 *
 	 * @return Vector of bytes read
 	 */
-	virtual ByteVector perform_read() throw(StreamException);
+	virtual ByteVector perform_read() noexcept(false);
 
-	virtual void perform_write(const ByteVectorPtr bytes) throw(StreamException);
+	virtual void perform_write(const ByteVectorPtr bytes) noexcept(false);
 
 public:
 	explicit UartByteStream(const std::string& ttyDevice, unsigned int speedDevice);

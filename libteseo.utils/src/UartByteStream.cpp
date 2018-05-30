@@ -90,7 +90,7 @@ static const std::unordered_map<unsigned int, speed_t> mDeviceSpeed = {
 	{921600, B921600}
 };
 
-void UartByteStream::open() throw(StreamException)
+void UartByteStream::open() noexcept(false)
 {
 	// Because we use a open count we must synchronize access to open
 	std::unique_lock<std::mutex> lock(openMutex);
@@ -144,7 +144,7 @@ void UartByteStream::open() throw(StreamException)
 	openCount++;
 }
 
-void UartByteStream::flush() throw(StreamException)
+void UartByteStream::flush() noexcept(false)
 {
 	if(streamStatus == ByteStreamStatus::OPENED)
 	{
@@ -156,7 +156,7 @@ void UartByteStream::flush() throw(StreamException)
 	}
 }
 
-void UartByteStream::close() throw(StreamException)
+void UartByteStream::close() noexcept(false)
 {
 	// Because we use a open count we must synchronize access to close
 	std::unique_lock<std::mutex> lock(openMutex);
@@ -193,7 +193,7 @@ void UartByteStream::close() throw(StreamException)
 	}
 }
 
-ByteVector UartByteStream::perform_read() throw(StreamException)
+ByteVector UartByteStream::perform_read() noexcept(false)
 {
 	if(streamStatus == ByteStreamStatus::OPENED)
 	{
@@ -224,7 +224,7 @@ ByteVector UartByteStream::perform_read() throw(StreamException)
 	}
 }
 
-void UartByteStream::perform_write(const ByteVectorPtr bytes) throw(StreamException)
+void UartByteStream::perform_write(const ByteVectorPtr bytes) noexcept(false)
 {
 	if(streamStatus == ByteStreamStatus::OPENED)
 	{

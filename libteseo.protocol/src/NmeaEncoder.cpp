@@ -61,9 +61,10 @@ ByteVectorPtr generic_encoder(
 {
 	if(parameters.size() != expected_parameters_count)
 	{
-		ALOGE("Expected %u parameters, only %u received",
+		/*ALOGE("Expected %u parameters, only %u received",
 			expected_parameters_count,
 			parameters.size());
+			//*/
 		throw std::runtime_error("Bad parameter count");
 	}
 
@@ -116,7 +117,7 @@ ByteVectorPtr stagps_password_generate(
 
 	if(parameters.size() != 2)
 	{
-		ALOGE("Expected 2 parameters, only %u received", parameters.size());
+		//ALOGE("Expected 2 parameters, only %u received", parameters.size());
 		throw std::runtime_error("Expected 2 parameters");
 	}
 
@@ -137,7 +138,7 @@ ByteVectorPtr stagps8_password_generate(
 
 	if(parameters.size() != 3)
 	{
-		ALOGE("Expected 3 parameters, only %u received", parameters.size());
+		//ALOGE("Expected 3 parameters, only %u received", parameters.size());
 		throw std::runtime_error("Expected 3 parameters");
 	}
 

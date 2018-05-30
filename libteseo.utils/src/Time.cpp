@@ -33,7 +33,7 @@
 #include <chrono>
 #include <ctime>
 #include <cstring>
-
+#include <cinttypes>
 namespace stm {
 namespace utils {
 
@@ -51,7 +51,7 @@ static time_point<system_clock> utcTodayOffset;
 
 int injectTime(GpsUtcTime time, int64_t timeReference, int uncertainty)
 {
-	ALOGI("Inject time: %lld, reference: %lld, uncertainty: %d -- now: %lld",
+	ALOGI("Inject time: %" PRId64 ", reference: %" PRId64 ", uncertainty: %d -- now: %lld",
 		time, timeReference, uncertainty,
 		duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
 

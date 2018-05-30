@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <clocale>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -59,7 +60,7 @@ class option
         // nothing
     }
 
-    option(T value) : empty_{false}, value_{std::move(value)}
+    option(T value) : empty_{false}, value_(std::move(value))
     {
         // nothing
     }
@@ -403,6 +404,8 @@ class base : public std::enable_shared_from_this<base>
   public:
     virtual ~base() = default;
 
+    virtual std::shared_ptr<base> clone() const = 0;
+
     /**
      * Determines if the given TOML element is a value.
      */
@@ -501,6 +504,8 @@ class value : public base
 
   public:
     static_assert(valid_value<T>::value, "invalid value type");
+
+    std::shared_ptr<base> clone() const override;
 
     value(const make_shared_enabler&, const T& val) : value(val)
     {
@@ -613,10 +618,14 @@ class array : public base
   public:
     friend std::shared_ptr<array> make_array();
 
+    std::shared_ptr<base> clone() const override;
+
     virtual bool is_array() const override
     {
         return true;
     }
+
+    using size_type = std::size_t;
 
     /**
      * arrays can be iterated over
@@ -821,6 +830,14 @@ class array : public base
         values_.clear();
     }
 
+    /**
+     * Reserve space for n values.
+     */
+    void reserve(size_type n)
+    {
+        values_.reserve(n);
+    }
+
   private:
     array() = default;
 
@@ -885,6 +902,10 @@ class table_array : public base
     friend std::shared_ptr<table_array> make_table_array();
 
   public:
+    std::shared_ptr<base> clone() const override;
+
+    using size_type = std::size_t;
+
     /**
      * arrays can be iterated over
      */
@@ -960,6 +981,14 @@ class table_array : public base
     void clear()
     {
         array_.clear();
+    }
+
+    /**
+     * Reserve space for n tables.
+     */
+    void reserve(size_type n)
+    {
+        array_.reserve(n);
     }
 
   private:
@@ -1067,6 +1096,8 @@ class table : public base
   public:
     friend class table_array;
     friend std::shared_ptr<table> make_table();
+
+    std::shared_ptr<base> clone() const override;
 
     /**
      * tables can be iterated over.
@@ -1441,7 +1472,7 @@ template <>
 inline typename array_of_trait<array>::return_type
 table::get_qualified_array_of<array>(const std::string& key) const
 {
-    if (auto v = get_array(key))
+    if (auto v = get_array_qualified(key))
     {
         std::vector<std::shared_ptr<array>> result;
         result.reserve(v->get().size());
@@ -1477,6 +1508,38 @@ template <>
 inline std::shared_ptr<table> make_element<table>()
 {
     return make_table();
+}
+
+template <class T>
+std::shared_ptr<base> value<T>::clone() const
+{
+    return make_value(data_);
+}
+
+inline std::shared_ptr<base> array::clone() const
+{
+    auto result = make_array();
+    result->reserve(values_.size());
+    for (const auto& ptr : values_)
+        result->values_.push_back(ptr->clone());
+    return result;
+}
+
+inline std::shared_ptr<base> table_array::clone() const
+{
+    auto result = make_table_array();
+    result->reserve(array_.size());
+    for (const auto& ptr : array_)
+        result->array_.push_back(ptr->clone()->as_table());
+    return result;
+}
+
+inline std::shared_ptr<base> table::clone() const
+{
+    auto result = make_table();
+    for (const auto& pr : map_)
+        result->insert(pr.first, pr.second->clone());
+    return result;
 }
 
 /**
@@ -1714,6 +1777,10 @@ class parser
             consume_whitespace(it, end);
         }
 
+        if (it == end)
+            throw_parse_exception(
+                "Unterminated table declaration; did you forget a ']'?");
+
         // table already existed
         if (!inserted)
         {
@@ -1837,7 +1904,7 @@ class parser
         auto key = parse_key(it, end, [](char c) { return c == '='; });
         if (curr_table->contains(key))
             throw_parse_exception("Key " + key + " already present");
-        if (*it != '=')
+        if (it == end || *it != '=')
             throw_parse_exception("Value must follow after a '='");
         ++it;
         consume_whitespace(it, end);
@@ -1951,6 +2018,10 @@ class parser
     parse_type determine_value_type(const std::string::iterator& it,
                                     const std::string::iterator& end)
     {
+        if(it == end)
+        {
+            throw_parse_exception("Failed to parse value type");
+        }
         if (*it == '"' || *it == '\'')
         {
             return parse_type::STRING;
@@ -2384,6 +2455,8 @@ class parser
         std::string v{it, end};
         v.erase(std::remove(v.begin(), v.end(), '_'), v.end());
         it = end;
+        char decimal_point = std::localeconv()->decimal_point[0];
+        std::replace(v.begin(), v.end(), '.', decimal_point);
         try
         {
             return make_value<double>(std::stod(v));
@@ -2425,7 +2498,7 @@ class parser
     std::string::iterator find_end_of_number(std::string::iterator it,
                                              std::string::iterator end)
     {
-        return std::find_if(it, end, [this](char c) {
+        return std::find_if(it, end, [](char c) {
             return !is_number(c) && c != '_' && c != '.' && c != 'e' && c != 'E'
                    && c != '-' && c != '+';
         });
@@ -2434,7 +2507,7 @@ class parser
     std::string::iterator find_end_of_date(std::string::iterator it,
                                            std::string::iterator end)
     {
-        return std::find_if(it, end, [this](char c) {
+        return std::find_if(it, end, [](char c) {
             return !is_number(c) && c != 'T' && c != 'Z' && c != ':' && c != '-'
                    && c != '+' && c != '.';
         });
@@ -2443,7 +2516,7 @@ class parser
     std::string::iterator find_end_of_time(std::string::iterator it,
                                            std::string::iterator end)
     {
-        return std::find_if(it, end, [this](char c) {
+        return std::find_if(it, end, [](char c) {
             return !is_number(c) && c != ':' && c != '.';
         });
     }
@@ -2994,7 +3067,7 @@ class toml_writer
             {
                 res += "\\\\";
             }
-            else if (*it >= 0x0000 && *it <= 0x001f)
+            else if ((const uint32_t)*it <= 0x001f)
             {
                 res += "\\u";
                 std::stringstream ss;
