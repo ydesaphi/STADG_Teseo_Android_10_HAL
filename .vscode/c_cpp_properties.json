@@ -9,12 +9,13 @@
                 "${workspaceRoot}/libteseo.config/include",
                 "${workspaceRoot}/libteseo.core/include",
                 "${workspaceRoot}/libteseo.device/include",
+                "${workspaceRoot}/libteseo.geofencing/include",
                 "${workspaceRoot}/libteseo.model/include",
                 "${workspaceRoot}/libteseo.protocol/include",
                 "${workspaceRoot}/libteseo.test/include",
                 "${workspaceRoot}/libteseo.utils/include",
                 "${workspaceRoot}/libteseo.vendor/include",
-                "${workspaceRoot}/../../../prebuilts/clang/host/linux-x86/clang-2690385/lib64/clang/3.8/include/",
+                "${workspaceRoot}/../../../prebuilts/clang/host/linux-x86/clang-4691093/lib64/clang/6.0.2/include/",
                 "${workspaceRoot}/../../../out/target/product/hikey/obj/STATIC_LIBRARIES/libteseo_intermediates ",
                 "${workspaceRoot}/../../../out/target/product/hikey/gen/STATIC_LIBRARIES/libteseo_intermediates",
                 "${workspaceRoot}/../../../libnativehelper/include/nativehelper",
@@ -39,6 +40,7 @@
                 "${workspaceRoot}/../../../bionic/libc/kernel/uapi/linux",
                 "${workspaceRoot}/../../../bionic/libc/kernel/common",
                 "${workspaceRoot}/../../../bionic/libc/kernel/uapi/asm-arm64",
+                "${workspaceRoot}/../../../bionic/libc/kernel/android/uapi",
                 "${workspaceRoot}/../../../bionic/libm/include",
                 "${workspaceRoot}/../../../bionic/libm/include/arm64"
             ],
@@ -51,12 +53,13 @@
                     "${workspaceRoot}/libteseo.config/include",
                     "${workspaceRoot}/libteseo.core/include",
                     "${workspaceRoot}/libteseo.device/include",
+                    "${workspaceRoot}/libteseo.geofencing/include",
                     "${workspaceRoot}/libteseo.model/include",
                     "${workspaceRoot}/libteseo.protocol/include",
                     "${workspaceRoot}/libteseo.test/include",
                     "${workspaceRoot}/libteseo.utils/include",
                     "${workspaceRoot}/libteseo.vendor/include",
-                    "${workspaceRoot}/../../../prebuilts/clang/host/linux-x86/clang-2690385/lib64/clang/3.8/include/",
+                    "${workspaceRoot}/../../../prebuilts/clang/host/linux-x86/clang-4691093/lib64/clang/6.0.2/include/",
                     "${workspaceRoot}/../../../out/target/product/hikey/obj/STATIC_LIBRARIES/libteseo_intermediates ",
                     "${workspaceRoot}/../../../out/target/product/hikey/gen/STATIC_LIBRARIES/libteseo_intermediates",
                     "${workspaceRoot}/../../../libnativehelper/include/nativehelper",
@@ -80,14 +83,17 @@
                     "${workspaceRoot}/../../../bionic/libc/kernel/uapi",
                     "${workspaceRoot}/../../../bionic/libc/kernel/common",
                     "${workspaceRoot}/../../../bionic/libc/kernel/uapi/asm-arm64",
+                    "${workspaceRoot}/../../../bionic/libc/kernel/android/uapi",
                     "${workspaceRoot}/../../../bionic/libm/include",
                     "${workspaceRoot}/../../../bionic/libm/include/arm64"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
             },
+            "cStandard": "c11",
+            "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64"
         }
     ],
-    "version": 3
+    "version": 4
 }
