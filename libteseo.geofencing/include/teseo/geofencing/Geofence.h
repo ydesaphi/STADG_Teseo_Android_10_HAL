@@ -73,6 +73,11 @@ private:
 
 public:
 
+    /**
+     * Create a geofence
+     * @param def Definition of geofence
+     * @param manager Manager of the geofence
+     */
     Geofence(const model::GeofenceDefinition def, GeofencingManager * manager);
 
     model::GeofenceId id() const { return id_; }
@@ -92,6 +97,8 @@ public:
     TrackingStatus trackingStatus() const { return status_; }
 
     void setTrackingStatus(TrackingStatus status) { status_ = status; }
+
+    void setMonitoredTransition(model::TransitionFlags flags);
 
     void updateStatusFromLocation(const Location & loc);
 

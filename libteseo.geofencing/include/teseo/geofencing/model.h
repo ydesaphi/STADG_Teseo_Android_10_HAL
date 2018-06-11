@@ -34,19 +34,31 @@ namespace model {
 
 using GeofenceId = int32_t;
 
+/**
+ * Geofence transitions
+ */
 enum class Transition {
     Entered   = GPS_GEOFENCE_ENTERED,
     Exited    = GPS_GEOFENCE_EXITED,
     Uncertain = GPS_GEOFENCE_UNCERTAIN
 };
 
+/**
+ * Geofence transition flag
+ */
 using TransitionFlags = int;
 
+/**
+ * Geofence system status/availability
+ */
 enum class SystemStatus {
     Unavailable = GPS_GEOFENCE_UNAVAILABLE,
     Available   = GPS_GEOFENCE_AVAILABLE
 };
 
+/**
+ * Geofence operation status/result
+ */
 enum class OperationStatus {
     Success                 = GPS_GEOFENCE_OPERATION_SUCCESS,
     Error_TooManyGeofences  = GPS_GEOFENCE_ERROR_TOO_MANY_GEOFENCES,
@@ -56,20 +68,47 @@ enum class OperationStatus {
     Error_Generic           = GPS_GEOFENCE_ERROR_GENERIC
 };
 
+/**
+ * Simple 2D point structure
+ */
 struct Point {
+    /**
+     * @brief Default constructor (lat=0, long=0)
+     */
     Point();
+
+    /**
+     * @brief Create a point from a location
+     * @param loc Location to use
+     */
     Point(const Location & loc);
+
+    /**
+     * @brief Create a point from coordinates
+     * @param lat Latitude
+     * @param lon Longitude
+     */
     Point(const ICoordinate & lat, const ICoordinate & lon);
 
     DecimalDegreeCoordinate latitude;
     DecimalDegreeCoordinate longitude;
 
+    /**
+     * Calculate distance from 2 points
+     */
     double distanceFrom(const Point & p);
 
 private:
+    /**
+     * Get coordinates as radians instead of decimale degrees
+     * @return Latitude and longitude as pair in this order
+     */
     std::pair<double, double> to_rad() const;
 };
 
+/**
+ * Geofence definition
+ */
 struct GeofenceDefinition {
     GeofenceId id;
     Point origin;
@@ -80,6 +119,11 @@ struct GeofenceDefinition {
     std::chrono::milliseconds unknown_time;
 };
 
+/**
+ * Check if transition flag is valid
+ * @param flags Transition flag to check
+ * @return true if valid, false otherwise
+ */
 bool transitionFlagsIsValid(TransitionFlags flags);
 
 } // namespace model

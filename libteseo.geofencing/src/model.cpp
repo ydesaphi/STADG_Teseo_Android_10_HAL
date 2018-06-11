@@ -28,21 +28,33 @@
 #include <teseo/geofencing/model.h>
 
 #include <cmath>
+#include <boost/math/constants/constants.hpp>
 
 
 namespace stm {
 namespace geofencing {
 namespace model {
 
-double degree_to_rad(double degree)
+double degree_to_rad(double d)
 {
-    return degree * 0.01745329251994329576923690768489;
+    return d * boost::math::double_constants::degree;
+}
+
+bool transitionFlagsIsValid(TransitionFlags flags)
+{
+    constexpr TransitionFlags ALL_FLAGS_INVERTED = ~(
+        static_cast<int32_t>(Transition::Entered) &
+        static_cast<int32_t>(Transition::Exited)  &
+        static_cast<int32_t>(Transition::Uncertain));
+
+    // force all valid values in flags to zero
+    // if others bit are enabled transition flags is not valie
+    return !(flags & ALL_FLAGS_INVERTED);
 }
 
 constexpr double WGS84_A = 6378137.0;
 constexpr double WGS84_E = 0.0818191908426;
 constexpr double WGS84_E2 = WGS84_E * WGS84_E;
-
 
 Point::Point()
 { }

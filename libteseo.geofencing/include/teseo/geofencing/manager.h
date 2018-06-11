@@ -36,7 +36,7 @@ namespace geofencing {
 class GeofencingManager {
 private:
 
-    std::unordered_map<model::GeofenceId, std::shared_ptr<Geofence>> geofences;
+    std::unordered_map<model::GeofenceId, std::unique_ptr<Geofence>> geofences;
 
 public:
 
@@ -70,7 +70,17 @@ public:
      */
     void resume(model::GeofenceId id, model::TransitionFlags watched_transitions);
 
-    void onLocationUpdate(const Location &);
+    /**
+     * @brief Update geofences status
+     * @param loc New location used to update the geofences
+     */
+    void onLocationUpdate(const Location & loc);
+
+    /**
+     * @brief Update geofencing avaibility using the Teseo status
+     * @param deviceStatus Teseo status
+     */
+    void onDeviceStatusUpdate(GpsStatusValue deviceStatus);
 
     Signal<void, model::SystemStatus> sendGeofenceStatus;
 
