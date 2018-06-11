@@ -46,6 +46,7 @@
 #include <teseo/protocol/NmeaDecoder.h>
 #include <teseo/device/NmeaDevice.h>
 #include <teseo/protocol/NmeaEncoder.h>
+#include <teseo/geofencing/manager.h>
 
 #include <teseo/LocServiceProxy.h>
 
@@ -92,6 +93,7 @@ int HalManager::init(GpsCallbacks * cb)
 	initUtils();
 	initDevice();
 	initStagps();
+	initGeofencing();
 
 	ALOGI("Set capabilities");
 	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
@@ -123,10 +125,12 @@ void HalManager::cleanup(void)
 	ALOGD("STAGPS Engine is not compiled, do not cleanup");
 #endif
 
+	delete geofencingManager;
 	delete stream;
 	delete byteStream;
 	delete decoder;
 	delete device;
+	geofencingManager = nullptr;
 	stream = nullptr;
 	byteStream = nullptr;
 	decoder = nullptr;
@@ -228,5 +232,31 @@ void HalManager::initStagps()
 	ALOGI("ST-AGPS not included in build");
 }
 #endif
+
+void HalManager::initGeofencing()
+{
+	using namespace stm::geofencing;
+
+	geofencingManager = new GeofencingManager();
+
+	geofencingManager->answerGeofenceAddRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceAddRequest));
+	geofencingManager->answerGeofenceRemoveRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceRemoveRequest));
+	geofencingManager->answerGeofencePauseRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofencePauseRequest));
+	geofencingManager->answerGeofenceResumeRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceResumeRequest));
+
+	geofencingManager->sendGeofenceStatus.connect(SlotFactory::create(LocServiceProxy::geofencing::sendGeofenceStatus));
+	geofencingManager->sendGeofenceTransition.connect(SlotFactory::create(LocServiceProxy::geofencing::sendGeofenceTransition));
+
+	auto & geofencingSignals = LocServiceProxy::geofencing::getSignals();
+	// Initialize slot is empty
+	geofencingSignals.init.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::initialize));
+	geofencingSignals.addGeofenceArea.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::add));
+	geofencingSignals.removeGeofenceArea.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::remove));
+	geofencingSignals.pauseGeofence.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::pause));
+	geofencingSignals.resumeGeofence.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::resume));
+
+	device->locationUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onLocationUpdate));
+	device->statusUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onDeviceStatusUpdate));
+}
 
 } // namespace stm

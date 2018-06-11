@@ -41,7 +41,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libteseo.config       \
 	libteseo.model        \
 	libteseo.device       \
-	libteseo.protocol
+	libteseo.protocol     \
+	libteseo.geofencing
 
 ifeq ($(TESEO_STAGPS_ENABLED),true)
 	LOCAL_CPPFLAGS += -DSTAGPS_ENABLED

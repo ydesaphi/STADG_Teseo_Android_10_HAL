@@ -43,6 +43,7 @@ namespace LocServiceProxy {
 
 static struct {
 	GpsCallbacks gps;
+	GpsGeofenceCallbacks geofence;
 } callbacks;
 
 static struct gps_device_t * device = nullptr;
@@ -51,6 +52,11 @@ void RegisterCallbacks(const GpsCallbacks * cb)
 {
 	memcpy(&(callbacks.gps), cb, sizeof(GpsCallbacks));
 	Thread::setCreateThreadCb(callbacks.gps.create_thread_cb);
+}
+
+void RegisterGeofenceCallbacks(const GpsGeofenceCallbacks * cb)
+{
+	memcpy(&(callbacks.geofence), cb, sizeof(GpsGeofenceCallbacks));
 }
 
 int openDevice(const struct hw_module_t * module, char const * name, struct hw_device_t ** dev)
@@ -259,6 +265,100 @@ void requestUtcTime()
 
 } // namespace gps
 
+namespace geofencing {
+
+using namespace stm::geofencing::model;
+
+static Signals signals;
+
+Signals & getSignals() { return signals; }
+
+void onInit(GpsGeofenceCallbacks * callbacks)
+{
+	ALOGI("Initialize geofence system request");
+	RegisterGeofenceCallbacks(callbacks);
+	signals.init(callbacks);
+}
+
+void onAddGeofenceArea (int32_t geofence_id, double latitude, double longitude, double radius_meters, int last_transition, int monitor_transitions, int notification_responsiveness_ms, int unknown_timer_ms)
+{
+	ALOGI("Add geofence request");
+	GeofenceDefinition def;
+	def.id = geofence_id;
+	def.origin.latitude = DecimalDegreeCoordinate(latitude);
+	def.origin.longitude = DecimalDegreeCoordinate(longitude);
+	def.radius = radius_meters;
+	def.last_transition = static_cast<Transition>(last_transition);
+	def.monitor_transitions = monitor_transitions;
+	def.notifications_responsiveness = std::chrono::milliseconds(notification_responsiveness_ms);
+	def.unknown_time = std::chrono::milliseconds(unknown_timer_ms);
+
+	signals.addGeofenceArea(def);
+}
+
+void onPauseGeofence(int32_t geofence_id)
+{
+	ALOGI("Pause geofence request");
+	signals.pauseGeofence(geofence_id);
+}
+
+void onResumeGeofence(int32_t geofence_id, int monitor_transitions)
+{
+	ALOGI("Resume geofence request");
+	signals.resumeGeofence(geofence_id, monitor_transitions);
+}
+
+void onRemoveGeofenceArea(int32_t geofence_id)
+{
+	ALOGI("Remove geofence request");
+	signals.removeGeofenceArea(geofence_id);
+}
+
+void sendGeofenceTransition(GeofenceId geofence_id,  const Location & loc, Transition transition, GpsUtcTime timestamp)
+{
+	// Convert location to Android location format
+	GpsLocation location;
+	loc.copyToGpsLocation(location);
+
+	ALOGI("Send geofence transition: id=%d, loc=%s", geofence_id, loc.toString().c_str());
+	callbacks.geofence.geofence_transition_callback(geofence_id, &location, static_cast<int32_t>(transition), timestamp);
+}
+
+void sendGeofenceStatus(SystemStatus status, const Location & last_location)
+{
+	GpsLocation location;
+	last_location.copyToGpsLocation(location);
+
+	ALOGI("Send geofence system status: %d", static_cast<int32_t>(status));
+	callbacks.geofence.geofence_status_callback(static_cast<int32_t>(status), &location);
+}
+
+void answerGeofenceAddRequest(GeofenceId geofence_id, OperationStatus status)
+{
+	ALOGI("Answer geofence add request; id=%d, result=%d", geofence_id, static_cast<int32_t>(status));
+	callbacks.geofence.geofence_add_callback(geofence_id, static_cast<int32_t>(status));
+}
+
+void answerGeofenceRemoveRequest(GeofenceId geofence_id, OperationStatus status)
+{
+	ALOGI("Answer geofence remove request; id=%d, result=%d", geofence_id, static_cast<int32_t>(status));
+	callbacks.geofence.geofence_remove_callback(geofence_id, static_cast<int32_t>(status));
+}
+
+void answerGeofencePauseRequest(GeofenceId geofence_id, OperationStatus status)
+{
+	ALOGI("Answer geofence pause request; id=%d, result=%d", geofence_id, static_cast<int32_t>(status));
+	callbacks.geofence.geofence_pause_callback(geofence_id, static_cast<int32_t>(status));
+}
+
+void answerGeofenceResumeRequest(GeofenceId geofence_id, OperationStatus status)
+{
+	ALOGI("Answer geofence resume request; id=%d, result=%d", geofence_id, static_cast<int32_t>(status));
+	callbacks.geofence.geofence_resume_callback(geofence_id, static_cast<int32_t>(status));
+}
+
+} // namespace geofencing
+
 namespace debug {
 
 static Signals signals;
@@ -307,6 +407,14 @@ static Interfaces interfaces = {
 		.set_position_mode  = &LocServiceProxy::gps::onSetPositionMode,
 		.get_extension      = &LocServiceProxy::gps::onGetExtension
 	},
+	.geofencing = {
+		.size                 = sizeof(GpsGeofencingInterface),
+		.init                 = &LocServiceProxy::geofencing::onInit,
+		.add_geofence_area    = &LocServiceProxy::geofencing::onAddGeofenceArea,
+		.pause_geofence       = &LocServiceProxy::geofencing::onPauseGeofence,
+		.resume_geofence      = &LocServiceProxy::geofencing::onResumeGeofence,
+		.remove_geofence_area = &LocServiceProxy::geofencing::onRemoveGeofenceArea
+	},
 	.debug = {
 		.size               = sizeof(GpsDebugInterface),
 		.get_internal_state = &LocServiceProxy::debug::getInternalState
@@ -314,15 +422,15 @@ static Interfaces interfaces = {
 };
 
 static std::unordered_map<const char *, void *> interfacesMap = {
-	{GPS_XTRA_INTERFACE,               NULL}                ,
-	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)} ,
-	{AGPS_INTERFACE,                   NULL}                ,
-	{SUPL_CERTIFICATE_INTERFACE,       NULL}                ,
-	{GPS_NI_INTERFACE,                 NULL}                ,
-	{AGPS_RIL_INTERFACE,               NULL}                ,
-	{GPS_GEOFENCING_INTERFACE,         NULL}                ,
-	{GPS_MEASUREMENT_INTERFACE,        NULL}                ,
-	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                ,
+	{GPS_XTRA_INTERFACE,               NULL}                     ,
+	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)}      ,
+	{AGPS_INTERFACE,                   NULL}                     ,
+	{SUPL_CERTIFICATE_INTERFACE,       NULL}                     ,
+	{GPS_NI_INTERFACE,                 NULL}                     ,
+	{AGPS_RIL_INTERFACE,               NULL}                     ,
+	{GPS_GEOFENCING_INTERFACE,         &(interfaces.geofencing)} ,
+	{GPS_MEASUREMENT_INTERFACE,        NULL}                     ,
+	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                     ,
 	{GNSS_CONFIGURATION_INTERFACE,     NULL}
 };
 
