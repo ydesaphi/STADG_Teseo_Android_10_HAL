@@ -59,6 +59,10 @@ namespace stagps {
 class StagpsEngine;
 } // namespace stagps
 
+namespace geofencing {
+class GeofencingManager;
+} // namespace geofencing
+
 /**
  * @brief      HAL Manager class
  * 
@@ -85,11 +89,15 @@ private:
 
 	stagps::StagpsEngine * stagpsEngine;
 
+	geofencing::GeofencingManager * geofencingManager;
+
 	void initUtils();
 	
 	void initDevice();
 
 	void initStagps();
+
+	void initGeofencing();
 
 public:
 	HalManager();

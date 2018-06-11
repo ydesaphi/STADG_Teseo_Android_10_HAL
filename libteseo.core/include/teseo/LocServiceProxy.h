@@ -38,6 +38,7 @@
 #include <teseo/model/NmeaMessage.h>
 #include <teseo/model/Location.h>
 #include <teseo/model/SatInfo.h>
+#include <teseo/geofencing/model.h>
 
 namespace stm {
 
@@ -158,6 +159,44 @@ namespace gps {
 	void requestUtcTime();
 
 } // namespace gps
+
+namespace geofencing {
+
+	// Import only needed names to avoid too much writing
+	using stm::geofencing::model::GeofenceDefinition;
+	using stm::geofencing::model::GeofenceId;
+	using stm::geofencing::model::Transition;
+	using stm::geofencing::model::TransitionFlags;
+	using stm::geofencing::model::SystemStatus;
+	using stm::geofencing::model::OperationStatus;
+
+	struct Signals {
+		Signal<void, GpsGeofenceCallbacks *> init = Signal<void, GpsGeofenceCallbacks *>("geofencing::signals::init");
+
+		Signal<void, GeofenceDefinition> addGeofenceArea = Signal<void, GeofenceDefinition>("geofencing::signals::addGeofenceArea");
+		
+		Signal<void, GeofenceId> pauseGeofence = Signal<void, GeofenceId>("geofencing::signals::pauseGeofence");
+		
+		Signal<void, GeofenceId, TransitionFlags> resumeGeofence = Signal<void, GeofenceId, TransitionFlags>("geofencing::signals::resumeGeofence");
+		
+		Signal<void, GeofenceId> removeGeofenceArea = Signal<void, GeofenceId>("geofencing::signals::removeGeofenceArea");
+	};
+
+	Signals & getSignals();
+
+	void sendGeofenceTransition(GeofenceId geofence_id,  const Location & loc, Transition transition, GpsUtcTime timestamp);
+
+	void sendGeofenceStatus(SystemStatus status, const Location & last_location);
+
+	void answerGeofenceAddRequest(GeofenceId geofence_id, OperationStatus status);
+
+	void answerGeofenceRemoveRequest(GeofenceId geofence_id, OperationStatus status);
+	
+	void answerGeofencePauseRequest(GeofenceId geofence_id, OperationStatus status);
+	
+	void answerGeofenceResumeRequest(GeofenceId geofence_id, OperationStatus status);
+	
+} // namespace geofencing
 
 namespace debug {
 
