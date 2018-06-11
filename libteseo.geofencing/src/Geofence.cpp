@@ -54,6 +54,11 @@ bool Geofence::isMonitored(Transition t) const
     return static_cast<int32_t>(t) & monitor_transitions_;
 }
 
+void Geofence::setMonitoredTransition(TransitionFlags flags)
+{
+    this->monitor_transitions_ = flags;
+}
+
 void Geofence::updateStatusFromLocation(const Location & loc)
 {
     const Point p(loc);

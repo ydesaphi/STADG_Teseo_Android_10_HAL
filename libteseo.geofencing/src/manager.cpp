@@ -47,18 +47,25 @@ void GeofencingManager::add(GeofenceDefinition && def)
     auto it = this->geofences.find(id);
 
     if(it != this->geofences.end()) {
+        ALOGE("Unable to add geofence #%d, id already exists", id);
         this->answerGeofenceAddRequest(id, OperationStatus::Error_IdExists);
         return;
     }
 
     if(!transitionFlagsIsValid(def.monitor_transitions)) {
+        ALOGE("Unable to add geofence #%d, transition flag (0x%x) is not valid", id, static_cast<int32_t>(def.monitor_transitions));
         this->answerGeofenceAddRequest(id, OperationStatus::Error_InvalidTransition);
         return;
     }
     
     try {
-        auto geofence_ptr = std::make_shared<Geofence>(std::move(def));
-        this->geofences.insert(std::make_pair(id, geofence_ptr));
+        auto geofence_ptr = std::make_unique<Geofence>(std::move(def));
+        this->geofences.insert(std::make_pair(id, std::move(geofence_ptr)));
+
+        ALOGI("Geofence #%d added, now tracking %d geofences", id, std::count_if(geofences.begin(), geofences.end(), [](auto & p) {
+            return p.second.trackingStatus() == Geofence::TrackingStatus::Tracking;
+        }));
+
         this->answerGeofenceAddRequest(id, OperationStatus::Success);
     } catch(const std::exception & e) {
         ALOGE("Exception while adding geofence %d: %s", id, e.what());
@@ -74,8 +81,10 @@ void GeofencingManager::remove(GeofenceId id)
         iterator->second->setTrackingStatus(Geofence::TrackingStatus::Removing);
         iterator->second.reset();
         this->geofences.erase(iterator);
+        ALOGI("Geofence #%d removed.");
         this->answerGeofenceRemoveRequest(id, OperationStatus::Success);
     } else {
+        ALOGE("Geofence #%d not found, can't remove it.");
         this->answerGeofenceRemoveRequest(id, OperationStatus::Error_IdUnknown);
     }
 }
@@ -85,14 +94,57 @@ void GeofencingManager::pause(GeofenceId id)
     auto iterator = this->geofences.find(id);
     if(iterator != this->geofences.end()) {
         iterator->second->setTrackingStatus(Geofence::TrackingStatus::Paused);
+        ALOGI("Geofence #%d paused.");
         this->answerGeofencePauseRequest(id, OperationStatus::Success);
     } else {
+        ALOGE("Geofence #%d not found, can't pause it.");
         this->answerGeofencePauseRequest(id, OperationStatus::Error_IdUnknown);
+    }
+}
+
+void GeofencingManager::resume(GeofenceId id, TransitionFlags monitored_transitions)
+{
+    auto iterator = this->geofences.find(id);
+    if(iterator != this->geofences.end()) {
+        iterator->second->setMonitoredTransition(monitored_transitions);
+        iterator->second->setTrackingStatus(Geofence::TrackingStatus::Tracking);
+        ALOGI("Geofence #%d resumed.");
+        this->answerGeofenceResumeRequest(id, OperationStatus::Success);
+    } else {
+        ALOGE("Geofence #%d not found, can't resume it.");
+        this->answerGeofenceResumeRequest(id, OperationStatus::Error_IdUnknown);
     }
 }
 
 void GeofencingManager::onLocationUpdate(const Location & loc)
 {
+    for(auto & pair : geofences)
+    {
+        auto & geofence_ptr = pair.second;
+        geofence_ptr->updateStatusFromLocation(loc);
+    }
+}
+
+void GeofencingManager::onDeviceStatusUpdate(GpsStatusValue deviceStatus)
+{
+    /*
+     The current HAL doesn't give ENGINE_ON and ENGINE_OFF status which should be used for that purpose
+     When they will be available this function should not depend on the SESSION_{BEGIN,END} statuses.
+     */
+    switch(deviceStatus)
+    {
+        //case GPS_STATUS_ENGINE_ON:
+        case GPS_STATUS_SESSION_BEGIN:
+            sendGeofenceStatus(SystemStatus::Available);
+            break;
+
+        //case GPS_STATUS_ENGINE_OFF:
+        case GPS_STATUS_SESSION_END:
+        case GPS_STATUS_NONE:
+        default:
+            sendGeofenceStatus(SystemStatus::Unavailable);
+            break;
+    }
 }
 
 } // namespace device
