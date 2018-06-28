@@ -34,6 +34,9 @@ namespace geofencing {
 
 using namespace stm::geofencing::model;
 
+
+Geofence::Geofence() {}
+
 Geofence::Geofence(const model::GeofenceDefinition def, GeofencingManager * mng) {
     id_ = def.id;
     radius_ = def.radius;
@@ -87,6 +90,8 @@ void Geofence::updateStatusFromLocation(const Location & loc)
         case State::Unknown:
             t = Transition::Uncertain;
             break;
+        default:
+            break;
         }
         break;
 
@@ -99,6 +104,8 @@ void Geofence::updateStatusFromLocation(const Location & loc)
 
         case State::Unknown:
             t = Transition::Uncertain;
+            break;
+        default:
             break;
         }
         break;
@@ -113,7 +120,11 @@ void Geofence::updateStatusFromLocation(const Location & loc)
         case State::Outside:
             t = Transition::Exited;
             break;
+        default:
+            break;
         }
+        break;
+    default:
         break;
     }
 

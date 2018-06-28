@@ -240,6 +240,8 @@ void HalManager::initGeofencing()
 {
 	using namespace stm::geofencing;
 
+	ALOGI("Initialize Geofencing");
+	
 	geofencingManager = new GeofencingManager();
 
 	geofencingManager->answerGeofenceAddRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceAddRequest));

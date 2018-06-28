@@ -24,6 +24,7 @@
 
 #include <unordered_map>
 #include <memory>
+#include <algorithm> //std::count_if
 #include <forward_list>
 
 #include <teseo/geofencing/model.h>
@@ -33,10 +34,13 @@
 namespace stm {
 namespace geofencing {
 
-class GeofencingManager {
+class GeofencingManager:public Trackable {
 private:
 
     std::unordered_map<model::GeofenceId, std::unique_ptr<Geofence>> geofences;
+
+    //pointer to last location
+    Location * m_lastLocation_ptr;
 
 public:
 
@@ -49,8 +53,8 @@ public:
      * @brief Add a new geofence to track
      * @param def Geofence definition informations
      */
-    void add(model::GeofenceDefinition && def);
-
+    //void add(model::GeofenceDefinition && def);
+    void add(model::GeofenceDefinition def);
     /**
      * @brief Remove a geofence from tracking
      * @param id Identifier of the geofence to remove
@@ -82,7 +86,7 @@ public:
      */
     void onDeviceStatusUpdate(GpsStatusValue deviceStatus);
 
-    Signal<void, model::SystemStatus> sendGeofenceStatus;
+    Signal<void, model::SystemStatus, const Location &> sendGeofenceStatus;
 
     Signal<void, model::GeofenceId, const Location &, model::Transition, GpsUtcTime> sendGeofenceTransition;
 
@@ -93,6 +97,9 @@ public:
     Signal<void, model::GeofenceId, model::OperationStatus> answerGeofencePauseRequest;
 
     Signal<void, model::GeofenceId, model::OperationStatus> answerGeofenceResumeRequest;
+
+    ~GeofencingManager();   
+    
 };
 
 } // namespace geofencing
