@@ -11,7 +11,7 @@ Index
 Introduction
 ============
 
-The STM Android Teseo Hardware Abstraction Layer (HAL) defines a standard interface for the STMicroelectronics Teseo family of Global Navigation System ICs. The Teseo HAL library is packaged into modules files (.so) and loaded by the Android system at the appropriate time.
+The STM Android Teseo Hardware Abstraction Layer (HAL) defines a standard interface for the STMicroelectronics (STM) Teseo family of Global Navigation System ICs. The Teseo HAL library is packaged into modules files (.so) and loaded by the Android system at the appropriate time.
 
 Currently supported GNSS receivers are:
 STA8088, STA8089/STA8090
@@ -25,13 +25,15 @@ The STM Teseo HAL provides the following features:
 
 -   Real Time AGNSS (see section STM proprietary libraries)
 
+-   Predictive Assisted GPS 7 (see section STM proprietary libraries)
+
 
 
 Hardware
 ========
-The [\[HiKey from Lenovator\]](http://www.lenovator.com/product/90.html#params) has been used as the reference development platform for the Teseo HAL. If you are using another development platform, be sure that you can connect it properly to the UART of your Teseo chip.
+The [\[HiKey960 from Lenovator\]](http://www.96boards.org/product/hikey960/) has been used as the reference development platform for the Teseo HAL. If you are using another development platform, be sure that you can connect it properly to the UART of your Teseo chip.
 
-In the following sections, the terms *Hikey* and *Teseo Chip* refers, respectively, to the HiKey development platform and to any GNSS IC of the Teseo family.
+In the following sections, the terms *Hikey* and *Teseo Chip* refers, respectively, to the HiKey960 development platform and to any GNSS IC of the STMicroelectronics  Teseo family.
 
 
 Software architecture and Integration details
@@ -65,16 +67,16 @@ Once you have downloaded all the source code, you have to customize your target 
 
 -   Add the gps xml permission file and the gps configuration file in the `PRODUCT_COPY_FILES` variable.
 
-To do so, add the following lines in your target device `device.mk` file:
+To do so, add the following lines in your target device `device-hikey960.mk` file:
 ```makefile
 PRODUCT_COPY_FILES += \\
 frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \\
 device/linaro/hikey/etc/gps.conf:system/etc/gps.conf
 
-PRODUCT_PACKAGES += gps.hikey
+PRODUCT_PACKAGES += gps.hikey960
 ```
 
-If you are not using Hikey, you must adapt the gps.hikey name to your board and the path to your `gps.conf` file.
+If you are not using Hikey, you must adapt the gps.hikey960 name to your board and the path to your `gps.conf` file.
 
 You should use the template available in `hardware/stm/teseo/etc/gps.conf` to write your own `gps.conf` file.
 
@@ -87,12 +89,12 @@ For the Hikey you also need to configure SELinux to allow access to the tty devi
 And the following line to `device/linaro/hikey/ueventd.hikey.rc`:
 
 ```
-/dev/ttyXX 0660 system root
+/dev/ttyXX 0660 gps system
 ```
 
 where `/dev/ttyXX` is the serial console where the Teseo chip sits.
 
-Finally to **ease development**, add this line to `device/linaro/hikey/BoardConfig.mk`:
+Finally to **ease development**, add this line to `device/linaro/hikey/hikey960/BoardConfig.mk`:
 
 ```
 BOARD_KERNEL_CMDLINE := $(BOARD_KERNEL_CMDLINE) androidboot.selinux=permissive
@@ -114,7 +116,7 @@ You just have to issue the following command in the android environment:
 <AOSP_DIR> $ make -j32
 ```
 
-The build should contain the following file `/system/lib64/hw/gps.hikey.so`.
+The build should contain the following file `/system/lib64/hw/gps.hikey960.so`.
 
 
 STM proprietary libraries
@@ -122,15 +124,18 @@ STM proprietary libraries
 
 ### Real Time Assisted GNSS
 > The real-time AGNSS is able to provide the approximate current time, the ephemerides, the almanacs to the _Teseo chip_ GNSS engine in a time frame less than the usual time (about 30 seconds) needed to download real ephemeris from the sky. This reduces considerably the time to get fix especially in critical environments when the ephemeris download time could be very long. 
-Real-time AGNSS requires a network connection to download assistance data from the server. 
+Real-time AGNSS requires a network connection to download assistance data from the server.
 
+### Predictive Assisted GPS 7
+> This server based assistance allows fast and accurate GPS performances thanks to a 8KB bi-weekly data transfer. Starting from this downloaded payload, the _Teseo chip_ is capable of computing the ephemeris for up to 14 days, with very high accuracy, for the complete GPS and GLONASS constellations.
+Predictive AGPS requires a network connection to download assistance data from the server.
 
-The release of STM proprietary libraries is subject to signature of a Software License Agreement (SLA) or of a Non Disclosure Agreement (NDA); please contact an STMicroelectronics sales office and representatives for further information.
+Please note that the release of STM proprietary libraries is subject to signature of a Software License Agreement (SLA) or of a Non Disclosure Agreement (NDA); please contact an STMicroelectronics sales office and representatives for further information.
 
 
 Copyright
 ========
-Copyright (C) 2017 STMicroelectronics
+Copyright (C) 2018 STMicroelectronics
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
