@@ -102,7 +102,7 @@ int closeDevice(struct hw_device_t * dev)
 
 namespace gps {
 
-const void * onGetExtension(const char * name);
+
 
 static Signals signals;
 
@@ -277,7 +277,7 @@ void onInit(GpsGeofenceCallbacks * callbacks)
 {
 	ALOGI("Initialize geofence system request");
 	RegisterGeofenceCallbacks(callbacks);
-	signals.init(callbacks);
+	signals.init();
 }
 
 void onAddGeofenceArea (int32_t geofence_id, double latitude, double longitude, double radius_meters, int last_transition, int monitor_transitions, int notification_responsiveness_ms, int unknown_timer_ms)
@@ -293,7 +293,7 @@ void onAddGeofenceArea (int32_t geofence_id, double latitude, double longitude, 
 	def.notifications_responsiveness = std::chrono::milliseconds(notification_responsiveness_ms);
 	def.unknown_time = std::chrono::milliseconds(unknown_timer_ms);
 
-	signals.addGeofenceArea(def);
+	signals.addGeofenceArea(std::move(def));
 }
 
 void onPauseGeofence(int32_t geofence_id)
@@ -421,6 +421,7 @@ static Interfaces interfaces = {
 	}
 };
 
+/*
 static std::unordered_map<const char *, void *> interfacesMap = {
 	{GPS_XTRA_INTERFACE,               NULL}                     ,
 	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)}      ,
@@ -433,6 +434,7 @@ static std::unordered_map<const char *, void *> interfacesMap = {
 	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                     ,
 	{GNSS_CONFIGURATION_INTERFACE,     NULL}
 };
+//*/
 
 const GpsInterface * getGpsInterface(struct gps_device_t * device)
 {
@@ -443,8 +445,27 @@ const GpsInterface * getGpsInterface(struct gps_device_t * device)
 namespace gps {	
 	const void * onGetExtension(const char * name)
 	{
+
 		ALOGI("Get extension '%s'", name);
-		return interfacesMap.count(name) == 1 ? interfacesMap[name] : NULL;
+	    //return (interfacesMap.count(name) > 0) ? interfacesMap[name] : NULL;
+
+
+		if(strcmp(GPS_GEOFENCING_INTERFACE,name)==0)
+		{
+			return &(interfaces.geofencing);
+		}
+		else{
+			if(strcmp(GPS_DEBUG_INTERFACE,name)==0)
+			{
+				return &(interfaces.debug);
+			}
+			else
+			{
+				ALOGI("Extension '%s' not found", name);
+				return NULL;
+			}
+		}		
+
 	}
 }
 

@@ -36,7 +36,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libcutils             \
 	libsysutils           \
 	libhardware           \
-	libteseo.model
+	libteseo.model        \
+	libteseo.vendor
 
 LOCAL_SRC_FILES :=   \
 	src/Geofence.cpp \

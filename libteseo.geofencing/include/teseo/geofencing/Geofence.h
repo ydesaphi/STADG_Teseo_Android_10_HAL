@@ -72,7 +72,7 @@ private:
     GeofencingManager * manager;
 
 public:
-
+    Geofence();
     /**
      * Create a geofence
      * @param def Definition of geofence
