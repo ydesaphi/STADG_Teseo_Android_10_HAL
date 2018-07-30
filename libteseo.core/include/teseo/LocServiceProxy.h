@@ -38,6 +38,7 @@
 #include <teseo/model/NmeaMessage.h>
 #include <teseo/model/Location.h>
 #include <teseo/model/SatInfo.h>
+#include <teseo/geofencing/model.h>
 
 namespace stm {
 
@@ -132,6 +133,22 @@ namespace gps {
 			Signal<int, GpsPositionMode, GpsPositionRecurrence, uint32_t, uint32_t, uint32_t>("gps::signals::setPositionMode");
 	};
 
+	int onStart(void);
+
+	int onStop(void);
+
+	void onCleanup(void);
+
+	int onInjectTime(GpsUtcTime time, int64_t timeReference, int uncertainty);
+
+	int onInjectLocation(double latitude, double longitude, float accuracy);
+
+	void onDeleteAidingData(GpsAidingData flags);
+
+	int onSetPositionMode(GpsPositionMode mode,	GpsPositionRecurrence recurrence,uint32_t minInterval,uint32_t preferredAccuracy,uint32_t preferredTime);
+
+	const void * onGetExtension(const char * name);
+
 	/**
 	 * @brief      Gets the GPS signal list
 	 *
@@ -158,6 +175,55 @@ namespace gps {
 	void requestUtcTime();
 
 } // namespace gps
+
+namespace geofencing {
+
+	// Import only needed names to avoid too much writing
+	using stm::geofencing::model::GeofenceDefinition;
+	using stm::geofencing::model::GeofenceId;
+	using stm::geofencing::model::Transition;
+	using stm::geofencing::model::TransitionFlags;
+	using stm::geofencing::model::SystemStatus;
+	using stm::geofencing::model::OperationStatus;
+
+	struct Signals {
+		//Signal<void, GpsGeofenceCallbacks *> init = Signal<void, GpsGeofenceCallbacks *>("geofencing::signals::init");
+		Signal<void> init = Signal<void>("geofencing::signals::init");
+
+		Signal<void, GeofenceDefinition > addGeofenceArea = Signal<void, GeofenceDefinition >("geofencing::signals::addGeofenceArea");
+		
+		Signal<void, GeofenceId> pauseGeofence = Signal<void, GeofenceId>("geofencing::signals::pauseGeofence");
+		
+		Signal<void, GeofenceId, TransitionFlags> resumeGeofence = Signal<void, GeofenceId, TransitionFlags>("geofencing::signals::resumeGeofence");
+		
+		Signal<void, GeofenceId> removeGeofenceArea = Signal<void, GeofenceId>("geofencing::signals::removeGeofenceArea");
+	};
+
+	void onInit(GpsGeofenceCallbacks * callbacks);
+	
+	void onAddGeofenceArea (int32_t geofence_id, double latitude, double longitude, double radius_meters, int last_transition, int monitor_transitions, int notification_responsiveness_ms, int unknown_timer_ms);
+	
+	void onPauseGeofence(int32_t geofence_id);
+	
+	void onResumeGeofence(int32_t geofence_id, int monitor_transitions);
+	
+	void onRemoveGeofenceArea(int32_t geofence_id);
+
+	Signals & getSignals();
+
+	void sendGeofenceTransition(GeofenceId geofence_id,  const Location & loc, Transition transition, GpsUtcTime timestamp);
+
+	void sendGeofenceStatus(SystemStatus status, const Location & last_location);
+
+	void answerGeofenceAddRequest(GeofenceId geofence_id, OperationStatus status);
+
+	void answerGeofenceRemoveRequest(GeofenceId geofence_id, OperationStatus status);
+	
+	void answerGeofencePauseRequest(GeofenceId geofence_id, OperationStatus status);
+	
+	void answerGeofenceResumeRequest(GeofenceId geofence_id, OperationStatus status);
+	
+} // namespace geofencing
 
 namespace debug {
 

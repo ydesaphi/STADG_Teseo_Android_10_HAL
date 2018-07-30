@@ -21,10 +21,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# libteseo.core module
+# libteseo.model module
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libteseo.core
+LOCAL_MODULE := libteseo.geofencing
 LOCAL_MODULE_OWNER := stm
 LOCAL_MODULE_TAGS := optional
 
@@ -36,27 +36,20 @@ LOCAL_SHARED_LIBRARIES := \
 	libcutils             \
 	libsysutils           \
 	libhardware           \
-	libteseo.vendor       \
-	libteseo.utils        \
-	libteseo.config       \
 	libteseo.model        \
-	libteseo.device       \
-	libteseo.protocol     \
-	libteseo.geofencing
+	libteseo.vendor
 
-ifeq ($(TESEO_STAGPS_ENABLED),true)
-	LOCAL_CPPFLAGS += -DSTAGPS_ENABLED
-	LOCAL_SHARED_LIBRARIES += libstagps
-endif
+LOCAL_SRC_FILES :=   \
+	src/Geofence.cpp \
+	src/manager.cpp  \
+	src/model.cpp
 
-LOCAL_SRC_FILES :=                  \
-	src/HalManager.cpp              \
-	src/LocServiceProxy.cpp
-
-LOCAL_COPY_HEADERS_TO:= teseo/
-LOCAL_COPY_HEADERS :=               \
-	include/teseo/HalManager.h      \
-	include/teseo/LocServiceProxy.h
+LOCAL_COPY_HEADERS_TO := teseo/geofencing/
+LOCAL_COPY_HEADERS :=                   \
+	include/teseo/geofencing/Geofence.h \
+	include/teseo/geofencing/manager.h  \
+	include/teseo/geofencing/model.h
+	
 
 LOCAL_PRELINK_MODULE := false
 
