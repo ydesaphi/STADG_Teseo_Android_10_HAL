@@ -63,9 +63,13 @@ namespace geofencing {
 class GeofencingManager;
 } // namespace geofencing
 
+namespace straw {
+class StrawEngine;
+} // namespace straw
+
 /**
  * @brief      HAL Manager class
- * 
+ *
  * @details    This class is responsible of:
  * - The HAL initialization,
  * - The virtual device creation,
@@ -91,13 +95,17 @@ private:
 
 	geofencing::GeofencingManager * geofencingManager;
 
+	straw::StrawEngine *rawMeasurement;
+
 	void initUtils();
-	
+
 	void initDevice();
 
 	void initStagps();
 
 	void initGeofencing();
+
+	void initRawMeasurement(void);
 
 public:
 	HalManager();
@@ -106,7 +114,7 @@ public:
 
 	/**
 	 * @brief      HAL Initializer
-	 * 
+	 *
 	 * @details    The initializer create a virtual device using the gps.conf configuration file
 	 * and send the HAL capabilities to the android platform.
 	 *

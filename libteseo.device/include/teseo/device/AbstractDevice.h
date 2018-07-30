@@ -238,6 +238,13 @@ public:
 	Signal<void, model::Stagps8Answer, const std::vector<ByteVector> &> onStagps8Answer;
 
 	Signal<void, model::StagpsAnswer, const std::vector<ByteVector> &> onStagpsAnswer;
+
+	Signal<void,  const NmeaMessage &> sendPSTMTGnmeaMessages;
+
+	Signal<void,  const NmeaMessage &> sendPSTMTSnmeaMessages;
+
+	Signal<void,  const NmeaMessage &> sendPSTMNAVMnmeaMessages;
+
 };
 
 } // namespace device

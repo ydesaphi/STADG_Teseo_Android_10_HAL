@@ -73,7 +73,20 @@ struct Interfaces {
  * @param[in]  cb    The GpsCallbacks to register
  */
 void RegisterCallbacks(const GpsCallbacks * cb);
-
+#ifdef STRAW_ENABLED
+/**
+ * @brief      Register MeasurementsCallbacks
+ *
+ * @param[in]  cb    The MeasurementsCallbacks to register
+ */
+void RegisterMeasurementsCallbacks(const GpsMeasurementCallbacks * cb);
+/**
+ * @brief      Register NavigationMessageCallbacks
+ *
+ * @param[in]  cb    The NavigationMessageCallbacks to register
+ */
+ void RegisterNavigationMessageCallbacks(const GpsNavigationMessageCallbacks * cb);
+#endif
 /**
  * @brief      Open function called by the Android platform to create the "HAL device"
  *
@@ -245,7 +258,33 @@ namespace debug {
 	 */
 	size_t getInternalState(char * buffer, size_t bufferSize);
 }
+#ifdef STRAW_ENABLED
+namespace navigationMessage {
 
+	struct Signals {
+		Signal<int, GpsNavigationMessageCallbacks *> init = Signal<int, GpsNavigationMessageCallbacks *>("navigationMessage::signals::init");
+		Signal<void> close = Signal<void>("navigationMessage::signals::close");
+	};
+
+	Signals & getSignals();
+	int onInit(GpsNavigationMessageCallbacks * callbacks);
+	void onClose(void);
+	void sendNavigationMessages(const GnssNavigationMessage & msg);
+}
+
+namespace measurement {
+
+	struct Signals {
+		Signal<int, GpsMeasurementCallbacks *> init = Signal<int, GpsMeasurementCallbacks *>("measurement::signals::init");
+		Signal<void> close = Signal<void>("measurement::signals::close");
+	};
+
+	Signals & getSignals();
+	int  onInit(GpsMeasurementCallbacks * cb);
+	void onClose(void);
+	void sendMeasurements(const GnssData & msg);
+}
+#endif 
 } // namespace LocServiceProxy
 } // namespace stm
 

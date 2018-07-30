@@ -79,7 +79,7 @@ constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 4> std = 
 	// Do not forget to update number of elements in map declaration
 };
 
-constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 8> stm = {
+constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 11> stm = {
 	{"SBAS"_s, &decoders::sbas},
 	{"VER"_s,  &decoders::pstmver},
 	{"STAGPS8PASSRTN"_s,  &decoders::pstmstagps8passrtn},
@@ -87,7 +87,10 @@ constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 8> stm = 
 	{"STAGPSPASSRTN"_s,  &decoders::pstmstagpspassrtn},
 	{"STAGPSPASSGENERROR"_s, &decoders::pstmstagpspassrtn},
 	{"STAGPSSATSEEDOK"_s, &decoders::pstmstagpssatseedresponse},
-	{"STAGPSSATSEEDERROR"_s, &decoders::pstmstagpssatseedresponse}
+	{"STAGPSSATSEEDERROR"_s, &decoders::pstmstagpssatseedresponse},
+	{"TS"_s, &decoders::pstmts},
+	{"TG"_s, &decoders::pstmtg},
+	{"NAVM"_s, &decoders::pstmnavm},
 	// Do not forget to update number of elements in map declaration
 };
 
@@ -139,6 +142,21 @@ void decode(AbstractDevice & dev, const NmeaMessage & msg)
 		ALOGW("Decoder is nullptr.");
 	}
 #endif
+}
+
+void decoders::pstmts(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	dev.sendPSTMTSnmeaMessages(msg);
+}
+
+void decoders::pstmtg(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	dev.sendPSTMTGnmeaMessages(msg);
+}
+
+void decoders::pstmnavm(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	dev.sendPSTMNAVMnmeaMessages(msg);
 }
 
 #ifdef MSG_DBG_GGA

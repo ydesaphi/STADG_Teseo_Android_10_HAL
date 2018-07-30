@@ -49,6 +49,29 @@ private:
 
 public:
 	/**
+	 * @brief      --PSTMTS decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMTS Message to decode
+	 */
+	static void pstmts(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      --PSTMTG decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMTG Message to decode
+	 */
+	static void pstmtg(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      --PSTMNAVM decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMNAVM Message to decode
+	 */
+	static void pstmnavm(AbstractDevice & dev, const NmeaMessage & msg);
+	/**
 	 * @brief      --GGA decoder
 	 *
 	 * @param      dev   Device to update
