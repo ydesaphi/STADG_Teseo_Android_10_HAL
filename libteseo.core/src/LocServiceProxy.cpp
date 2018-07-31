@@ -34,6 +34,7 @@
 #include <hardware/gps.h>
 #include <string.h>
 #include <unordered_map>
+#include <string_view>
 
 #include <teseo/HalManager.h>
 #include <teseo/utils/Thread.h>
@@ -421,8 +422,8 @@ static Interfaces interfaces = {
 	}
 };
 
-/*
-static std::unordered_map<const char *, void *> interfacesMap = {
+
+static std::unordered_map<std::string_view, void *> interfacesMap = {
 	{GPS_XTRA_INTERFACE,               NULL}                     ,
 	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)}      ,
 	{AGPS_INTERFACE,                   NULL}                     ,
@@ -434,7 +435,7 @@ static std::unordered_map<const char *, void *> interfacesMap = {
 	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                     ,
 	{GNSS_CONFIGURATION_INTERFACE,     NULL}
 };
-//*/
+
 
 const GpsInterface * getGpsInterface(struct gps_device_t * device)
 {
@@ -445,27 +446,17 @@ const GpsInterface * getGpsInterface(struct gps_device_t * device)
 namespace gps {	
 	const void * onGetExtension(const char * name)
 	{
+		auto it  = interfacesMap.find(std::string_view(name));
 
-		ALOGI("Get extension '%s'", name);
-	    //return (interfacesMap.count(name) > 0) ? interfacesMap[name] : NULL;
-
-
-		if(strcmp(GPS_GEOFENCING_INTERFACE,name)==0)
+		if(it != interfacesMap.end())
 		{
-			return &(interfaces.geofencing);
+			ALOGI("Get extension '%s': %p", name, it->second);
+			return it->second;
 		}
 		else{
-			if(strcmp(GPS_DEBUG_INTERFACE,name)==0)
-			{
-				return &(interfaces.debug);
-			}
-			else
-			{
-				ALOGI("Extension '%s' not found", name);
-				return NULL;
-			}
-		}		
-
+			ALOGI("Extension '%s' not supported: NULL", name);
+			return NULL;
+		}
 	}
 }
 
