@@ -99,6 +99,7 @@ int HalManager::init(GpsCallbacks * cb)
 	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
 	               GPS_CAPABILITY_SINGLE_SHOT    |
 	               GPS_CAPABILITY_ON_DEMAND_TIME |
+				   GPS_CAPABILITY_GEOFENCING     |
 	               GPS_CAPABILITY_MEASUREMENTS   |
 	               GPS_CAPABILITY_NAV_MESSAGES);
 
