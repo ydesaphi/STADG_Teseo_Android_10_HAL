@@ -26,6 +26,8 @@
  * @copyright 2016, STMicroelectronics, All rights reserved.
  */
 
+
+
 #include <teseo/LocServiceProxy.h>
 
 #define LOG_TAG "teseo_hal_LocServiceProxy"
@@ -410,6 +412,7 @@ std::size_t getInternalState(char * buffer, std::size_t bufferSize)
 }
 
 } // namespace debug
+
 #ifdef STRAW_ENABLED
 namespace measurement {
 static Signals signals;
@@ -430,10 +433,21 @@ void onClose(void)
    	signals.close.emit();
 }
 
-void sendMeasurements(const GnssData & msg)
+void sendMeasurements(const GnssClock & clockData, std::vector <GnssMeasurement> & measurementdata)
 {
 	ALOGI("SendMeasurements");
-	callbacks.measurement.gnss_measurement_callback((GnssData*) &msg);
+
+	GnssData Measurementmsg = {.size = sizeof(GnssData), .measurement_count = 0};
+	Measurementmsg.clock = clockData;
+	Measurementmsg.measurement_count = measurementdata.size();
+	int i = 0;
+	for(std::vector<GnssMeasurement>::iterator it = measurementdata.begin(); it != measurementdata.end(); it++,i++ )    {
+		if(i == GNSS_MAX_MEASUREMENT) {
+			break;
+		}
+		Measurementmsg.measurements[i] = *it ;
+	}
+	callbacks.measurement.gnss_measurement_callback( &Measurementmsg);
 }
 
 }
@@ -453,17 +467,18 @@ int onInit(GpsNavigationMessageCallbacks * callbacks)
 
 void onClose(void)
 {
-		signals.close.emit();
+	signals.close.emit();
 }
 
-void sendNavigationMessages(const GnssNavigationMessage & msg)
+void sendNavigationMessages(GnssNavigationMessage & msg)
 {
 	ALOGI("SendNavigationMessages");
-	callbacks.navigationMessage.gnss_navigation_message_callback((GnssNavigationMessage*) &msg);
+	callbacks.navigationMessage.gnss_navigation_message_callback(static_cast<GnssNavigationMessage *> (&msg));
 }
 } //end navigation message
 
 #endif
+
 static Interfaces interfaces = {
 	.gps = {
 		.size               = sizeof(GpsInterface),
@@ -503,8 +518,6 @@ static Interfaces interfaces = {
 #endif
 };
 
-<<<<<<< HEAD
-
 static std::unordered_map<std::string_view, void *> interfacesMap = {
 	{GPS_XTRA_INTERFACE,               NULL}                     ,
 	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)}      ,
@@ -514,11 +527,11 @@ static std::unordered_map<std::string_view, void *> interfacesMap = {
 	{AGPS_RIL_INTERFACE,               NULL}                     ,
 	{GPS_GEOFENCING_INTERFACE,         &(interfaces.geofencing)} ,
 #ifdef STRAW_ENABLED
-	{GPS_MEASUREMENT_INTERFACE,        &(interfaces.measurement)} ,
-	{GPS_NAVIGATION_MESSAGE_INTERFACE, &(interfaces.navigationMessage)}                ,
+	{GPS_MEASUREMENT_INTERFACE,        &(interfaces.measurement)}   	,
+	{GPS_NAVIGATION_MESSAGE_INTERFACE, &(interfaces.navigationMessage)}	,
 #else
-	{GPS_MEASUREMENT_INTERFACE,        NULL}                ,
-	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                ,
+	{GPS_MEASUREMENT_INTERFACE,        NULL}				,
+	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}				,
 #endif
 	{GNSS_CONFIGURATION_INTERFACE,     NULL}
 };
@@ -546,7 +559,7 @@ const void * onGetExtension(const char * name)
 		}
 	}
 }
-}
+
 
 } // namespace LocServiceProxy
 } // namespace stm

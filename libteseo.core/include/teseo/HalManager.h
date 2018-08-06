@@ -105,7 +105,7 @@ private:
 
 	void initGeofencing();
 
-	void initRawMeasurement(void);
+	void initRawMeasurement();
 
 public:
 	HalManager();

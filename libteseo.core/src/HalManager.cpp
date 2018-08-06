@@ -48,14 +48,14 @@
 #include <teseo/protocol/NmeaEncoder.h>
 #include <teseo/geofencing/manager.h>
 
-#ifdef STRAW_ENABLED
-#include <teseo/libstraw/straw.h>
-#endif
-
 #include <teseo/LocServiceProxy.h>
 
 #ifdef STAGPS_ENABLED
 #include <teseo/stagps/stagps.h>
+#endif
+
+#ifdef STRAW_ENABLED
+#include <teseo/libstraw/straw.h>
 #endif
 
 namespace stm {
@@ -137,7 +137,6 @@ void HalManager::cleanup(void)
 	delete rawMeasurement;
 	rawMeasurement = nullptr;
 #endif
-
 
 	delete stream;
 	delete byteStream;
@@ -293,15 +292,11 @@ void HalManager::initRawMeasurement(void)
 	rawMeasurement->sendMeasurements.connect(SlotFactory::create(LocServiceProxy::measurement::sendMeasurements));
 	rawMeasurement->sendNavigathionMessages.connect(SlotFactory::create(LocServiceProxy::navigationMessage::sendNavigationMessages));
 
-	device->sendPSTMTGnmeaMessages.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::PSTMTGnmeaMessages));
-	device->sendPSTMTSnmeaMessages.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::PSTMTSnmeaMessages));
-	device->sendPSTMNAVMnmeaMessages.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::PSTMNAVMnmeaMessages));
+	device->onNmea.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::onNmeaMessage));
 
 	auto & navSignals = LocServiceProxy::navigationMessage::getSignals();
 	navSignals.init.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::initNavigationMessages));
 	navSignals.close.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::closeNavigationMessages));
-
-
 }
 #else
 void HalManager::initRawMeasurement(void)
