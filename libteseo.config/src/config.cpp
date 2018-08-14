@@ -74,6 +74,7 @@ const Configuration & read(const string & path)
     READ_VAL(constellations.beidou,  CFG_DEF_CONSTELLATIONS_BEIDOU);
     READ_VAL(constellations.galileo, CFG_DEF_CONSTELLATIONS_GALILEO);
 
+    READ_VAL(agnss.enable,CFG_DEF_DATA_ASSISTANCE_ENABLED);
     READ_VAL(stagps.enable, CFG_DEF_STAGPS_ENABLE);
 
     READ_VAL(stagps.predictive.enable,    CFG_DEF_STAGPS_PREDICTIVE_ENABLE);

@@ -58,6 +58,12 @@
 #include <teseo/libstraw/straw.h>
 #endif
 
+#ifdef AGPS_ENABLED
+#include <teseo/agnss/agps_if.h>
+#include <teseo/agnss/ril_if.h>
+#include <teseo/agnss/ni_if.h>
+#endif
+
 namespace stm {
 
 using namespace stm::device;
@@ -72,6 +78,8 @@ HalManager::HalManager() :
 	device = nullptr;
 
 	setCapabilites.connect(SlotFactory::create(&(LocServiceProxy::gps::sendCapabilities)));
+
+	config::read();
 }
 
 HalManager::~HalManager()
@@ -88,9 +96,9 @@ int HalManager::init(GpsCallbacks * cb)
 
 	ALOGI("Initialize the HAL");
 
-	config::read();
-
-	LocServiceProxy::gps::sendSystemInfo(2017);
+	//config::read();
+	
+	LocServiceProxy::gps::sendSystemInfo(2018);
 
 	ALOGI("Initialize modules");
 
@@ -100,8 +108,24 @@ int HalManager::init(GpsCallbacks * cb)
 	initGeofencing();
 	initRawMeasurement();
 
+	#ifdef AGPS_ENABLED
+	if(config::get().agnss.enable)
+	{
+		initAGpsIf();
+		initRilIf();
+		initNiIf();
+	}
+	else
+	{
+		ALOGI("Data assistance disabled in configuration");
+	}
+	#endif
+
 	ALOGI("Set capabilities");
 	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
+	#ifdef SUPL_ENABLED
+				   GPS_CAPABILITY_MSB            | //MS Based
+	#endif
 	               GPS_CAPABILITY_SINGLE_SHOT    |
 	               GPS_CAPABILITY_ON_DEMAND_TIME |
 				   GPS_CAPABILITY_GEOFENCING     |
@@ -131,6 +155,24 @@ void HalManager::cleanup(void)
 	ALOGD("STAGPS Engine is not compiled, do not cleanup");
 #endif
 
+#ifdef AGPS_ENABLED
+	if(config::get().agnss.enable)
+	{
+		delete rilIf;
+		delete niIf;
+		delete AgpsIf;
+		rilIf = nullptr;
+		niIf = nullptr;
+		AgpsIf = nullptr;
+	}
+	else
+	{
+		ALOGV("Data assistance disabled in configuration, nothing to clean up");
+	}
+#else
+    ALOGD("AGPS is not compiled, do not cleanup");
+#endif
+
 	delete geofencingManager;
 
 #ifdef STRAW_ENABLED
@@ -142,6 +184,7 @@ void HalManager::cleanup(void)
 	delete byteStream;
 	delete decoder;
 	delete device;
+
 	geofencingManager = nullptr;
 	stream = nullptr;
 	byteStream = nullptr;
@@ -305,4 +348,50 @@ void HalManager::initRawMeasurement(void)
 }
 #endif
 
+void HalManager::initRilIf()
+{
+	//using namespace stm::ril;
+
+	ALOGI("Initialize RIL interface");	
+
+	rilIf = new ril::Ril_If();
+	
+	// Ril interface -> framework signals
+	rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
+	rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
+
+	//Framework -> ril interface signals
+	auto & rilSignals = LocServiceProxy::ril::getSignals();
+
+	rilSignals.init.connect(SlotFactory::create(*rilIf, &ril::Ril_If::initialize));
+	rilSignals.setRefLocation.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setRefLocation));
+	rilSignals.setSetId.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setSetId));
+	rilSignals.niMessage.connect(SlotFactory::create(*rilIf, &ril::Ril_If::niMessage));
+	rilSignals.updateNetworkState.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkState));
+	rilSignals.updateNetworkAvailability.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkAvailability));
+}
+
+void HalManager::initNiIf(){
+	ALOGI("Initialize NI interface");	
+
+	niIf = new ni::Ni_If();
+	auto & niSignals = LocServiceProxy::ni::getSignals();
+	// Ni interface -> framework signals
+	niIf->reqNiNotification.connect(SlotFactory::create(LocServiceProxy::ni::sendNiNotificationRequest));
+
+	//Framework -> ni interface signals
+	niSignals.init.connect(SlotFactory::create(*niIf, &ni::Ni_If::initialize));
+	niSignals.respond.connect(SlotFactory::create(*niIf, &ni::Ni_If::respond));
+}
+
+void	HalManager::initAGpsIf()
+	{
+		AgpsIf = new agps::Agps_If();
+
+		auto & agpsSignals = LocServiceProxy::agps::getSignals();
+		agpsSignals.init.connect(SlotFactory::create(*AgpsIf, &agps::Agps_If::initialize));
+		agpsSignals.setServer.connect(SlotFactory::create(*AgpsIf, &agps::Agps_If::setServer));
+
+		AgpsIf->statusCb.connect(SlotFactory::create(LocServiceProxy::agps::sendAGpsStatus));
+	}	
 } // namespace stm

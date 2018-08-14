@@ -66,6 +66,17 @@ class GeofencingManager;
 namespace straw {
 class StrawEngine;
 } // namespace straw
+namespace ril {
+class Ril_If;
+} // namespace ril
+
+namespace ni {
+class Ni_If;
+} // namespace ril
+
+namespace agps {
+class Agps_If;
+} // namespace agps
 
 /**
  * @brief      HAL Manager class
@@ -96,6 +107,11 @@ private:
 	geofencing::GeofencingManager * geofencingManager;
 
 	straw::StrawEngine *rawMeasurement;
+	stm::ril::Ril_If * rilIf;
+
+	stm::ni::Ni_If * niIf;
+
+	stm::agps::Agps_If * AgpsIf;
 
 	void initUtils();
 
@@ -106,6 +122,11 @@ private:
 	void initGeofencing();
 
 	void initRawMeasurement();
+	void initAGpsIf();
+
+	void initRilIf();
+
+	void initNiIf();
 
 public:
 	HalManager();

@@ -56,6 +56,15 @@ ifeq ($(TESEO_STAGPS_ENABLED),true)
 	LOCAL_SHARED_LIBRARIES += libstagps
 endif
 
+ifeq ($(TESEO_AGPS_ENABLED),true)
+	LOCAL_CPPFLAGS += -DAGPS_ENABLED
+	LOCAL_SHARED_LIBRARIES += libagnss
+endif
+
+ifeq ($(TESEO_SUPL_ENABLED),true)
+	LOCAL_CPPFLAGS += -DSUPL_ENABLED
+endif
+
 LOCAL_SRC_FILES :=    \
 	gps.cpp
 

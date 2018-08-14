@@ -90,6 +90,27 @@ void RegisterMeasurementsCallbacks(const GpsMeasurementCallbacks * cb);
 #endif
 
 /**
+ * @brief      Register GpsGeofenceCallbacks
+ *
+ * @param[in]  cb    The GpsGeofenceCallbacks to register
+ */
+void RegisterGeofenceCallbacks(const GpsGeofenceCallbacks * cb);
+
+/**
+ * @brief      Register AGpsRilCallbacks
+ *
+ * @param[in]  cb    The AGpsRilCallbacks to register
+ */
+void RegisterRilCallbacks(const AGpsRilCallbacks *cb);
+
+/**
+ * @brief      Register AGpsRilCallbacks
+ *
+ * @param[in]  cb    The AGpsRilCallbacks to register
+ */
+void RegisterNiCallbacks(const GpsNiCallbacks *cb);
+
+/**
  * @brief      Open function called by the Android platform to create the "HAL device"
  *
  * @param[in]  module  The GPS module instance
@@ -286,6 +307,67 @@ namespace measurement {
 	void sendMeasurements(const GnssClock & clockData,std::vector <GnssMeasurement> & measurementdata);
 }
 #endif
+namespace ril {
+
+	struct Signals {
+		Signal<void> init = Signal<void>("ril::signals::init");
+
+		Signal<void, const AGpsRefLocation *> setRefLocation = Signal<void, const AGpsRefLocation * >("ril::signals::setRefLocation");
+		
+		Signal<void, AGpsSetIDType, const char *> setSetId = Signal<void, AGpsSetIDType, const char *>("ril::signals::setSetId");
+		
+		Signal<void, uint8_t *> niMessage = Signal<void, uint8_t *>("ril::signals::niMessage");
+		
+		Signal<void, int, int,int>updateNetworkState = Signal<void, int, int,int>("ril::signals::updateNetworkState");
+
+		Signal<void, int>updateNetworkAvailability = Signal<void, int>("ril::signals::updateNetworkAvailability");
+	};
+
+	void onInit(AGpsRilCallbacks *callbacks);
+	void onSetRefLocation(const AGpsRefLocation *agps_reflocation, size_t sz_struct);
+ 	void onSetSetId( AGpsSetIDType type, const char *setid);
+ 	void onNiMessage(uint8_t *msg, size_t len);
+	void onUpdateNetworkState(int connected, int type, int roaming, const char *extra_info);
+	void onUpdateNetworkAvailability(int available, const char *apn);
+
+	Signals & getSignals();
+
+	void sendRequestSetId(uint32_t flags);
+	void sendRequestReferenceLocation(uint32_t flags);
+
+} // namespace ril 
+
+namespace ni
+{
+	struct Signals {
+		Signal<void> init = Signal<void>("ni::signals::init");
+		Signal<void, int, GpsUserResponseType> respond = Signal<void, int, GpsUserResponseType>("ni::signals::respond");
+	};
+	void onInit(GpsNiCallbacks *callbacks);
+	void onResponse(int notif_id, GpsUserResponseType user_response);
+	Signals & getSignals();
+	void sendNiNotificationRequest(GpsNiNotification *notification);
+
+} // namespace ni
+
+namespace agps
+{
+
+	struct Signals {
+		Signal<void> init = Signal<void>("agps::signals:: init");
+		Signal<int,AGpsType,const char*,int> setServer = Signal<int,AGpsType,const char*,int>("agps::signals::setServer");
+	};
+
+	Signals & getSignals();
+	void onInit(AGpsCallbacks *callbacks);
+	int onDataConnOpen(const char* apn);
+	int onDataConnClosed(void);
+	int onDataConnFailed(void);
+	int onSetServer(AGpsType type, const char* hostname, int port);
+	int onDataConnOpenWithApnType(const char* apn, ApnIpType apnIpType);
+
+	void sendAGpsStatus(AGpsStatus* status);
+}
 
 } // namespace LocServiceProxy
 } // namespace stm

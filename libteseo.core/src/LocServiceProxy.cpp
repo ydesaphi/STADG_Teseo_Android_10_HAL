@@ -37,6 +37,7 @@
 #include <string.h>
 #include <unordered_map>
 #include <string_view>
+#include <teseo/config/config.h>
 
 #include <teseo/HalManager.h>
 #include <teseo/utils/Thread.h>
@@ -51,14 +52,18 @@ static struct {
 	GpsMeasurementCallbacks measurement;
 	GpsNavigationMessageCallbacks navigationMessage;
 #endif
+	AGpsRilCallbacks ril;
+	GpsNiCallbacks ni;
+	AGpsCallbacks agps;
 } callbacks;
 
 static struct gps_device_t * device = nullptr;
 
+
 void RegisterCallbacks(const GpsCallbacks * cb)
 {
-	memcpy(&(callbacks.gps), cb, sizeof(GpsCallbacks));
 	Thread::setCreateThreadCb(callbacks.gps.create_thread_cb);
+	memcpy(&(callbacks.gps), cb, sizeof(GpsCallbacks));
 }
 
 void RegisterGeofenceCallbacks(const GpsGeofenceCallbacks * cb)
@@ -77,6 +82,20 @@ void RegisterMeasurementsCallbacks(const GpsMeasurementCallbacks * cb)
 	memcpy(&(callbacks.measurement), cb, sizeof(GpsMeasurementCallbacks));
 }
 #endif
+void RegisterRilCallbacks(const AGpsRilCallbacks *cb)
+{
+	memcpy(&(callbacks.ril), cb, sizeof(AGpsRilCallbacks));
+}
+
+void RegisterNiCallbacks(const GpsNiCallbacks *cb)
+{
+	memcpy(&(callbacks.ni), cb, sizeof(GpsNiCallbacks));
+}
+
+void RegisterAGpsCallbacks(const AGpsCallbacks *cb)
+{
+	memcpy(&(callbacks.agps), cb, sizeof(AGpsCallbacks));
+}
 
 int openDevice(const struct hw_module_t * module, char const * name, struct hw_device_t ** dev)
 {
@@ -478,6 +497,163 @@ void sendNavigationMessages(GnssNavigationMessage & msg)
 } //end navigation message
 
 #endif
+namespace ril {
+	static Signals signals;
+
+	Signals & getSignals() { return signals; }
+
+
+	void onInit(AGpsRilCallbacks *callbacks)
+	{
+		ALOGI("Initialize ril interface");
+		RegisterRilCallbacks(callbacks);
+		signals.init();
+	}
+
+	void onSetRefLocation(const AGpsRefLocation *agps_reflocation, size_t sz_struct)
+	{
+		ALOGI("Set Reference Location received");
+		(void)(sz_struct);
+		signals.setRefLocation(std::move(agps_reflocation));
+	}
+
+ 	void onSetSetId( AGpsSetIDType type, const char *setid)
+	{
+		ALOGI("Set Set ID received");
+		signals.setSetId(type, setid);
+	}
+ 	void onNiMessage(uint8_t *msg, size_t len)
+	{
+		ALOGI("Ni message received");
+		(void)(len);
+		signals.niMessage(msg);
+	}
+	void onUpdateNetworkState(int connected, int type, int roaming, const char *extra_info)
+	{
+		ALOGI("Update Network State received");
+		(void)(extra_info);
+		signals.updateNetworkState(connected,type,roaming);
+	}
+
+	void onUpdateNetworkAvailability(int available, const char *apn)
+	{
+		ALOGI("Update Network Availability received");
+		(void)(apn);
+		signals.updateNetworkAvailability(available);
+	}
+
+	void sendRequestSetId(uint32_t flags)
+	{
+		ALOGI("Request Cell Id");
+		callbacks.ril.request_setid(flags);
+	}
+
+	void sendRequestReferenceLocation(uint32_t flags)
+	{
+		ALOGI("Request Ref loc");
+		callbacks.ril.request_refloc(flags);
+	}
+
+} // namespace ril
+
+namespace ni
+{
+	static Signals signals;
+
+	Signals & getSignals() { return signals; }
+
+	void onInit(GpsNiCallbacks *callbacks)
+	{
+		ALOGI("Initialize Ni interface");
+		RegisterNiCallbacks(callbacks);
+		signals.init();
+	}
+
+	void onResponse(int notif_id, GpsUserResponseType user_response)
+	{
+		ALOGI("Response to Network Initiated request");
+		signals.respond(notif_id, user_response);
+	}
+
+	void sendNiNotificationRequest(GpsNiNotification *notification)
+	{
+		ALOGI("Send Network Initiated request");
+		callbacks.ni.notify_cb(notification);
+	}
+} // namespace ni
+
+
+namespace agps
+{
+	static Signals signals;
+
+	Signals & getSignals() { return signals; }
+
+	void onInit(AGpsCallbacks *callbacks)
+	{
+		ALOGI("Initialize AGps interface");
+		RegisterAGpsCallbacks(callbacks);
+		signals.init();
+	}
+
+	/**
+     * Deprecated.
+     * If the HAL supports AGpsInterface_v2 this API will not be used, see
+     * data_conn_open_with_apn_ip_type for more information.
+     */
+	int onDataConnOpen(const char* apn)
+	{
+		ALOGI("Data connection open");
+		(void)(apn);
+		return 0;
+	}
+
+    /**
+     * Notifies that the AGPS data connection has been closed.
+     */
+	int onDataConnClosed(void)
+	{
+		ALOGI("Data connection closed");
+		return 0;
+	}
+	/**
+     * Notifies that a data connection is not available for AGPS.
+     */
+	int onDataConnFailed(void)
+	{
+		ALOGI("Data connection failed");
+		return 0;
+	}
+
+	/**
+     * Sets the hostname and port for the AGPS server.
+     */
+	int onSetServer(AGpsType type, const char* hostname, int port)
+	{
+		ALOGI("AGps received set server");
+		signals.setServer(type,hostname, port);
+		return 0;
+	}
+
+	/**
+     * Notifies that a data connection is available and sets the name of the
+     * APN, and its IP type, to be used for SUPL connections.
+     */
+	int onDataConnOpenWithApnType(const char* apn, ApnIpType apnIpType)
+	{
+		ALOGI("Data connection available with apn");
+		(void)(apn);
+		(void)(apnIpType);
+		return 0;
+	}
+
+
+	void sendAGpsStatus(AGpsStatus* status)
+	{
+		ALOGI("Send agps status");
+		callbacks.agps.status_cb(status);
+	}
+}
 
 static Interfaces interfaces = {
 	.gps = {
@@ -516,15 +692,45 @@ static Interfaces interfaces = {
 		.close              = &LocServiceProxy::navigationMessage::onClose
 	},
 #endif
+	.ril = {
+		.size				= sizeof(AGpsRilInterface),
+		.init				= &LocServiceProxy::ril::onInit,
+		.set_ref_location	= &LocServiceProxy::ril::onSetRefLocation,
+		.set_set_id			= &LocServiceProxy::ril::onSetSetId,
+		.ni_message         = &LocServiceProxy::ril::onNiMessage,
+		.update_network_state= &LocServiceProxy::ril::onUpdateNetworkState,
+		.update_network_availability=&LocServiceProxy::ril::onUpdateNetworkAvailability
+	},
+	.ni = {
+		.size				= sizeof(GpsNiInterface),
+		.init				= &LocServiceProxy::ni::onInit,
+		.respond			= &LocServiceProxy::ni::onResponse
+	},
+	.agps = {
+		.size				= sizeof(AGpsInterface),
+		.init				= &LocServiceProxy::agps::onInit,
+		.data_conn_open		= &LocServiceProxy::agps::onDataConnOpen,
+		.data_conn_closed	= &LocServiceProxy::agps::onDataConnClosed,
+		.data_conn_failed	= &LocServiceProxy::agps::onDataConnFailed,
+		.set_server			= &LocServiceProxy::agps::onSetServer,
+		.data_conn_open_with_apn_ip_type =&LocServiceProxy::agps::onDataConnOpenWithApnType	
+	}
+
 };
 
 static std::unordered_map<std::string_view, void *> interfacesMap = {
 	{GPS_XTRA_INTERFACE,               NULL}                     ,
 	{GPS_DEBUG_INTERFACE,              &(interfaces.debug)}      ,
-	{AGPS_INTERFACE,                   NULL}                     ,
 	{SUPL_CERTIFICATE_INTERFACE,       NULL}                     ,
+#ifdef AGPS_ENABLED
+	{AGPS_INTERFACE,                   &(interfaces.agps)}       ,
+	{GPS_NI_INTERFACE,                 &(interfaces.ni)}         ,
+	{AGPS_RIL_INTERFACE,               &(interfaces.ril)}        ,
+#else
+	{AGPS_INTERFACE,                   NULL}                     ,
+	{AGPS_RIL_INTERFACE,               NULL} 				     ,
 	{GPS_NI_INTERFACE,                 NULL}                     ,
-	{AGPS_RIL_INTERFACE,               NULL}                     ,
+#endif
 	{GPS_GEOFENCING_INTERFACE,         &(interfaces.geofencing)} ,
 #ifdef STRAW_ENABLED
 	{GPS_MEASUREMENT_INTERFACE,        &(interfaces.measurement)}   	,
@@ -543,10 +749,24 @@ const GpsInterface * getGpsInterface(struct gps_device_t * device)
 	return &(interfaces.gps);
 }
 
-namespace gps {
-const void * onGetExtension(const char * name)
-{
-	auto it  = interfacesMap.find(std::string_view(name));
+namespace gps {	
+	const void * onGetExtension(const char * name)
+	{
+		
+
+#ifdef AGPS_ENABLED
+		if((std::strcmp(AGPS_INTERFACE,name)==0)||
+			(std::strcmp(AGPS_RIL_INTERFACE,name)==0)||
+			(std::strcmp(GPS_NI_INTERFACE,name)==0))
+			{
+				// data assistance disabled in configuration
+				if(!config::get().agnss.enable)
+				{
+					return NULL;
+				}
+			}
+#endif
+		auto it  = interfacesMap.find(std::string_view(name));
 
 		if(it != interfacesMap.end())
 		{

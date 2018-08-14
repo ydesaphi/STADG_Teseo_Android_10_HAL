@@ -31,6 +31,8 @@
 #define CFG_DEF_DEVICE_TTY std::string("/dev/ttyAMA2")
 #define CFG_DEF_DEVICE_SPEED 115200
 
+
+#define CFG_DEF_DATA_ASSISTANCE_ENABLED false
 #define CFG_DEF_STAGPS_ENABLE false
 
 #define CFG_DEF_CONSTELLATIONS_GPS     true

@@ -60,6 +60,13 @@ struct Configuration {
     } constellations;
 
     /**
+     * Assistance
+     */
+    struct Agnss
+    {
+        bool enable; ///< Flag used to enable or disable assistance including ST-AGPS
+    } agnss;
+    /**
      * ST-AGPS Configuration
      */
     struct Stagps {
