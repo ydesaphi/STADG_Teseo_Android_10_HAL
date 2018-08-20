@@ -38,8 +38,6 @@ namespace geofencing {
 void GeofencingManager::initialize()
 {
     ALOGI("GeofencingManager init");
-    m_lastLocation_ptr = new Location();
-
 }
 
 //void GeofencingManager::add(GeofenceDefinition && def)
@@ -121,6 +119,10 @@ void GeofencingManager::resume(GeofenceId id, TransitionFlags monitored_transiti
 
 void GeofencingManager::onLocationUpdate(const Location & loc)
 {
+    ALOGI("onLocationUpdate");
+
+    m_lastLocation = loc;
+
     for(auto & pair : geofences)
     {
         auto & geofence_ptr = pair.second;
@@ -138,21 +140,21 @@ void GeofencingManager::onDeviceStatusUpdate(GpsStatusValue deviceStatus)
     {
         //case GPS_STATUS_ENGINE_ON:
         case GPS_STATUS_SESSION_BEGIN:
-            sendGeofenceStatus(SystemStatus::Available, *m_lastLocation_ptr);
+            sendGeofenceStatus(SystemStatus::Available, m_lastLocation);
             break;
 
         //case GPS_STATUS_ENGINE_OFF:
         case GPS_STATUS_SESSION_END:
         case GPS_STATUS_NONE:
         default:
-            sendGeofenceStatus(SystemStatus::Unavailable, *m_lastLocation_ptr);
+            sendGeofenceStatus(SystemStatus::Unavailable, m_lastLocation);
             break;
     }
 }
 
 GeofencingManager::~GeofencingManager(){
 
-    delete m_lastLocation_ptr;
+    //delete m_lastLocation_ptr;
 }
 
 } // namespace device

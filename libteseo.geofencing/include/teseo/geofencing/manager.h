@@ -39,8 +39,8 @@ private:
 
     std::unordered_map<model::GeofenceId, std::unique_ptr<Geofence>> geofences;
 
-    //pointer to last location
-    Location * m_lastLocation_ptr;
+    // Last location
+    Location m_lastLocation;
 
 public:
 
