@@ -54,6 +54,10 @@
 #include <teseo/stagps/stagps.h>
 #endif
 
+#ifdef STRAW_ENABLED
+#include <teseo/libstraw/straw.h>
+#endif
+
 namespace stm {
 
 using namespace stm::device;
@@ -85,7 +89,7 @@ int HalManager::init(GpsCallbacks * cb)
 	ALOGI("Initialize the HAL");
 
 	config::read();
-	
+
 	LocServiceProxy::gps::sendSystemInfo(2017);
 
 	ALOGI("Initialize modules");
@@ -94,6 +98,7 @@ int HalManager::init(GpsCallbacks * cb)
 	initDevice();
 	initStagps();
 	initGeofencing();
+	initRawMeasurement();
 
 	ALOGI("Set capabilities");
 	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
@@ -113,7 +118,7 @@ void HalManager::cleanup(void)
 {
 #ifdef STAGPS_ENABLED
 	if(config::get().stagps.enable)
-	{	
+	{
 		stagpsEngine->cleanup();
 		delete stagpsEngine;
 		stagpsEngine = nullptr;
@@ -127,6 +132,12 @@ void HalManager::cleanup(void)
 #endif
 
 	delete geofencingManager;
+
+#ifdef STRAW_ENABLED
+	delete rawMeasurement;
+	rawMeasurement = nullptr;
+#endif
+
 	delete stream;
 	delete byteStream;
 	delete decoder;
@@ -172,7 +183,7 @@ void HalManager::initDevice()
 	// Start navigation signal
 	device->startNavigation.connect(SlotFactory::create(*decoder, &decoder::AbstractDecoder::start));
 	device->startNavigation.connect(SlotFactory::create(*byteStream, &stream::IByteStream::start));
-	
+
 	// Stop navigation signal
 	device->stopNavigation.connect(SlotFactory::create(*decoder, &decoder::AbstractDecoder::stop));
 	device->stopNavigation.connect(SlotFactory::create(*byteStream, &stream::IByteStream::stop));
@@ -215,7 +226,7 @@ void HalManager::initStagps()
 			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStagps8Answer));
 
 		device->onStagpsAnswer.connect(
-			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStagpsAnswer));	
+			SlotFactory::create(*stagpsEngine, &stagps::StagpsEngine::onStagpsAnswer));
 
 		stagpsEngine->sendMessageRequest.connect(
 			SlotFactory::create(*device, &device::AbstractDevice::sendMessageRequest));
@@ -242,7 +253,7 @@ void HalManager::initGeofencing()
 	using namespace stm::geofencing;
 
 	ALOGI("Initialize Geofencing");
-	
+
 	geofencingManager = new GeofencingManager();
 
 	geofencingManager->answerGeofenceAddRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceAddRequest));
@@ -264,5 +275,34 @@ void HalManager::initGeofencing()
 	device->locationUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onLocationUpdate));
 	device->statusUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onDeviceStatusUpdate));
 }
+
+#ifdef STRAW_ENABLED
+void HalManager::initRawMeasurement(void)
+{
+	using namespace stm::straw;
+
+	ALOGI("Initialize  HalManager::initRawMeasurement");
+
+	rawMeasurement = new StrawEngine();
+
+	auto & gnssSignals = LocServiceProxy::measurement::getSignals();
+	gnssSignals.init.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::initMeasurement));
+	gnssSignals.close.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::closeMeasurement));
+
+	rawMeasurement->sendMeasurements.connect(SlotFactory::create(LocServiceProxy::measurement::sendMeasurements));
+	rawMeasurement->sendNavigathionMessages.connect(SlotFactory::create(LocServiceProxy::navigationMessage::sendNavigationMessages));
+
+	device->onNmea.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::onNmeaMessage));
+
+	auto & navSignals = LocServiceProxy::navigationMessage::getSignals();
+	navSignals.init.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::initNavigationMessages));
+	navSignals.close.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::closeNavigationMessages));
+}
+#else
+void HalManager::initRawMeasurement(void)
+{
+	ALOGI("ST-RAW not included in build");
+}
+#endif
 
 } // namespace stm

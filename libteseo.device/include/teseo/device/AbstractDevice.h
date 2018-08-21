@@ -58,9 +58,9 @@ namespace device {
 
 /**
  * @brief      Abstract Device manager
- * 
+ *
  * @details    An abstract device store the Teseo current state in the HAL. This state is updated by
- * the attached decoder. 
+ * the attached decoder.
  */
 class AbstractDevice :
 	public Trackable
@@ -69,7 +69,7 @@ private:
 	const static ByteVector nmeaSequenceStart;
 
 	// ======================== Data Model =====================
-	
+
 	ValueContainer<GpsUtcTime> timestamp;
 
 	ValueContainer<Location> location;
@@ -238,6 +238,7 @@ public:
 	Signal<void, model::Stagps8Answer, const std::vector<ByteVector> &> onStagps8Answer;
 
 	Signal<void, model::StagpsAnswer, const std::vector<ByteVector> &> onStagpsAnswer;
+
 };
 
 } // namespace device

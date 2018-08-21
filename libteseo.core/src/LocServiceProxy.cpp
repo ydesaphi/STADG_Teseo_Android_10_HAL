@@ -26,6 +26,8 @@
  * @copyright 2016, STMicroelectronics, All rights reserved.
  */
 
+
+
 #include <teseo/LocServiceProxy.h>
 
 #define LOG_TAG "teseo_hal_LocServiceProxy"
@@ -45,6 +47,10 @@ namespace LocServiceProxy {
 static struct {
 	GpsCallbacks gps;
 	GpsGeofenceCallbacks geofence;
+#ifdef STRAW_ENABLED
+	GpsMeasurementCallbacks measurement;
+	GpsNavigationMessageCallbacks navigationMessage;
+#endif
 } callbacks;
 
 static struct gps_device_t * device = nullptr;
@@ -59,6 +65,18 @@ void RegisterGeofenceCallbacks(const GpsGeofenceCallbacks * cb)
 {
 	memcpy(&(callbacks.geofence), cb, sizeof(GpsGeofenceCallbacks));
 }
+
+#ifdef STRAW_ENABLED
+void RegisterNavigationMessageCallbacks(const GpsNavigationMessageCallbacks * cb)
+{
+	memcpy(&(callbacks.navigationMessage), cb, sizeof(GpsNavigationMessageCallbacks));
+}
+
+void RegisterMeasurementsCallbacks(const GpsMeasurementCallbacks * cb)
+{
+	memcpy(&(callbacks.measurement), cb, sizeof(GpsMeasurementCallbacks));
+}
+#endif
 
 int openDevice(const struct hw_module_t * module, char const * name, struct hw_device_t ** dev)
 {
@@ -226,7 +244,7 @@ void sendSatelliteListUpdate(const std::map<SatIdentifier, SatInfo> & satellites
 	};
 
 	if(status.num_svs < GNSS_MAX_SVS)
-	{	
+	{
 		std::for_each(satellites.begin(), satellites.end(), action);
 	}
 	else
@@ -395,6 +413,72 @@ std::size_t getInternalState(char * buffer, std::size_t bufferSize)
 
 } // namespace debug
 
+#ifdef STRAW_ENABLED
+namespace measurement {
+static Signals signals;
+
+Signals & getSignals()
+{
+	return signals;
+}
+
+int  onInit(GpsMeasurementCallbacks * cb)
+{
+   	RegisterMeasurementsCallbacks(cb);
+	signals.init.emit(cb);
+	return 0;
+}
+void onClose(void)
+{
+   	signals.close.emit();
+}
+
+void sendMeasurements(const GnssClock & clockData, std::vector <GnssMeasurement> & measurementdata)
+{
+	ALOGI("SendMeasurements");
+
+	GnssData Measurementmsg = {.size = sizeof(GnssData), .measurement_count = 0};
+	Measurementmsg.clock = clockData;
+	Measurementmsg.measurement_count = measurementdata.size();
+	int i = 0;
+	for(std::vector<GnssMeasurement>::iterator it = measurementdata.begin(); it != measurementdata.end(); it++,i++ )    {
+		if(i == GNSS_MAX_MEASUREMENT) {
+			break;
+		}
+		Measurementmsg.measurements[i] = *it ;
+	}
+	callbacks.measurement.gnss_measurement_callback( &Measurementmsg);
+}
+
+}
+
+namespace navigationMessage {
+
+static Signals signals;
+
+Signals & getSignals() { return signals; }
+
+int onInit(GpsNavigationMessageCallbacks * callbacks)
+{
+	RegisterNavigationMessageCallbacks(callbacks);
+	signals.init.emit(callbacks);
+	return 0;
+}
+
+void onClose(void)
+{
+	signals.close.emit();
+}
+
+void sendNavigationMessages(GnssNavigationMessage & msg)
+{
+	ALOGI("SendNavigationMessages");
+	callbacks.navigationMessage.gnss_navigation_message_callback(static_cast<GnssNavigationMessage *> (&msg));
+}
+} //end navigation message
+
+#endif
+
 static Interfaces interfaces = {
 	.gps = {
 		.size               = sizeof(GpsInterface),
@@ -419,9 +503,20 @@ static Interfaces interfaces = {
 	.debug = {
 		.size               = sizeof(GpsDebugInterface),
 		.get_internal_state = &LocServiceProxy::debug::getInternalState
-	}
+	},
+#ifdef STRAW_ENABLED
+	.measurement = {
+		.size               = sizeof(GpsMeasurementInterface),
+		.init               = &LocServiceProxy::measurement::onInit,
+		.close              = &LocServiceProxy::measurement::onClose
+	},
+	.navigationMessage = {
+		.size                 = sizeof(GpsNavigationMessageInterface),
+		.init                 = &LocServiceProxy::navigationMessage::onInit,
+		.close              = &LocServiceProxy::navigationMessage::onClose
+	},
+#endif
 };
-
 
 static std::unordered_map<std::string_view, void *> interfacesMap = {
 	{GPS_XTRA_INTERFACE,               NULL}                     ,
@@ -431,8 +526,13 @@ static std::unordered_map<std::string_view, void *> interfacesMap = {
 	{GPS_NI_INTERFACE,                 NULL}                     ,
 	{AGPS_RIL_INTERFACE,               NULL}                     ,
 	{GPS_GEOFENCING_INTERFACE,         &(interfaces.geofencing)} ,
-	{GPS_MEASUREMENT_INTERFACE,        NULL}                     ,
-	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}                     ,
+#ifdef STRAW_ENABLED
+	{GPS_MEASUREMENT_INTERFACE,        &(interfaces.measurement)}   	,
+	{GPS_NAVIGATION_MESSAGE_INTERFACE, &(interfaces.navigationMessage)}	,
+#else
+	{GPS_MEASUREMENT_INTERFACE,        NULL}				,
+	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}				,
+#endif
 	{GNSS_CONFIGURATION_INTERFACE,     NULL}
 };
 
@@ -443,10 +543,10 @@ const GpsInterface * getGpsInterface(struct gps_device_t * device)
 	return &(interfaces.gps);
 }
 
-namespace gps {	
-	const void * onGetExtension(const char * name)
-	{
-		auto it  = interfacesMap.find(std::string_view(name));
+namespace gps {
+const void * onGetExtension(const char * name)
+{
+	auto it  = interfacesMap.find(std::string_view(name));
 
 		if(it != interfacesMap.end())
 		{
@@ -459,6 +559,7 @@ namespace gps {
 		}
 	}
 }
+
 
 } // namespace LocServiceProxy
 } // namespace stm

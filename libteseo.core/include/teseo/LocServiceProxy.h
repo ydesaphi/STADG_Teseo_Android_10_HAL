@@ -45,7 +45,7 @@ namespace stm {
 /**
  * The LocServiceProxy namespace contains functions, structures and signals used to communicate
  * between the Android Location Services and the HAL.
- * 
+ *
  * @details    The HAL interfaces are
  */
 namespace LocServiceProxy {
@@ -73,6 +73,21 @@ struct Interfaces {
  * @param[in]  cb    The GpsCallbacks to register
  */
 void RegisterCallbacks(const GpsCallbacks * cb);
+
+#ifdef STRAW_ENABLED
+/**
+ * @brief      Register MeasurementsCallbacks
+ *
+ * @param[in]  cb    The MeasurementsCallbacks to register
+ */
+void RegisterMeasurementsCallbacks(const GpsMeasurementCallbacks * cb);
+/**
+ * @brief      Register NavigationMessageCallbacks
+ *
+ * @param[in]  cb    The NavigationMessageCallbacks to register
+ */
+ void RegisterNavigationMessageCallbacks(const GpsNavigationMessageCallbacks * cb);
+#endif
 
 /**
  * @brief      Open function called by the Android platform to create the "HAL device"
@@ -191,22 +206,22 @@ namespace geofencing {
 		Signal<void> init = Signal<void>("geofencing::signals::init");
 
 		Signal<void, GeofenceDefinition > addGeofenceArea = Signal<void, GeofenceDefinition >("geofencing::signals::addGeofenceArea");
-		
+
 		Signal<void, GeofenceId> pauseGeofence = Signal<void, GeofenceId>("geofencing::signals::pauseGeofence");
-		
+
 		Signal<void, GeofenceId, TransitionFlags> resumeGeofence = Signal<void, GeofenceId, TransitionFlags>("geofencing::signals::resumeGeofence");
-		
+
 		Signal<void, GeofenceId> removeGeofenceArea = Signal<void, GeofenceId>("geofencing::signals::removeGeofenceArea");
 	};
 
 	void onInit(GpsGeofenceCallbacks * callbacks);
-	
+
 	void onAddGeofenceArea (int32_t geofence_id, double latitude, double longitude, double radius_meters, int last_transition, int monitor_transitions, int notification_responsiveness_ms, int unknown_timer_ms);
-	
+
 	void onPauseGeofence(int32_t geofence_id);
-	
+
 	void onResumeGeofence(int32_t geofence_id, int monitor_transitions);
-	
+
 	void onRemoveGeofenceArea(int32_t geofence_id);
 
 	Signals & getSignals();
@@ -218,11 +233,11 @@ namespace geofencing {
 	void answerGeofenceAddRequest(GeofenceId geofence_id, OperationStatus status);
 
 	void answerGeofenceRemoveRequest(GeofenceId geofence_id, OperationStatus status);
-	
+
 	void answerGeofencePauseRequest(GeofenceId geofence_id, OperationStatus status);
-	
+
 	void answerGeofenceResumeRequest(GeofenceId geofence_id, OperationStatus status);
-	
+
 } // namespace geofencing
 
 namespace debug {
@@ -240,11 +255,37 @@ namespace debug {
 	 * @param[in]  bufferSize  The buffer size
 	 *
 	 * @return     Number of byte dumped
-	 * 
+	 *
 	 * @todo Currently dummy data is dumped
 	 */
 	size_t getInternalState(char * buffer, size_t bufferSize);
 }
+
+#ifdef STRAW_ENABLED
+namespace navigationMessage {
+
+	struct Signals {
+		Signal<int, GpsNavigationMessageCallbacks *> init = Signal<int, GpsNavigationMessageCallbacks *>("navigationMessage::signals::init");
+		Signal<void> close = Signal<void>("navigationMessage::signals::close");
+	};
+
+	Signals & getSignals();
+
+	void sendNavigationMessages(GnssNavigationMessage & msg);
+}
+
+namespace measurement {
+
+	struct Signals {
+		Signal<int, GpsMeasurementCallbacks *> init = Signal<int, GpsMeasurementCallbacks *>("measurement::signals::init");
+		Signal<void> close = Signal<void>("measurement::signals::close");
+	};
+
+	Signals & getSignals();
+
+	void sendMeasurements(const GnssClock & clockData,std::vector <GnssMeasurement> & measurementdata);
+}
+#endif
 
 } // namespace LocServiceProxy
 } // namespace stm

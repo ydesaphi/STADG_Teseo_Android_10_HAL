@@ -40,7 +40,7 @@ using namespace stm::device;
 
 /**
  * @brief      NMEA Message decoders
- * 
+ *
  * @details    This is declared as a struct to allow friend declaration with AbstractDevice
  */
 struct decoders {

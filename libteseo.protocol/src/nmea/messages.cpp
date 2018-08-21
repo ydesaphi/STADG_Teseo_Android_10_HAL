@@ -87,7 +87,7 @@ constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 8> stm = 
 	{"STAGPSPASSRTN"_s,  &decoders::pstmstagpspassrtn},
 	{"STAGPSPASSGENERROR"_s, &decoders::pstmstagpspassrtn},
 	{"STAGPSSATSEEDOK"_s, &decoders::pstmstagpssatseedresponse},
-	{"STAGPSSATSEEDERROR"_s, &decoders::pstmstagpssatseedresponse}
+	{"STAGPSSATSEEDERROR"_s, &decoders::pstmstagpssatseedresponse},
 	// Do not forget to update number of elements in map declaration
 };
 
@@ -153,7 +153,7 @@ void decoders::gga(AbstractDevice & dev, const NmeaMessage & msg)
 	GGA_LOGI("Decode GGA: %s", msg.toString().c_str());
 
 	GpsUtcTime timestamp = 0;
-	
+
 	if(auto opt = utils::parseTimestamp(msg.parameters[0]))
 		timestamp = *opt;
 	else
@@ -297,7 +297,7 @@ bool gsv_empty_or_set_helper(
 	}
 
 	++it;
-	
+
 	return ret;
 }
 
@@ -311,7 +311,7 @@ void decoders::gsv(AbstractDevice & dev, const NmeaMessage & msg)
 	//int numberOfSentences  = utils::byteVectorParse<int>(*it); // unused
 	//int sentenceId         = utils::byteVectorParse<int>(*it); // unused
 	//int NumberOfSatellites = utils::byteVectorParseInt(msg.parameters[2]); // unused
-	
+
 	// Extract and update or insert satellites
 	while(it != msg.parameters.end())
 	{
@@ -343,7 +343,7 @@ void decoders::gsv(AbstractDevice & dev, const NmeaMessage & msg)
 
 			auto result = dev.getSatellite(id);
 			SatInfo s = result ? *result : SatInfo(id);
-			
+
 			s.setElevation(elevation)
 			 .setAzimuth(azimuth)
 			 .setSnr(snr)
@@ -400,10 +400,10 @@ void decoders::gsa(AbstractDevice & dev, const NmeaMessage & msg)
 			if(auto opt = utils::byteVectorParse<int>(*it))
 			{
 				SatIdentifier id(*opt);
-				
+
 				auto result = dev.getSatellite(id);
 				SatInfo s = result ? *result : SatInfo(id);
-				
+
 				s.setUsedInFix(true)
 				.setAlmanac(true)
 				.setEphemeris(true);
@@ -438,7 +438,7 @@ void decoders::sbas(AbstractDevice & dev, const NmeaMessage & msg)
 		id = SatIdentifier(*opt);
 	else
 		return;
-	
+
 	++it;
 
 	float elevation = utils::byteVectorParse<float>(*it).value_or(0.); ++it;

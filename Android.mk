@@ -41,4 +41,10 @@ else
 TESEO_STAGPS_ENABLED := false
 endif
 
+ifeq ($(shell test -d $(LOCAL_PATH)/libteseo.straw && echo true),true)
+TESEO_STRAW_ENABLED := true
+else
+TESEO_STRAW_ENABLED := false
+endif
+
 include $(call all-subdir-makefiles)

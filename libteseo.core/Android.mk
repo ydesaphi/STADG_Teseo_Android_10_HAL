@@ -49,6 +49,11 @@ ifeq ($(TESEO_STAGPS_ENABLED),true)
 	LOCAL_SHARED_LIBRARIES += libstagps
 endif
 
+ifeq ($(TESEO_STRAW_ENABLED),true)
+	LOCAL_CPPFLAGS += -DSTRAW_ENABLED
+	LOCAL_SHARED_LIBRARIES += libteseo.straw
+endif
+
 LOCAL_SRC_FILES :=                  \
 	src/HalManager.cpp              \
 	src/LocServiceProxy.cpp

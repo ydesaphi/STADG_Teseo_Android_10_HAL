@@ -210,13 +210,13 @@ constexpr int16_t PRN_GPS_MIN = 1,
                   PRN_GAL_MIN = 301,
                   PRN_GAL_MAX = 330;
 
-static Constellation prn2constellation(int16_t prn)
+Constellation prn2constellation(int16_t prn)
 {
 	if(PRN_GPS_MIN <= prn && prn <= PRN_GPS_MAX) return Constellation::Gps;
 	if(PRN_SBA_MIN <= prn && prn <= PRN_SBA_MAX) return Constellation::Sbas;
 	if(PRN_GLO_MIN <= prn && prn <= PRN_GLO_MAX) return Constellation::Glonass;
 	if(PRN_BEI_MIN <= prn && prn <= PRN_BEI_MAX) return Constellation::Beidou;
-	if(PRN_QZS_MIN <= prn && prn <= PRN_QZS_MAX) return Constellation::Glonass;
+	if(PRN_QZS_MIN <= prn && prn <= PRN_QZS_MAX) return Constellation::Qzss;
 	if(PRN_GAL_MIN <= prn && prn <= PRN_GAL_MAX) return Constellation::Galileo;
 
 	switch (prn)
@@ -225,7 +225,7 @@ static Constellation prn2constellation(int16_t prn)
 		case 120: 	//EGNOS   Inmarsat 3f2 (AOR-E) 	 15.5° W
 		case 123:   //EGNOS   Astra 5B               31.5° E
 		case 136:   //EGNOS   Test-mode sat
-		
+
 		// GAGAN
 		case 127: 	//GAGAN   Inmarsat 4f1           64.0° E
 
