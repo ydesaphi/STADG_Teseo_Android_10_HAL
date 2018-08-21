@@ -216,7 +216,7 @@ Constellation prn2constellation(int16_t prn)
 	if(PRN_SBA_MIN <= prn && prn <= PRN_SBA_MAX) return Constellation::Sbas;
 	if(PRN_GLO_MIN <= prn && prn <= PRN_GLO_MAX) return Constellation::Glonass;
 	if(PRN_BEI_MIN <= prn && prn <= PRN_BEI_MAX) return Constellation::Beidou;
-	if(PRN_QZS_MIN <= prn && prn <= PRN_QZS_MAX) return Constellation::Glonass;
+	if(PRN_QZS_MIN <= prn && prn <= PRN_QZS_MAX) return Constellation::Qzss;
 	if(PRN_GAL_MIN <= prn && prn <= PRN_GAL_MAX) return Constellation::Galileo;
 
 	switch (prn)
