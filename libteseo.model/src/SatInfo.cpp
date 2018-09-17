@@ -248,7 +248,7 @@ Constellation prn2constellation(int16_t prn)
 	return Constellation::Unknown;
 }
 
-static int16_t prn2svid(Constellation constellation, int16_t prn)
+int16_t prn2svid(Constellation constellation, int16_t prn)
 {
 	switch(constellation)
 	{

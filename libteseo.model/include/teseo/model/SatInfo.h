@@ -36,6 +36,7 @@ enum class SatInfoFlags : uint8_t {
 };
 
 Constellation prn2constellation(int16_t prn);
+int16_t prn2svid(Constellation constellation, int16_t prn);
 
 class SatIdentifier {
 private:
