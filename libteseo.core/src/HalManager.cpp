@@ -107,20 +107,10 @@ int HalManager::init(GpsCallbacks * cb)
 	initStagps();
 	initGeofencing();
 	initRawMeasurement();
-
-	#ifdef AGPS_ENABLED
-	if(config::get().agnss.enable)
-	{
-		initAGpsIf();
-		initRilIf();
-		initNiIf();
-	}
-	else
-	{
-		ALOGI("Data assistance disabled in configuration");
-	}
-	#endif
-
+	initAGpsIf();
+	initRilIf();
+	initNiIf();
+	
 	ALOGI("Set capabilities");
 	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
 	#ifdef SUPL_ENABLED
@@ -164,10 +154,6 @@ void HalManager::cleanup(void)
 		rilIf = nullptr;
 		niIf = nullptr;
 		AgpsIf = nullptr;
-	}
-	else
-	{
-		ALOGV("Data assistance disabled in configuration, nothing to clean up");
 	}
 #else
     ALOGD("AGPS is not compiled, do not cleanup");
@@ -348,43 +334,64 @@ void HalManager::initRawMeasurement(void)
 }
 #endif
 
+#ifdef AGPS_ENABLED
 void HalManager::initRilIf()
 {
 	//using namespace stm::ril;
+	if(config::get().agnss.enable)
+	{
+		ALOGI("Initialize RIL interface");	
 
-	ALOGI("Initialize RIL interface");	
-
-	rilIf = new ril::Ril_If();
+		rilIf = new ril::Ril_If();
 	
-	// Ril interface -> framework signals
-	rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
-	rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
+		// Ril interface -> framework signals
+		rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
+		rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
 
-	//Framework -> ril interface signals
-	auto & rilSignals = LocServiceProxy::ril::getSignals();
+		//Framework -> ril interface signals
+		auto & rilSignals = LocServiceProxy::ril::getSignals();
 
-	rilSignals.init.connect(SlotFactory::create(*rilIf, &ril::Ril_If::initialize));
-	rilSignals.setRefLocation.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setRefLocation));
-	rilSignals.setSetId.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setSetId));
-	rilSignals.niMessage.connect(SlotFactory::create(*rilIf, &ril::Ril_If::niMessage));
-	rilSignals.updateNetworkState.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkState));
-	rilSignals.updateNetworkAvailability.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkAvailability));
+		rilSignals.init.connect(SlotFactory::create(*rilIf, &ril::Ril_If::initialize));
+		rilSignals.setRefLocation.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setRefLocation));
+		rilSignals.setSetId.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setSetId));
+		rilSignals.niMessage.connect(SlotFactory::create(*rilIf, &ril::Ril_If::niMessage));
+		rilSignals.updateNetworkState.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkState));
+		rilSignals.updateNetworkAvailability.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkAvailability));
+	}
 }
+#else
+void HalManager::initRilIf()
+{
+	ALOGI("Ril IF not included in build");
+}
+#endif // 	#ifdef AGPS_ENABLED
 
+#ifdef AGPS_ENABLED
 void HalManager::initNiIf(){
-	ALOGI("Initialize NI interface");	
+	if(config::get().agnss.enable)
+	{
+		ALOGI("Initialize NI interface");	
 
-	niIf = new ni::Ni_If();
-	auto & niSignals = LocServiceProxy::ni::getSignals();
-	// Ni interface -> framework signals
-	niIf->reqNiNotification.connect(SlotFactory::create(LocServiceProxy::ni::sendNiNotificationRequest));
+		niIf = new ni::Ni_If();
+		auto & niSignals = LocServiceProxy::ni::getSignals();
+		// Ni interface -> framework signals
+		niIf->reqNiNotification.connect(SlotFactory::create(LocServiceProxy::ni::sendNiNotificationRequest));
 
-	//Framework -> ni interface signals
-	niSignals.init.connect(SlotFactory::create(*niIf, &ni::Ni_If::initialize));
-	niSignals.respond.connect(SlotFactory::create(*niIf, &ni::Ni_If::respond));
+		//Framework -> ni interface signals
+		niSignals.init.connect(SlotFactory::create(*niIf, &ni::Ni_If::initialize));
+		niSignals.respond.connect(SlotFactory::create(*niIf, &ni::Ni_If::respond));
+	}
 }
+#else
+void HalManager::initNiIf(){
+	ALOGI("Ni IF not included in build");
+}
+#endif //#ifdef AGPS_ENABLED
 
-void	HalManager::initAGpsIf()
+#ifdef AGPS_ENABLED
+void HalManager::initAGpsIf()
+{
+	if(config::get().agnss.enable)
 	{
 		AgpsIf = new agps::Agps_If();
 
@@ -393,5 +400,12 @@ void	HalManager::initAGpsIf()
 		agpsSignals.setServer.connect(SlotFactory::create(*AgpsIf, &agps::Agps_If::setServer));
 
 		AgpsIf->statusCb.connect(SlotFactory::create(LocServiceProxy::agps::sendAGpsStatus));
-	}	
+	}
+}
+#else
+void HalManager::initAGpsIf()
+{
+	ALOGI("AGPS IF not included in build");
+}
+#endif //#ifdef AGPS_ENABLED
 } // namespace stm
