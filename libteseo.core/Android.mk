@@ -56,7 +56,7 @@ endif
 
 ifeq ($(TESEO_AGPS_ENABLED),true)
 	LOCAL_CPPFLAGS += -DAGPS_ENABLED
-	LOCAL_SHARED_LIBRARIES += libagnss
+	LOCAL_SHARED_LIBRARIES += libteseo.agnss
 endif
 
 ifeq ($(TESEO_SUPL_ENABLED),true)

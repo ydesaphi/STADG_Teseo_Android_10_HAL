@@ -46,7 +46,7 @@ TESEO_STRAW_ENABLED := true
 else
 TESEO_STRAW_ENABLED := false
 endif
-ifeq ($(shell test -d $(LOCAL_PATH)/libagnss && echo true),true)
+ifeq ($(shell test -d $(LOCAL_PATH)/libteseo.agnss && echo true),true)
 TESEO_AGPS_ENABLED := true
 TESEO_SUPL_ENABLED := false
 else
