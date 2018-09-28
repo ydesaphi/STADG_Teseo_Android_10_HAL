@@ -1,5 +1,10 @@
 # Unreleased
-- Geofencing feature
+- Batching
+
+# Version 0.5.0 - 2018-09-27
+- [ADDED] Geofencing
+- [ADDED] Support of Agps, ril and ni interfaces
+- [ADDED] Support for raw measurements and navigation messages
 
 # Version 0.4.0 - 2018-06-29
 - [CHANGED] Update for Android 8.1
