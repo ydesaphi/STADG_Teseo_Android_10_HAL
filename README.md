@@ -23,9 +23,13 @@ The STM Teseo HAL provides the following features:
 
 -   Satellite information
 
+-   Geofencing
+
 -   Real Time AGNSS (see section STM proprietary libraries)
 
 -   Predictive Assisted GPS 7 (see section STM proprietary libraries)
+
+-   Support for raw measurements and navigation messages
 
 
 
@@ -129,6 +133,9 @@ Real-time AGNSS requires a network connection to download assistance data from t
 ### Predictive Assisted GPS 7
 > This server based assistance allows fast and accurate GPS performances thanks to a 8KB bi-weekly data transfer. Starting from this downloaded payload, the _Teseo chip_ is capable of computing the ephemeris for up to 14 days, with very high accuracy, for the complete GPS and GLONASS constellations.
 Predictive AGPS requires a network connection to download assistance data from the server.
+
+### RAW GNSS measurements and navigation messages
+> The _Teseo chip_ is able to report raw measurements data and navigation messages through the HAL GNSS measurements interface. This is available for GPS signals. Please note that the _Teseo chip_ must use a dedicated binary image enabling Carrier Phase measurements.
 
 Please note that the release of STM proprietary libraries is subject to signature of a Software License Agreement (SLA) or of a Non Disclosure Agreement (NDA); please contact an STMicroelectronics sales office and representatives for further information.
 
