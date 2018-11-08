@@ -74,6 +74,16 @@ const Configuration & read(const string & path)
     READ_VAL(constellations.beidou,  CFG_DEF_CONSTELLATIONS_BEIDOU);
     READ_VAL(constellations.galileo, CFG_DEF_CONSTELLATIONS_GALILEO);
 
+    READ_VAL(constellationsmeasurement.gps,     CFG_DEF_CONSTELLATIONS_GPS);
+    READ_VAL(constellationsmeasurement.glonass, CFG_DEF_CONSTELLATIONS_GLONASS);
+    READ_VAL(constellationsmeasurement.beidou,  CFG_DEF_CONSTELLATIONS_BEIDOU);
+    READ_VAL(constellationsmeasurement.galileo, CFG_DEF_CONSTELLATIONS_GALILEO);
+
+    READ_VAL(constellationsnavigation.gps,     CFG_DEF_CONSTELLATIONS_GPS);
+    READ_VAL(constellationsnavigation.glonass, CFG_DEF_CONSTELLATIONS_GLONASS);
+    READ_VAL(constellationsnavigation.beidou,  CFG_DEF_CONSTELLATIONS_BEIDOU);
+    READ_VAL(constellationsnavigation.galileo, CFG_DEF_CONSTELLATIONS_GALILEO);
+
     READ_VAL(agnss.enable,CFG_DEF_DATA_ASSISTANCE_ENABLED);
     READ_VAL(stagps.enable, CFG_DEF_STAGPS_ENABLE);
 

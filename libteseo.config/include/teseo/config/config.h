@@ -58,6 +58,27 @@ struct Configuration {
         bool beidou;
         bool galileo;
     } constellations;
+    
+    /**
+     * Gnss Measurement Constellations supports
+     */
+    struct ConstellationsMeasurement {
+        bool gps;
+        bool glonass;
+        bool beidou;
+        bool galileo;
+    } constellationsmeasurement;
+
+    /**
+     * Navigation data Constellations supports
+     */
+    struct ConstellationsNavigation {
+        bool gps;
+        bool glonass;
+        bool beidou;
+        bool galileo;
+    } constellationsnavigation;
+
 
     /**
      * Assistance
