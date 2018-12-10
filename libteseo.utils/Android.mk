@@ -72,7 +72,8 @@ LOCAL_COPY_HEADERS :=                       \
 	include/teseo/utils/Time.h              \
 	include/teseo/utils/UartByteStream.h    \
 	include/teseo/utils/utils.h             \
-	include/teseo/utils/Wakelock.h
+	include/teseo/utils/Wakelock.h			\
+	include/teseo/utils/singleton.h
 
 LOCAL_PRELINK_MODULE := false
 

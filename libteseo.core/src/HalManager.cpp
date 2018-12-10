@@ -148,12 +148,12 @@ void HalManager::cleanup(void)
 #ifdef AGPS_ENABLED
 	if(config::get().agnss.enable)
 	{
-		delete rilIf;
-		delete niIf;
-		delete AgpsIf;
-		rilIf = nullptr;
-		niIf = nullptr;
-		AgpsIf = nullptr;
+		if(niIf != nullptr)
+			niIf->kill();
+		if(rilIf != nullptr)
+			rilIf->kill();
+		if(AgpsIf != nullptr)
+			AgpsIf->kill();
 	}
 #else
     ALOGD("AGPS is not compiled, do not cleanup");
@@ -198,6 +198,7 @@ void HalManager::initDevice()
 	byteStream = new stream::UartByteStream(config::get().device.tty, config::get().device.speed);
 	stream = new stream::NmeaStream();
 
+
 	// Bytes read stream
 	// teseo -> byte stream -> nmea stream -> decoder -> device
 	byteStream->newBytes.connect(SlotFactory::create(*stream, &stream::IStream::onNewBytes));
@@ -231,6 +232,7 @@ void HalManager::initDevice()
 
 	device->init();
 }
+
 
 #ifdef STAGPS_ENABLED
 void HalManager::initStagps()
@@ -342,22 +344,24 @@ void HalManager::initRilIf()
 	{
 		ALOGI("Initialize RIL interface");	
 
-		rilIf = new ril::Ril_If();
+	ALOGI("Initialize RIL interface");	
+
+	rilIf = ril::Ril_If::getInstance();
 	
-		// Ril interface -> framework signals
-		rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
-		rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
+	// Ril interface -> framework signals
+	rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
+	rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
 
-		//Framework -> ril interface signals
-		auto & rilSignals = LocServiceProxy::ril::getSignals();
+	//Framework -> ril interface signals
+	auto & rilSignals = LocServiceProxy::ril::getSignals();
 
-		rilSignals.init.connect(SlotFactory::create(*rilIf, &ril::Ril_If::initialize));
-		rilSignals.setRefLocation.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setRefLocation));
-		rilSignals.setSetId.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setSetId));
-		rilSignals.niMessage.connect(SlotFactory::create(*rilIf, &ril::Ril_If::niMessage));
-		rilSignals.updateNetworkState.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkState));
-		rilSignals.updateNetworkAvailability.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkAvailability));
-	}
+	rilSignals.init.connect(SlotFactory::create(*rilIf, &ril::Ril_If::initialize));
+	rilSignals.setRefLocation.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setRefLocation));
+	rilSignals.setSetId.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setSetId));
+	rilSignals.niMessage.connect(SlotFactory::create(*rilIf, &ril::Ril_If::niMessage));
+	rilSignals.updateNetworkState.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkState));
+	rilSignals.updateNetworkAvailability.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkAvailability));
+
 }
 #else
 void HalManager::initRilIf()
@@ -372,10 +376,11 @@ void HalManager::initNiIf(){
 	{
 		ALOGI("Initialize NI interface");	
 
-		niIf = new ni::Ni_If();
-		auto & niSignals = LocServiceProxy::ni::getSignals();
-		// Ni interface -> framework signals
-		niIf->reqNiNotification.connect(SlotFactory::create(LocServiceProxy::ni::sendNiNotificationRequest));
+	niIf = ni::Ni_If::getInstance();
+
+	auto & niSignals = LocServiceProxy::ni::getSignals();
+	// Ni interface -> framework signals
+	niIf->reqNiNotification.connect(SlotFactory::create(LocServiceProxy::ni::sendNiNotificationRequest));
 
 		//Framework -> ni interface signals
 		niSignals.init.connect(SlotFactory::create(*niIf, &ni::Ni_If::initialize));
@@ -393,9 +398,10 @@ void HalManager::initAGpsIf()
 {
 	if(config::get().agnss.enable)
 	{
-		AgpsIf = new agps::Agps_If();
+		AgpsIf = agps::Agps_If::getInstance();
 
 		auto & agpsSignals = LocServiceProxy::agps::getSignals();
+
 		agpsSignals.init.connect(SlotFactory::create(*AgpsIf, &agps::Agps_If::initialize));
 		agpsSignals.setServer.connect(SlotFactory::create(*AgpsIf, &agps::Agps_If::setServer));
 
