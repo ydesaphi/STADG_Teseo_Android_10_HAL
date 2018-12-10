@@ -369,6 +369,15 @@ namespace agps
 	void sendAGpsStatus(AGpsStatus* status);
 }
 
+namespace configuration
+{
+	struct Signals {
+		Signal<void,const char*,int32_t> cfgUpdateSig = Signal<void,const char*,int32_t>("configuration::signals::cfgUpdateSig");
+	};
+	Signals & getSignals();
+	void onConfigurationUpdate(const char* config_data, int32_t length);
+}
+
 } // namespace LocServiceProxy
 } // namespace stm
 

@@ -38,6 +38,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <teseo/config/config.h>
+#include <teseo/config/configuration_if.h>
 #include <teseo/model/GpsState.h>
 #include <teseo/HalManager.h>
 #include <teseo/utils/Thread.h>
@@ -62,7 +63,7 @@ static struct gps_device_t * device = nullptr;
 
 void RegisterCallbacks(const GpsCallbacks * cb)
 {
-	Thread::setCreateThreadCb(callbacks.gps.create_thread_cb);
+	//Thread::setCreateThreadCb(callbacks.gps.create_thread_cb);
 	memcpy(&(callbacks.gps), cb, sizeof(GpsCallbacks));
 }
 
@@ -116,6 +117,11 @@ int openDevice(const struct hw_module_t * module, char const * name, struct hw_d
 	gps::getSignals().cleanup.connect(
 		SlotFactory::create(HalManager::getInstance(), &HalManager::cleanup));
 
+	stm::config::Config_If * CfgIf = stm::config::Config_If::getInstance();
+
+	configuration::getSignals().cfgUpdateSig.connect(
+		SlotFactory::create(*CfgIf, &stm::config::Config_If::configuration_update));
+
 	ALOGI("New device instanciated at address %p, with name: '%s'", dev, name);
 
 	return (device != NULL) ? 0 : -1;
@@ -152,13 +158,16 @@ Signals & getSignals()
 int onInit(GpsCallbacks * cb)
 {
 	RegisterCallbacks(cb);
+	Thread::setCreateThreadCb(callbacks.gps.create_thread_cb);
 	signals.init.emit(cb);
+
 	return 0;
 }
 
 int onStart(void)
 {
 	signals.start.emit();
+
 	return 0;
 }
 
@@ -657,6 +666,21 @@ namespace agps
 	}
 }
 
+namespace configuration 
+{
+	static Signals signals;
+
+	Signals & getSignals()
+	{
+		return signals;
+	}
+
+	void onConfigurationUpdate(const char* config_data, int32_t length)
+	{
+		signals.cfgUpdateSig(config_data,length);
+	}
+}
+
 static Interfaces interfaces = {
 	.gps = {
 		.size               = sizeof(GpsInterface),
@@ -705,7 +729,7 @@ static Interfaces interfaces = {
 	},
 	.ni = {
 		.size				= sizeof(GpsNiInterface),
-		.init				= &LocServiceProxy::ni::onInit,
+		.init				= &LocServiceProxy::ni::onInit, 
 		.respond			= &LocServiceProxy::ni::onResponse
 	},
 	.agps = {
@@ -716,6 +740,10 @@ static Interfaces interfaces = {
 		.data_conn_failed	= &LocServiceProxy::agps::onDataConnFailed,
 		.set_server			= &LocServiceProxy::agps::onSetServer,
 		.data_conn_open_with_apn_ip_type =&LocServiceProxy::agps::onDataConnOpenWithApnType	
+	},
+	.configuration ={
+		.size				= sizeof(GnssConfigurationInterface),
+		.configuration_update = &LocServiceProxy::configuration::onConfigurationUpdate
 	}
 
 };
@@ -741,7 +769,7 @@ static std::unordered_map<std::string_view, void *> interfacesMap = {
 	{GPS_MEASUREMENT_INTERFACE,        NULL}				,
 	{GPS_NAVIGATION_MESSAGE_INTERFACE, NULL}				,
 #endif
-	{GNSS_CONFIGURATION_INTERFACE,     NULL}
+	{GNSS_CONFIGURATION_INTERFACE,     &(interfaces.configuration)}
 };
 
 
@@ -762,7 +790,7 @@ namespace gps {
 			(std::strcmp(GPS_NI_INTERFACE,name)==0))
 			{
 				// data assistance disabled in configuration
-				if(!config::get().agnss.enable)
+				if(!stm::config::get().agnss.enable)
 				{
 					return NULL;
 				}

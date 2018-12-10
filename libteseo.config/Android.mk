@@ -39,10 +39,12 @@ LOCAL_SHARED_LIBRARIES := \
 	libteseo.utils        \
 	libteseo.vendor
 
-LOCAL_SRC_FILES := src/config.cpp
+LOCAL_SRC_FILES := src/config.cpp \
+					src/configuration_if.cpp
 
 LOCAL_COPY_HEADERS_TO:= teseo/config/
-LOCAL_COPY_HEADERS := include/teseo/config/config.h
+LOCAL_COPY_HEADERS := include/teseo/config/config.h \
+						include/teseo/config/configuration_if.h
 
 LOCAL_PRELINK_MODULE := false
 
