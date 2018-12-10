@@ -78,6 +78,7 @@ namespace agps {
 class Agps_If;
 } // namespace agps
 
+
 /**
  * @brief      HAL Manager class
  *
@@ -90,8 +91,9 @@ class HalManager :
 	public Trackable
 {
 private:
-	Signal<void, uint32_t> setCapabilites;
 
+	Signal<void, uint32_t> setCapabilites;
+	
 	device::AbstractDevice * device;
 
 	decoder::AbstractDecoder * decoder;
@@ -113,6 +115,7 @@ private:
 
 	stm::agps::Agps_If * AgpsIf;
 
+
 	void initUtils();
 
 	void initDevice();
@@ -127,6 +130,8 @@ private:
 	void initRilIf();
 
 	void initNiIf();
+
+	void initAssistance();
 
 public:
 	HalManager();
@@ -151,6 +156,7 @@ public:
 	void cleanup();
 
 	static HalManager & getInstance();
+
 
 private:
 	static HalManager instance;

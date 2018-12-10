@@ -35,7 +35,7 @@
 #include <teseo/utils/Time.h>
 #include <teseo/utils/Wakelock.h>
 #include <teseo/utils/http.h>
-
+#include <teseo/model/GpsState.h>
 #include <teseo/utils/IByteStream.h>
 #include <teseo/utils/IStream.h>
 #include <teseo/device/AbstractDevice.h>
@@ -72,6 +72,7 @@ HalManager HalManager::instance;
 
 HalManager::HalManager() :
 	setCapabilites("HalManager::setCapabilites")
+
 {
 	ALOGI("Create HAL manager");
 
@@ -79,7 +80,7 @@ HalManager::HalManager() :
 
 	setCapabilites.connect(SlotFactory::create(&(LocServiceProxy::gps::sendCapabilities)));
 
-	config::read();
+	stm::config::read();
 }
 
 HalManager::~HalManager()
@@ -95,8 +96,6 @@ int HalManager::init(GpsCallbacks * cb)
 	(void)(cb);
 
 	ALOGI("Initialize the HAL");
-
-	//config::read();
 	
 	LocServiceProxy::gps::sendSystemInfo(2018);
 
@@ -104,12 +103,12 @@ int HalManager::init(GpsCallbacks * cb)
 
 	initUtils();
 	initDevice();
-	initStagps();
 	initGeofencing();
 	initRawMeasurement();
 	initAGpsIf();
 	initRilIf();
 	initNiIf();
+	initAssistance();
 	
 	ALOGI("Set capabilities");
 	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
@@ -414,4 +413,19 @@ void HalManager::initAGpsIf()
 	ALOGI("AGPS IF not included in build");
 }
 #endif //#ifdef AGPS_ENABLED
+	}	
+
+void HalManager::initAssistance()
+{
+
+	ALOGI("Initialize assistance features");
+	// GpsPositionMode mode = GpsState::getInstance()->GetGpsMode();
+
+	if(stm::config::get().agnss.enable)
+	{
+		initStagps();
+	}
+}
+
+
 } // namespace stm

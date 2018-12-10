@@ -38,7 +38,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <teseo/config/config.h>
-
+#include <teseo/model/GpsState.h>
 #include <teseo/HalManager.h>
 #include <teseo/utils/Thread.h>
 
@@ -197,7 +197,9 @@ int onSetPositionMode(
 	uint32_t preferredAccuracy,
 	uint32_t preferredTime)
 {
-	signals.setPositionMode.emit(mode, recurrence, minInterval, preferredAccuracy, preferredTime);
+	//signals.setPositionMode.emit(mode, recurrence, minInterval, preferredAccuracy, preferredTime);
+	stm::GpsState *GpsStateInst = GpsState::getInstance();
+	GpsStateInst->SetPositionMode(mode, recurrence, minInterval, preferredAccuracy, preferredTime);	
 	return 0;
 }
 

@@ -48,7 +48,8 @@ LOCAL_SRC_FILES :=              \
 	src/NmeaMessage.cpp         \
 	src/SatInfo.cpp             \
 	src/TalkerId.cpp            \
-	src/Version.cpp
+	src/Version.cpp				\
+	src/GpsState.cpp
 
 LOCAL_COPY_HEADERS_TO := teseo/model/
 LOCAL_COPY_HEADERS :=                          \
@@ -65,7 +66,8 @@ LOCAL_COPY_HEADERS :=                          \
 	include/teseo/model/Stagps.h               \
 	include/teseo/model/TalkerId.h             \
 	include/teseo/model/ValueContainer.h       \
-	include/teseo/model/Version.h 		 
+	include/teseo/model/Version.h 		       \
+	include/teseo/model/GpsState.h
 	
 
 LOCAL_PRELINK_MODULE := false
