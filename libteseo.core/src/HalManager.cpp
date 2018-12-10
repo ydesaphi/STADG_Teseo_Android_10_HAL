@@ -72,7 +72,6 @@ HalManager HalManager::instance;
 
 HalManager::HalManager() :
 	setCapabilites("HalManager::setCapabilites")
-
 {
 	ALOGI("Create HAL manager");
 
@@ -340,27 +339,26 @@ void HalManager::initRilIf()
 {
 	//using namespace stm::ril;
 	if(config::get().agnss.enable)
-	{
+	{	
+
 		ALOGI("Initialize RIL interface");	
 
-	ALOGI("Initialize RIL interface");	
-
-	rilIf = ril::Ril_If::getInstance();
+		rilIf = ril::Ril_If::getInstance();
 	
-	// Ril interface -> framework signals
-	rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
-	rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
+		// Ril interface -> framework signals
+		rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
+		rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
 
-	//Framework -> ril interface signals
-	auto & rilSignals = LocServiceProxy::ril::getSignals();
+		//Framework -> ril interface signals
+		auto & rilSignals = LocServiceProxy::ril::getSignals();
 
-	rilSignals.init.connect(SlotFactory::create(*rilIf, &ril::Ril_If::initialize));
-	rilSignals.setRefLocation.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setRefLocation));
-	rilSignals.setSetId.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setSetId));
-	rilSignals.niMessage.connect(SlotFactory::create(*rilIf, &ril::Ril_If::niMessage));
-	rilSignals.updateNetworkState.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkState));
-	rilSignals.updateNetworkAvailability.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkAvailability));
-
+		rilSignals.init.connect(SlotFactory::create(*rilIf, &ril::Ril_If::initialize));
+		rilSignals.setRefLocation.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setRefLocation));
+		rilSignals.setSetId.connect(SlotFactory::create(*rilIf, &ril::Ril_If::setSetId));
+		rilSignals.niMessage.connect(SlotFactory::create(*rilIf, &ril::Ril_If::niMessage));
+		rilSignals.updateNetworkState.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkState));
+		rilSignals.updateNetworkAvailability.connect(SlotFactory::create(*rilIf, &ril::Ril_If::updateNetworkAvailability));
+	}
 }
 #else
 void HalManager::initRilIf()
@@ -370,16 +368,17 @@ void HalManager::initRilIf()
 #endif // 	#ifdef AGPS_ENABLED
 
 #ifdef AGPS_ENABLED
-void HalManager::initNiIf(){
+void HalManager::initNiIf()
+{
 	if(config::get().agnss.enable)
 	{
 		ALOGI("Initialize NI interface");	
 
-	niIf = ni::Ni_If::getInstance();
+		niIf = ni::Ni_If::getInstance();
 
-	auto & niSignals = LocServiceProxy::ni::getSignals();
-	// Ni interface -> framework signals
-	niIf->reqNiNotification.connect(SlotFactory::create(LocServiceProxy::ni::sendNiNotificationRequest));
+		auto & niSignals = LocServiceProxy::ni::getSignals();
+		// Ni interface -> framework signals
+		niIf->reqNiNotification.connect(SlotFactory::create(LocServiceProxy::ni::sendNiNotificationRequest));
 
 		//Framework -> ni interface signals
 		niSignals.init.connect(SlotFactory::create(*niIf, &ni::Ni_If::initialize));
@@ -387,7 +386,8 @@ void HalManager::initNiIf(){
 	}
 }
 #else
-void HalManager::initNiIf(){
+void HalManager::initNiIf()
+{
 	ALOGI("Ni IF not included in build");
 }
 #endif //#ifdef AGPS_ENABLED
@@ -413,11 +413,10 @@ void HalManager::initAGpsIf()
 	ALOGI("AGPS IF not included in build");
 }
 #endif //#ifdef AGPS_ENABLED
-	}	
 
+#ifdef AGPS_ENABLED
 void HalManager::initAssistance()
 {
-
 	ALOGI("Initialize assistance features");
 	// GpsPositionMode mode = GpsState::getInstance()->GetGpsMode();
 
@@ -426,6 +425,11 @@ void HalManager::initAssistance()
 		initStagps();
 	}
 }
-
+#else
+void HalManager::initAssistance()
+{
+	
+}
+#endif //#ifdef AGPS_ENABLED
 
 } // namespace stm
