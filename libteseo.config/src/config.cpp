@@ -85,6 +85,8 @@ const Configuration & read(const string & path)
     READ_VAL(constellationsnavigation.galileo, CFG_DEF_CONSTELLATIONS_GALILEO);
 
     READ_VAL(agnss.enable,CFG_DEF_DATA_ASSISTANCE_ENABLED);
+    READ_VAL(agnss.cellular_modem_simu,CFG_DEF_CELLULAR_MODEM_SIMU_ENABLED);
+    READ_VAL(agnss.supl_cacert,CFG_DEF_SUPL_CACERT);
     READ_VAL(stagps.enable, CFG_DEF_STAGPS_ENABLE);
 
     READ_VAL(stagps.predictive.enable,    CFG_DEF_STAGPS_PREDICTIVE_ENABLE);

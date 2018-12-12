@@ -86,6 +86,8 @@ struct Configuration {
     struct Agnss
     {
         bool enable; ///< Flag used to enable or disable assistance including ST-AGPS
+        bool cellular_modem_simu; ///< Flag used to simulate IMSI and cell informations given by the framework
+        std::string supl_cacert; ///< Path to a CA-certificate
     } agnss;
     /**
      * ST-AGPS Configuration

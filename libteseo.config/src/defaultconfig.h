@@ -33,7 +33,9 @@
 
 
 #define CFG_DEF_DATA_ASSISTANCE_ENABLED false
+#define CFG_DEF_CELLULAR_MODEM_SIMU_ENABLED false
 #define CFG_DEF_STAGPS_ENABLE false
+#define CFG_DEF_SUPL_CACERT std::string("")
 
 #define CFG_DEF_CONSTELLATIONS_GPS     true
 #define CFG_DEF_CONSTELLATIONS_GLONASS true
