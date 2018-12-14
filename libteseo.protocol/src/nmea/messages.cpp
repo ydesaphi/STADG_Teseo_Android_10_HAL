@@ -507,7 +507,7 @@ catch(...)
 #endif
 void decoders::pstmstagps8passrtn(AbstractDevice & dev, const NmeaMessage & msg)
 {
-	if(msg.sentenceId == utils::createFromString("STAGPS8PASSGENERROR"))
+	if(utils::bytesToString(msg.sentenceId) == "STAGPS8PASSGENERROR")
 	{
 		STAGPS8PASSRTN_LOGI("Decode PSTMSTAGPS8PASSGENERROR");
 		dev.onStagps8Answer(model::Stagps8Answer::PasswordReturnKO, { });
@@ -515,8 +515,8 @@ void decoders::pstmstagps8passrtn(AbstractDevice & dev, const NmeaMessage & msg)
 	else
 	{
 		STAGPS8PASSRTN_LOGI("Decode PSTMSTAGPS8PASSRTN: %s", msg.toCString());
-		STAGPS8PASSRTN_LOGI("Password string: %s", bytesToString(msg.parameters.at(0)).c_str());
-		dev.onStagps8Answer(model::Stagps8Answer::PasswordReturnOk, { msg.parameters.at(0) });
+		STAGPS8PASSRTN_LOGI("Device id: %s - Password: %s", bytesToString(msg.parameters.at(0)).c_str(),bytesToString(msg.parameters.at(1)).c_str());
+		dev.onStagps8Answer(model::Stagps8Answer::PasswordReturnOk, {msg.parameters.at(0),msg.parameters.at(1)});
 	}
 }
 
@@ -532,7 +532,7 @@ void decoders::pstmstagps8passrtn(AbstractDevice & dev, const NmeaMessage & msg)
 #endif
 void decoders::pstmstagpspassrtn(AbstractDevice & dev, const NmeaMessage & msg)
 {
-	if(msg.sentenceId == utils::createFromString("STAGPSPASSGENERROR"))
+	if(utils::bytesToString(msg.sentenceId) == "STAGPSPASSGENERROR")
 	{
 		STAGPSPASSRTN_LOGI("Decode PSTMSTAGPSPASSGENERROR");
 		dev.onStagpsAnswer(model::StagpsAnswer::PasswordReturnKO, { });
@@ -557,11 +557,11 @@ void decoders::pstmstagpspassrtn(AbstractDevice & dev, const NmeaMessage & msg)
 #endif
 void decoders::pstmstagpssatseedresponse(AbstractDevice &, const NmeaMessage & msg)
 {
-	if(msg.sentenceId == utils::createFromString("STAGPSSATSEEDERROR"))
+	if(utils::bytesToString(msg.sentenceId) == "STAGPSSATSEEDERROR")
 	{
 		STAGPSSATSEEDRESP_LOGI("Device sent STAGPSSATSEEDERROR");
 	}
-	if(msg.sentenceId == utils::createFromString("STAGPSSATSEEDOK"))
+	if(utils::bytesToString(msg.sentenceId) == "STAGPSSATSEEDOK")
 	{
 		STAGPSSATSEEDRESP_LOGI("Device sent STAGPSSATSEEDOK");
 	}

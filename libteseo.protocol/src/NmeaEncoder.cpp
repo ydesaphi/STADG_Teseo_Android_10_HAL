@@ -132,10 +132,9 @@ ByteVectorPtr stagps8_password_generate(
 {
 	ALOGI("Encode ST-AGPS 8 Password generate message");
 
-	if(parameters.size() != 3)
+	if(parameters.size() != 2)
 	{
-		//ALOGE("Expected 3 parameters, only %u received", parameters.size());
-		throw std::runtime_error("Expected 3 parameters");
+		throw std::runtime_error("Expected 2 parameters");
 	}
 
 	ByteVectorPtr messagePtr = std::make_shared<ByteVector>();
@@ -150,11 +149,8 @@ ByteVectorPtr stagps8_password_generate(
 
 	auto vendorId = parameters.at(0);
 	auto modelId  = parameters.at(1);
-	auto deviceId = parameters.at(2);
 
-	message << vendorId << ','
-			<< modelId  << ','
-			<< deviceId;
+	message << vendorId << ','	<< modelId; 		
 
 	return messagePtr;
 }
