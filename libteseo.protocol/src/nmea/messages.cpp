@@ -317,7 +317,7 @@ void decoders::gsv(AbstractDevice & dev, const NmeaMessage & msg)
 	{
 		bool emptyValue = false, notTracked = false;
 		int16_t prn;
-		float elevation, azimuth, snr = -1;
+		float elevation(-1), azimuth(-1), snr(0);
 
 		// Extract PRN, Elevation and Azimuth
 		// Set empty flag if we found an empty value

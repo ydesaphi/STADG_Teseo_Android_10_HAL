@@ -159,7 +159,7 @@ SatInfo & SatInfo::setTracked(bool tracked)
 
 	if(!tracked)
 	{
-		this->snr = -1;
+		this->snr = 0;
 		this->setUsedInFix(false);
 	}
 
