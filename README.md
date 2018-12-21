@@ -25,10 +25,6 @@ The STM Teseo HAL provides the following features:
 
 -   Geofencing
 
--   Real Time AGNSS (see section STM proprietary libraries)
-
--   Predictive Assisted GPS 7 (see section STM proprietary libraries)
-
 -   Support for raw measurements and navigation messages
 
 
@@ -55,7 +51,6 @@ You must place the source in the correct location in the android source tree. Th
 $ mkdir <AOSP_DIR>/hardware/stm
 
 $ cd <AOSP_DIR>/hardware/stm
-
 
 <AOSP_DIR>/hardware/stm $ git clone https://github.com/STMicroelectronics/STADG_Teseo_Android_HAL.git teseo
 
@@ -126,16 +121,8 @@ The build should contain the following file `/system/lib64/hw/gps.hikey960.so`.
 STM proprietary libraries
 =========================
 
-### Real Time Assisted GNSS
-> The real-time AGNSS is able to provide the approximate current time, the ephemerides, the almanacs to the _Teseo chip_ GNSS engine in a time frame less than the usual time (about 30 seconds) needed to download real ephemeris from the sky. This reduces considerably the time to get fix especially in critical environments when the ephemeris download time could be very long. 
-Real-time AGNSS requires a network connection to download assistance data from the server.
-
-### Predictive Assisted GPS 7
-> This server based assistance allows fast and accurate GPS performances thanks to a 8KB bi-weekly data transfer. Starting from this downloaded payload, the _Teseo chip_ is capable of computing the ephemeris for up to 14 days, with very high accuracy, for the complete GPS and GLONASS constellations.
-Predictive AGPS requires a network connection to download assistance data from the server.
-
 ### RAW GNSS measurements and navigation messages
-> The _Teseo chip_ is able to report raw measurements data and navigation messages through the HAL GNSS measurements interface. This is available for GPS signals. Please note that the _Teseo chip_ must use a dedicated binary image enabling Carrier Phase measurements.
+> The _Teseo chip_ is able to report raw measurements data and navigation messages through the dedicated HAL GNSS interface. This is available for GPS, GLONASS, BEIDOU and GALILEO constellations (except GALILEO navigation messages). Please note that the _Teseo chip_ must use a dedicated binary image enabling Carrier Phase measurements.
 
 Please note that the release of STM proprietary libraries is subject to signature of a Software License Agreement (SLA) or of a Non Disclosure Agreement (NDA); please contact an STMicroelectronics sales office and representatives for further information.
 

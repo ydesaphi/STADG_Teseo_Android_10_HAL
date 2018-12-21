@@ -1,26 +1,44 @@
-# Unreleased
+# Changelog
+All notable changes to this project will be documented in this file
+## [Unreleased]
 - Batching
 
-# Version 0.5.0 - 2018-09-27
-- [ADDED] Geofencing
-- [ADDED] Support of Agps, ril and ni interfaces
-- [ADDED] Support for raw measurements and navigation messages
+## [0.6.0] - 2018-12-21
+### Added
+- gnss configuration interface
 
-# Version 0.4.0 - 2018-06-29
-- [CHANGED] Update for Android 8.1
-- [CHANGED] Boost library modules aligned to version 1.67.0
-- [ADDED] Support of Predictive Assisted GPS 7
+### Changed
+- use unique instances of agps, ril and ni interfaces
+- support location io api v8
+## [0.5.0] - 2018-09-27
+### Added
+- Geofencing
+- Support of Agps, ril and ni interfaces
+- Support for raw measurements and navigation messages
 
-# Version 0.3.1
-- [ADDED] README file
+## [0.4.0] - 2018-06-29
+### Added
+- Support of Predictive Assisted GPS 7
 
-# Version 0.3.0
-- [ADDED]  UART Baudrate configuration
+### Changed
+- Update for Android 8.1
+- Boost library modules aligned to version 1.67.0
 
-# Version 0.2.0
-- [ADDED]  Support for the external st-agps library (libstagps) to support Real-Time ephemeris download and injection.
-- [ADDED]  Configuration file support
-- [CHANGED] Reorganize the source tree
+## [0.3.1]
+### Added
+- README file
 
-# Version 0.1.0
-This version reports the location and satellites information to the Android services.
+## [0.3.0]
+### Added
+- UART Baudrate configuration
+
+## [0.2.0]
+### Added
+- Support for the external st-agps library (libstagps) to support Real-Time ephemeris download and injection.
+- Configuration file support
+
+### Changed
+- Reorganize the source tree
+
+## [0.1.0]
+- This version reports the location and satellites information to the Android services.
