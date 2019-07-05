@@ -31,6 +31,8 @@
 #define LOG_TAG "teseo_hal_UartByteStream"
 #include <cutils/log.h>
 
+#include <unistd.h>
+
 #include <teseo/config/config.h>
 #include <teseo/utils/errors.h>
 #include <unordered_map>

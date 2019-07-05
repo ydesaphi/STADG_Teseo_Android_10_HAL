@@ -97,6 +97,7 @@ void Config_If::configuration_update(const char* config_data, int32_t length){
     case E_LppProfile:
         m_LppProfile = (uint8_t)(atoi(var_value.c_str()));
         ALOGI("Set LPP profile: %d", m_LppProfile);
+	break;
     case E_GloPosProtSel:
         m_GlonassPosProtocol = (uint8_t)(atoi(var_value.c_str()));
         ALOGI("A-Glonass system positioning protocol: %d", m_GlonassPosProtocol);
