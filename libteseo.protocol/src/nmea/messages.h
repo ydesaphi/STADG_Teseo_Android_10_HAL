@@ -127,6 +127,14 @@ public:
 	 * @param[in]  msg   PSTMSTAGPSSATSEEDOK/ PSTMSTAGPSSATSEEDERRORMessage to decode
 	 */
 	 static void pstmstagpssatseedresponse(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      PSTMDRCAL decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMDRCAL Message to decode
+	 */
+	static void drcal(AbstractDevice & dev, const NmeaMessage & msg);
 };
 
 /**

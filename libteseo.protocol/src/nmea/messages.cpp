@@ -60,6 +60,7 @@ using namespace frozen::string_literals;
 	#define MSG_DBG_STAGPS8PASSRTN
 	#define MSG_DBG_STAGPSPASSRTN
 	#define MSG_DBG_STAGPSSATSEEDRESP
+	#define MSG_DBG_DRCAL
 #endif
 
 namespace stm {
@@ -81,7 +82,7 @@ constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 5> std = 
 	// Do not forget to update number of elements in map declaration
 };
 
-constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 8> stm = {
+constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 9> stm = {
 	{"SBAS"_s, &decoders::sbas},
 	{"VER"_s,  &decoders::pstmver},
 	{"STAGPS8PASSRTN"_s,  &decoders::pstmstagps8passrtn},
@@ -90,6 +91,7 @@ constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 8> stm = 
 	{"STAGPSPASSGENERROR"_s, &decoders::pstmstagpspassrtn},
 	{"STAGPSSATSEEDOK"_s, &decoders::pstmstagpssatseedresponse},
 	{"STAGPSSATSEEDERROR"_s, &decoders::pstmstagpssatseedresponse},
+	{"DRCAL"_s, &decoders::drcal},
 	// Do not forget to update number of elements in map declaration
 };
 
@@ -195,6 +197,8 @@ void decoders::gga(AbstractDevice & dev, const NmeaMessage & msg)
 	Location loc = locResult ? *locResult : Location();
 
 	loc.quality(quality);
+
+	dev.getDrInfo().setGgaFixQual(quality);
 
 	if(quality == FixQuality::Invalid)
 	{
@@ -410,6 +414,7 @@ void decoders::gsa(AbstractDevice & dev, const NmeaMessage & msg)
 	auto locResult = dev.getLocation();
 	Location loc = locResult ? *locResult : Location();
 	loc.fixMode(mode);
+	dev.getDrInfo().setGsaFixMode(mode);
 	dev.setLocation(loc);
 
 	// Update satellites usage informations
@@ -586,6 +591,27 @@ void decoders::pstmstagpssatseedresponse(AbstractDevice &, const NmeaMessage & m
 		STAGPSSATSEEDRESP_LOGI("Device sent STAGPSSATSEEDOK");
 	}
 }
+
+#ifdef MSG_DBG_DRCAL
+#define DRCAL_LOGI(...) ALOGI(__VA_ARGS__)
+#define DRCAL_LOGW(...) ALOGW(__VA_ARGS__)
+#define DRCAL_LOGE(...) ALOGE(__VA_ARGS__)
+#else
+#define DRCAL_LOGI(...)
+#define DRCAL_LOGW(...)
+#define DRCAL_LOGE(...)
+#endif
+void decoders::drcal(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	DRCAL_LOGI("Decode DRCAL: %s", msg.toString().c_str());
+
+	auto it = msg.parameters.begin();
+
+	bool isCalib = utils::byteVectorParse<bool>(*it).value_or(true);
+
+	dev.getDrInfo().setDrcalIsCalib(isCalib);
+}
+
 
 } // namespace nmea
 } // namespace decoder

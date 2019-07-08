@@ -45,6 +45,7 @@
 #include <teseo/model/Stagps.h>
 #include <teseo/utils/Thread.h>
 #include <teseo/model/ValueContainer.h>
+#include <teseo/model/DrInfo.h>
 
 namespace stm {
 namespace decoder {
@@ -77,6 +78,8 @@ private:
 	ValueContainer<std::map<SatIdentifier, SatInfo>> satellites;
 
 	ValueContainer<std::unordered_map<std::string, model::Version>> versions;
+
+	DrInfo drInfo;
 
 protected:
 
@@ -178,6 +181,13 @@ public:
 	 */
 	Result<model::Version, ValueStatus>
 		getProductVersion(const std::string & productName) const;
+
+	/**
+	 * @brief      Gets the current DR information reported by the Teseo
+	 *
+	 * @return     The current DR information.
+	 */
+	DrInfo & getDrInfo();
 
 	/**
 	 * Request to send a message to the Teseo

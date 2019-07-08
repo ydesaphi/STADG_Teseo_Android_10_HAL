@@ -70,6 +70,11 @@ void AbstractDevice::clearSatelliteList()
 	satellites.invalidate();
 }
 
+DrInfo & AbstractDevice::getDrInfo()
+{
+	return this->drInfo;
+}
+
 Result<GpsUtcTime, ValueStatus> AbstractDevice::getTimestamp() const
 {
 	if(this->timestamp)
