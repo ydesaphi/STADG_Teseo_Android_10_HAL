@@ -208,8 +208,30 @@ ByteVector UartByteStream::perform_read() noexcept(false)
 		uint8_t bytes[UART_BYTE_STREAM_BUFFER_SIZE + 1] = {0};
 		ByteVector output;
 		ssize_t nbBytes = 0;
+fd_set set;
+		struct timeval timeout;
+		int rv;
 
-		nbBytes = ::read(fd, &bytes, UART_BYTE_STREAM_BUFFER_SIZE);
+		FD_ZERO(&set); /* clear the set */
+		FD_SET(fd, &set); /* add our file descriptor to the set */
+
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100000;
+
+		rv = select(fd + 1, &set, NULL, NULL, &timeout);
+		if(rv == 1)
+		{
+			nbBytes = ::read(fd, &bytes, UART_BYTE_STREAM_BUFFER_SIZE);
+		}
+		else if(rv == 0)
+		{
+			// Not an erro, log disabled because it happens too often
+			//ALOGV("Read timeout"); /* a timeout occured */
+		}
+		else
+		{
+			ALOGW("Read error"); 
+		}
 
 		if(nbBytes == -1)
 		{

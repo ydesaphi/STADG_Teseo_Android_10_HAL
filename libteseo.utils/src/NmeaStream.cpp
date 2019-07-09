@@ -114,7 +114,8 @@ void NmeaStream::onNewBytes(const ByteVector & bytes)
 	}
 	else if(bytes.size() == 0)
 	{
-		ALOGW("0 bytes received");
+		// log disabled because it happens too often since read function has timeout
+		//ALOGW("0 bytes received");
 	}
 }
 
