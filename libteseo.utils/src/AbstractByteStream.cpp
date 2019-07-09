@@ -138,6 +138,19 @@ int AbstractByteStream::stop()
 	return rr == 0 && rw == 0 ? 0 : 1;
 }
 
+bool AbstractByteStream::isRunning()
+{
+	return writer.isRunning() || reader.isRunning();
+}
+
+void AbstractByteStream::join()
+{
+	if(writer.isRunning())
+		writer.join();
+	if(reader.isRunning())
+		reader.join();
+}
+
 namespace __private_ByteStreamOpenerLog {
 void loge(const char * format, std::string streamName, const char * what)
 {

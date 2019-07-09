@@ -60,6 +60,12 @@ UartByteStream::~UartByteStream()
 {
 	dbgRx.stop();
 	dbgTx.stop();
+	
+	if(this->isRunning())
+	{
+		this->stop();
+		this->join();
+	}
 
 	if(streamStatus == ByteStreamStatus::OPENED)
 	{

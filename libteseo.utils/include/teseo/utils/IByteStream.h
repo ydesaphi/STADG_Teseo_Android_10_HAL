@@ -180,6 +180,16 @@ public:
 	virtual int stop() = 0;
 
 	/**
+	 * Return true if the stream is still running
+	 */
+	virtual bool isRunning() = 0;
+
+	/**
+	 * Wait for reader and writer thread to finish
+	 */
+	virtual void join() = 0;
+
+	/**
 	 * New bytes signal
 	 */
 	Signal<void, const ByteVector &> newBytes;
@@ -311,6 +321,10 @@ public:
 	int start();
 
 	int stop();
+
+	bool isRunning();
+
+	void join();
 };
 
 } // namespace stream
