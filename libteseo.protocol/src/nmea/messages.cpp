@@ -49,6 +49,7 @@ using namespace frozen::string_literals;
 // Messages to debug
 #ifndef DISABLE_ALL_MESSAGE_DEBUGGING
 	// NMEA std. messages
+	//#define MSG_DBG_RMC
 	//#define MSG_DBG_GGA
 	//#define MSG_DBG_VTG
 	//#define MSG_DBG_GSV
@@ -71,7 +72,8 @@ using namespace stm::model;
 
 typedef void (*MessageDecoder)(AbstractDevice & dev, const NmeaMessage &);
 
-constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 4> std = {
+constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 5> std = {
+	{"RMC"_s, &decoders::rmc},
 	{"GGA"_s, &decoders::gga},
 	{"VTG"_s, &decoders::vtg},
 	{"GSV"_s, &decoders::gsv},
@@ -141,6 +143,37 @@ void decode(AbstractDevice & dev, const NmeaMessage & msg)
 #endif
 }
 
+#ifdef MSG_DBG_RMC
+#define RMC_LOGI(...) ALOGI(__VA_ARGS__)
+#define RMC_LOGW(...) ALOGW(__VA_ARGS__)
+#else
+#define RMC_LOGI(...)
+#define RMC_LOGW(...)
+#endif
+void decoders::rmc(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	RMC_LOGI("Decode RMC: %s", msg.toString().c_str());
+
+	GpsUtcTime timestamp = 0;
+
+	if(auto opt = utils::parseTimeAndDate(msg.parameters[0], msg.parameters[8]))
+		timestamp = *opt;
+	else
+	{
+		timestamp = utils::systemNow();
+		RMC_LOGW("Error while parsing GGA timestamp, defaulted to system now.");
+	}
+
+	dev.setTimestamp(timestamp);
+
+	auto locResult = dev.getLocation();
+	Location loc = locResult ? *locResult : Location();
+
+	loc.timestamp(timestamp);
+
+	dev.setLocation(loc);
+}
+
 #ifdef MSG_DBG_GGA
 #define GGA_LOGI(...) ALOGI(__VA_ARGS__)
 #define GGA_LOGW(...) ALOGW(__VA_ARGS__)
@@ -152,29 +185,16 @@ void decoders::gga(AbstractDevice & dev, const NmeaMessage & msg)
 {
 	GGA_LOGI("Decode GGA: %s", msg.toString().c_str());
 
-	GpsUtcTime timestamp = 0;
-
-	if(auto opt = utils::parseTimestamp(msg.parameters[0]))
-		timestamp = *opt;
-	else
-	{
-		timestamp = utils::systemNow();
-		GGA_LOGW("Error while parsing GGA timestamp, defaulted to system now.");
-	}
-
 	DegreeMinuteCoordinate lat(msg.parameters[1], msg.parameters[2][0]);
 	DegreeMinuteCoordinate lon(msg.parameters[3], msg.parameters[4][0]);
 	FixQuality quality = FixQualityFromInt(msg.parameters[5][0] - '0');
 	double HDOP = utils::byteVectorParse<double>(msg.parameters[7]).value_or(0);
 	double altitude = utils::byteVectorParse<double>(msg.parameters[8]).value_or(0);
 
-	dev.setTimestamp(timestamp);
-
 	auto locResult = dev.getLocation();
 	Location loc = locResult ? *locResult : Location();
 
 	loc.quality(quality);
-	loc.timestamp(timestamp);
 
 	if(quality == FixQuality::Invalid)
 	{

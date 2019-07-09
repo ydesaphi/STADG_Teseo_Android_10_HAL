@@ -49,6 +49,14 @@ private:
 
 public:
 	/**
+	 * @brief      --RMC decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   RMC Message to decode
+	 */
+	static void rmc(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
 	 * @brief      --GGA decoder
 	 *
 	 * @param      dev   Device to update

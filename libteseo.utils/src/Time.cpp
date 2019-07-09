@@ -85,6 +85,64 @@ std::optional<GpsUtcTime> parseTimestamp(const ByteVector & vec)
 	return parseTimestamp(vec.cbegin(), vec.cend());
 }
 
+constexpr int PARSER_HOUR_SIZE = 2, PARSER_HOUR_OFFSET = 0;
+constexpr int PARSER_MIN_SIZE  = 2, PARSER_MIN_OFFSET  = 2;
+constexpr int PARSER_SEC_SIZE  = 2, PARSER_SEC_OFFSET  = 4;
+constexpr int PARSER_MSEC_SIZE = 3, PARSER_MSEC_OFFSET = 7;
+constexpr int PARSER_DAY_SIZE = 2, PARSER_DAY_OFFSET = 0;
+constexpr int PARSER_MONTH_SIZE  = 2, PARSER_MONTH_OFFSET  = 2;
+constexpr int PARSER_YEAR_SIZE  = 2, PARSER_YEAR_OFFSET  = 4;
+std::optional<GpsUtcTime> parseTimeAndDate(const ByteVector & time, const ByteVector & date)
+{
+	tm timestamp;
+	int msec;
+	time_point<system_clock> resultTime;
+	struct timeval tv;
+	struct timezone tz;
+
+	timestamp.tm_isdst = 0;
+	gettimeofday(&tv, &tz);
+
+	if(auto opt = utils::byteVectorParse<int>(time.begin() + PARSER_HOUR_OFFSET, time.begin() + PARSER_HOUR_OFFSET + PARSER_HOUR_SIZE))
+		timestamp.tm_hour = *opt;
+	else
+		throw std::runtime_error("Unable to parse hour");
+
+	if(auto opt = utils::byteVectorParse<int>(time.begin() + PARSER_MIN_OFFSET, time.begin() + PARSER_MIN_OFFSET + PARSER_MIN_SIZE))
+		timestamp.tm_min = *opt;
+	else
+		throw std::runtime_error("Unable to parse min");
+
+	if(auto opt = utils::byteVectorParse<int>(time.begin() + PARSER_SEC_OFFSET, time.begin() + PARSER_SEC_OFFSET + PARSER_SEC_SIZE))
+		timestamp.tm_sec = *opt;
+	else
+		throw std::runtime_error("Unable to parse sec");
+
+	if(auto opt = utils::byteVectorParse<int>(time.begin() + PARSER_MSEC_OFFSET, time.begin() + PARSER_MSEC_OFFSET + PARSER_MSEC_SIZE))
+		msec = *opt;
+	else
+		throw std::runtime_error("Unable to parse msec");
+
+	if(auto opt = utils::byteVectorParse<int>(date.begin() + PARSER_DAY_OFFSET, date.begin() + PARSER_DAY_OFFSET + PARSER_DAY_SIZE))
+		timestamp.tm_mday = *opt;
+	else
+		throw std::runtime_error("Unable to parse day");
+
+	if(auto opt = utils::byteVectorParse<int>(date.begin() + PARSER_MONTH_OFFSET, date.begin() + PARSER_MONTH_OFFSET + PARSER_MONTH_SIZE))
+		timestamp.tm_mon = *opt - 1;
+	else
+		throw std::runtime_error("Unable to parse month");
+
+	if(auto opt = utils::byteVectorParse<int>(date.begin() + PARSER_YEAR_OFFSET, date.begin() + PARSER_YEAR_OFFSET + PARSER_YEAR_SIZE))
+		timestamp.tm_year = (*opt+100);
+	else
+		throw std::runtime_error("Unable to parse year");
+
+	resultTime = system_clock::from_time_t(mktime(&timestamp));
+
+	return duration_cast<milliseconds>(resultTime.time_since_epoch()).count() + msec - (tz.tz_minuteswest*60*1000);
+}
+
 std::string time2string(GpsUtcTime tp)
 {
 	return time2string(time_point<system_clock>(milliseconds(tp)));
@@ -100,10 +158,7 @@ GpsUtcTime utc_timestamp_to_gps_timestamp(GpsUtcTime tp)
 // Timestamp expected format : hhmmss.msec
 //                             0123456789.
 // We ignore the '.' before msec field as it make the parse int function crash
-constexpr int PARSER_HOUR_SIZE = 2, PARSER_HOUR_OFFSET = 0;
-constexpr int PARSER_MIN_SIZE  = 2, PARSER_MIN_OFFSET  = 2;
-constexpr int PARSER_SEC_SIZE  = 2, PARSER_SEC_OFFSET  = 4;
-constexpr int PARSER_MSEC_SIZE = 3, PARSER_MSEC_OFFSET = 7;
+
 
 std::optional<GpsUtcTime> parseTimestamp(
 	const ByteVector::const_iterator & begin,

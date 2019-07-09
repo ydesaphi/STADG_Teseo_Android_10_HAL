@@ -66,6 +66,19 @@ std::optional<GpsUtcTime> parseTimestamp(
 std::optional<GpsUtcTime> parseTimestamp(const ByteVector & vec);
 
 /**
+ * @brief      Convert a time and a date byte vector to a timestamp
+ * 
+ * @details    The time format is 'hhmmss.msec'. The date format is 'DDMMYY' To output a complete timestamp we used the
+ * current UTC date injected by the platform.
+ *
+ * @param[in]  vecTime    Time byte vector to parse
+ * @param[in]  vecDate    Date byte vector to parse
+ *
+ * @return     The parsed timestamp
+ */
+std::optional<GpsUtcTime> parseTimeAndDate(const ByteVector & vecTime, const ByteVector & vecDate);
+
+/**
  * @brief      Save the UTC time into the HAL memory
  *
  * @param[in]  time           The time
