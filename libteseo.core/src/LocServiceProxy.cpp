@@ -212,6 +212,18 @@ int onSetPositionMode(
 	return 0;
 }
 
+int onSetGNSSConstellationMask(int mask)
+{
+	signals.setGNSSConstellationMask.emit(mask);
+	return 0;
+}
+
+int onGetGNSSConstellationMask(void)
+{
+	signals.getGNSSConstellationMask.emit();
+	return 0;
+}
+
 void sendNmea(GpsUtcTime timestamp, const NmeaMessage & nmea)
 {
 	std::string asString = nmea.toString();
@@ -692,6 +704,10 @@ static Interfaces interfaces = {
 		.inject_location    = &LocServiceProxy::gps::onInjectLocation,
 		.delete_aiding_data = &LocServiceProxy::gps::onDeleteAidingData,
 		.set_position_mode  = &LocServiceProxy::gps::onSetPositionMode,
+#ifdef ST_CHANGE_CONSTMASK_ENABLED
+		.set_gnss_constellation_mask = &LocServiceProxy::gps::onSetGNSSConstellationMask,
+		.get_gnss_constellation_mask = &LocServiceProxy::gps::onGetGNSSConstellationMask,
+#endif
 		.get_extension      = &LocServiceProxy::gps::onGetExtension
 	},
 	.geofencing = {

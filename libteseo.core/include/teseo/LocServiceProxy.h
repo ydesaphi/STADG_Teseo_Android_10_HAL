@@ -167,6 +167,10 @@ namespace gps {
 
 		Signal<int, GpsPositionMode, GpsPositionRecurrence, uint32_t, uint32_t, uint32_t> setPositionMode =
 			Signal<int, GpsPositionMode, GpsPositionRecurrence, uint32_t, uint32_t, uint32_t>("gps::signals::setPositionMode");
+
+		Signal<int, int> setGNSSConstellationMask = Signal<int, int>("gps::signals::setGNSSConstellationMask");
+
+		Signal<int> getGNSSConstellationMask = Signal<int>("gps::signals::getGNSSConstellationMask");
 	};
 
 	int onStart(void);
@@ -182,6 +186,10 @@ namespace gps {
 	void onDeleteAidingData(GpsAidingData flags);
 
 	int onSetPositionMode(GpsPositionMode mode,	GpsPositionRecurrence recurrence,uint32_t minInterval,uint32_t preferredAccuracy,uint32_t preferredTime);
+
+	int onSetGNSSConstellationMask(int mask);
+
+	int onGetGNSSConstellationMask(void);
 
 	const void * onGetExtension(const char * name);
 

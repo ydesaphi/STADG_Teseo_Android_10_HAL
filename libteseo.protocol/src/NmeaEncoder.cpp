@@ -45,6 +45,10 @@ constexpr const auto stagps_realtime_ephemeris = BA("PSTMEPHEM");
 constexpr const auto stagps_realtime_almanac = BA("PSTMALMANAC");
 
 constexpr const auto stagps_pgps7_seed = BA("PSTMSTAGPSSATSEED");
+
+constexpr const auto set_const_mask = BA("PSTMSETCONSTMASK");
+
+constexpr const auto save_par = BA("PSTMSAVEPAR");
 } // namespace messages
 
 template<std::size_t N>
@@ -179,6 +183,42 @@ ByteVectorPtr stagps_pgps7_seed(
 	return generic_encoder(messages::stagps_pgps7_seed, 7, parameters);
 }
 
+ByteVectorPtr set_const_mask(
+	const device::AbstractDevice &,
+	const std::vector<ByteVector> & parameters)
+{
+	ALOGI("Encode Set GNSS constellation message");
+
+	if(parameters.size() != 1)
+	{
+		throw std::runtime_error("Expected 1 parameters");
+	}
+
+	ByteVectorPtr messagePtr = std::make_shared<ByteVector>();
+	ByteVector & message = *messagePtr;
+
+	message.insert(message.begin(),
+		messages::set_const_mask.begin(),
+		messages::set_const_mask.end());
+
+	auto mask = parameters.at(0);
+
+	message << ','	<< mask;
+
+	return messagePtr;
+}
+
+ByteVectorPtr save_par(
+	const device::AbstractDevice & device,
+	const std::vector<ByteVector> & parameters)
+{
+	// Unused params
+	(void)(device);
+	(void)(parameters);
+
+	return ba2bvptr(messages::save_par);
+}
+
 
 } // namespace encoders
 
@@ -211,6 +251,14 @@ void NmeaEncoder::encode(
 
 		case MessageId::Stagps_PGPS7_Seed:
 			encodedBytes(encoders::stagps_pgps7_seed(device, message.parameters));
+			break;
+
+		case MessageId::SetConstMask:
+			encodedBytes(encoders::set_const_mask(device, message.parameters));
+			break;
+
+		case MessageId::SavePar:
+			encodedBytes(encoders::save_par(device, message.parameters));
 			break;
 
 		default:

@@ -79,6 +79,8 @@ private:
 
 	ValueContainer<std::unordered_map<std::string, model::Version>> versions;
 
+	int gnssConstMask;
+
 	DrInfo drInfo;
 
 protected:
@@ -190,11 +192,51 @@ public:
 	DrInfo & getDrInfo();
 
 	/**
+	 * @brief      Gets the current GNSS constellation mask reported by the Teseo
+	 *
+	 * @return     The current GNSS constellation mask.
+	 */
+	int getConstMask();
+
+	/**
+	 * @brief      Sets the current GNSS constellation mask reported by the Teseo
+	 *
+	 * @param[in]  mask The current GNSS constellation mask.
+	 */
+	void setConstMask(int mask);
+
+	/**
 	 * Request to send a message to the Teseo
 	 *
 	 * @param message The message to send
 	 */
 	void sendMessageRequest(const model::Message & message);
+
+	/**
+	 * Request to change GNSS constellation mask
+	 *
+	 * @param mask mask where each bit enable/disable a specific constellation
+	 * bit 0 = GPS
+	 * bit 1 = GLONASS
+	 * bit 2 = QZSS
+	 * bit 3 = GALILEO
+	 * bit 7 = BEIDOU
+	 *
+	 * @return     0 on success, 1 on failure
+	 */
+	int setGNSSConstellationMask(int mask);
+
+	/**
+	 * Request to get GNSS constellation mask
+	 *
+	 * @return mask where each bit enable/disable a specific constellation
+	 * bit 0 = GPS
+	 * bit 1 = GLONASS
+	 * bit 2 = QZSS
+	 * bit 3 = GALILEO
+	 * bit 7 = BEIDOU
+	 */
+	int getGNSSConstellationMask();
 
 	/**
 	 * @brief      Start the navigation

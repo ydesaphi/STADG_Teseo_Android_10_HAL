@@ -82,6 +82,17 @@ enum class MessageId {
 	 */
 	Stagps_PGPS7_Seed,
 
+	/**
+	 * Set GNSS constellation mask
+	 * Parameters:
+	 * - mask
+	 */
+	SetConstMask,
+
+	/**
+	 * Save FW config parameters
+	 */
+	SavePar,
 };
 
 struct Message {

@@ -61,6 +61,7 @@ using namespace frozen::string_literals;
 	#define MSG_DBG_STAGPSPASSRTN
 	#define MSG_DBG_STAGPSSATSEEDRESP
 	#define MSG_DBG_DRCAL
+	#define MSG_DBG_TG
 #endif
 
 namespace stm {
@@ -82,7 +83,7 @@ constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 5> std = 
 	// Do not forget to update number of elements in map declaration
 };
 
-constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 9> stm = {
+constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 10> stm = {
 	{"SBAS"_s, &decoders::sbas},
 	{"VER"_s,  &decoders::pstmver},
 	{"STAGPS8PASSRTN"_s,  &decoders::pstmstagps8passrtn},
@@ -92,6 +93,7 @@ constexpr static frozen::unordered_map<frozen::string, MessageDecoder, 9> stm = 
 	{"STAGPSSATSEEDOK"_s, &decoders::pstmstagpssatseedresponse},
 	{"STAGPSSATSEEDERROR"_s, &decoders::pstmstagpssatseedresponse},
 	{"DRCAL"_s, &decoders::drcal},
+	{"TG"_s, &decoders::tg},
 	// Do not forget to update number of elements in map declaration
 };
 
@@ -610,6 +612,26 @@ void decoders::drcal(AbstractDevice & dev, const NmeaMessage & msg)
 	bool isCalib = utils::byteVectorParse<bool>(*it).value_or(true);
 
 	dev.getDrInfo().setDrcalIsCalib(isCalib);
+}
+
+#ifdef MSG_DBG_TG
+#define TG_LOGI(...) ALOGI(__VA_ARGS__)
+#define TG_LOGW(...) ALOGW(__VA_ARGS__)
+#define TG_LOGE(...) ALOGE(__VA_ARGS__)
+#else
+#define TG_LOGI(...)
+#define TG_LOGW(...)
+#define TG_LOGE(...)
+#endif
+void decoders::tg(AbstractDevice & dev, const NmeaMessage & msg)
+{
+	TG_LOGI("Decode PSTMTG: %s", msg.toString().c_str());
+
+	int constMask = utils::byteVectorParse<int>(msg.parameters[7]).value_or(0);
+
+	dev.setConstMask(constMask);
+
+	TG_LOGI("GNSS constellation mask: %d", dev.getConstMask());
 }
 
 

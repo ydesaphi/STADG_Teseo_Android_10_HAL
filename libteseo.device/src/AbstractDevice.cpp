@@ -48,6 +48,7 @@ AbstractDevice::AbstractDevice()
 void AbstractDevice::init()
 {
 	statusUpdate(GPS_STATUS_NONE);
+	gnssConstMask = 0;
 }
 
 void AbstractDevice::setLocation(const Location & loc)
@@ -192,6 +193,64 @@ void AbstractDevice::newVersionNumber(const model::Version & version)
 void AbstractDevice::sendMessageRequest(const model::Message & message)
 {
 	sendMessage(*this, message);
+}
+
+int AbstractDevice::getConstMask()
+{
+	return gnssConstMask;
+}
+
+void AbstractDevice::setConstMask(int mask)
+{
+	gnssConstMask = mask;
+}
+
+int AbstractDevice::setGNSSConstellationMask(int mask)
+{
+	int error = 0;
+	int tmpMask = mask & ~4; // Remove QZSS before checking validity since QZSS is valid with all combinations
+
+	//check if the new mask is already applied
+	if(mask == gnssConstMask)
+		return error;
+
+	switch(tmpMask)
+	{
+		case 1:		// GPS
+		case 2:		// GLONASS
+		case 3:		// GPS+GLONASS
+		case 8:		// GALILEO
+		case 9:		// GPS+GALILEO
+		case 10:	// GLONASS+GALILEO
+		case 128:	// BEIDOU
+		case 129:	// GPS+BEIDOU
+		case 130:	// GALILEO+BEIDOU
+		{
+			//send $PSTMSETCONSTMASK message
+			model::Message setConstMaskMsg;
+			setConstMaskMsg.id = MessageId::SetConstMask;
+			auto strMask = std::to_string(mask);
+			setConstMaskMsg.parameters.push_back(utils::createFromString(strMask));
+			sendMessage(*this, setConstMaskMsg);
+
+			// send $PSTMSAVEPAR message
+			model::Message saveParMsg;
+			saveParMsg.id = MessageId::SavePar;
+			sendMessage(*this, saveParMsg);
+			error = 0;
+		}
+		break;
+
+		default:
+			error = 1;
+			break;
+	}
+	return error;
+}
+
+int AbstractDevice::getGNSSConstellationMask()
+{
+	return getConstMask();
 }
 
 } // namespace device

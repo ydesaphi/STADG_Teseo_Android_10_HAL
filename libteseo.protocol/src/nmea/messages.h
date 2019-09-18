@@ -135,6 +135,14 @@ public:
 	 * @param[in]  msg   PSTMDRCAL Message to decode
 	 */
 	static void drcal(AbstractDevice & dev, const NmeaMessage & msg);
+
+	/**
+	 * @brief      PSTMTG decoder
+	 *
+	 * @param      dev   Device to update
+	 * @param[in]  msg   PSTMTG Message to decode
+	 */
+	static void tg(AbstractDevice & dev, const NmeaMessage & msg);
 };
 
 /**

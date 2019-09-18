@@ -41,9 +41,10 @@ cc_defaults {
         //"-DDEBUG_HTTP_CLIENT",                // Enable HTTP client debug messages
         //"-DSIGNAL_DEBUGGING",                 // Display signal debugging messages
         //"-DENABLE_DEBUG_OUTPUT_STREAM",       // Enable debug output stream
+        //"-DST_CHANGE_CONSTMASK_ENABLED",      // Enable the use of get and set GNSS const mask from HIDL (interfaces must be added by user in HIDL)
     ],
     rtti: true,
-	shared_libs: [
+    shared_libs: [
         "libc",
         "liblog",
         "libsysutils",

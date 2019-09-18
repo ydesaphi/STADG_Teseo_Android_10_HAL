@@ -228,6 +228,12 @@ void HalManager::initDevice()
 
 	device->requestUtcTime.connect(SlotFactory::create(LocServiceProxy::gps::requestUtcTime));
 
+	gpsSignals.setGNSSConstellationMask.connect(
+		SlotFactory::create(*device, &device::AbstractDevice::setGNSSConstellationMask));
+
+	gpsSignals.getGNSSConstellationMask.connect(
+		SlotFactory::create(*device, &device::AbstractDevice::getGNSSConstellationMask));
+
 	device->init();
 }
 
