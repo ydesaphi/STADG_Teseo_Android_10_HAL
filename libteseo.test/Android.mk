@@ -27,6 +27,10 @@ LOCAL_MODULE := libteseo.test
 LOCAL_MODULE_OWNER := stm
 #LOCAL_MODULE_TAGS := eng	# eng is obsolete
 
+ifdef BOARD_VNDK_VERSION
+	LOCAL_VENDOR_MODULE:= true
+endif
+
 LOCAL_CPPFLAGS := -Wall -Wextra -std=c++1z -fexceptions -frtti
 
 LOCAL_CPPFLAGS += -DDEBUG_NMEA_DECODER             # Debug the NMEA Decoder
