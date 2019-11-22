@@ -214,37 +214,188 @@ int AbstractDevice::setGNSSConstellationMask(int mask)
 	if(mask == gnssConstMask)
 		return error;
 
+	//check if the mask is a valid mask
+	if(!((tmpMask == 1) || (tmpMask == 2) || (tmpMask == 3) || (tmpMask == 8) || (tmpMask == 9)
+	 || (tmpMask == 10) || (tmpMask == 128) || (tmpMask == 129) || (tmpMask == 130)))
+		return 1;
+		
+	//Send COLD start command to invalidate current almanac, ephemeris, position and time
+	model::Message coldStartMsg;
+	coldStartMsg.id = MessageId::ColdStart;
+	coldStartMsg.parameters.push_back(utils::createFromString("15"));
+	sendMessage(*this, coldStartMsg);
+
+	//Suspend GNSS engine
+	model::Message gpsSuspendMsg;
+	gpsSuspendMsg.id = MessageId::GpsSuspend;
+	sendMessage(*this, gpsSuspendMsg);
+
+	//Clear the BD+GAL enable bits
+	model::Message setParClearBDGALMsg;
+	setParClearBDGALMsg.id = MessageId::SetPar;
+	setParClearBDGALMsg.parameters.push_back(utils::createFromString("1227"));
+	setParClearBDGALMsg.parameters.push_back(utils::createFromString("3C0"));
+	setParClearBDGALMsg.parameters.push_back(utils::createFromString("2"));
+	sendMessage(*this, setParClearBDGALMsg);
+
+	//Clear the GPS+GLO enable bits
+	model::Message setParClearGPSGLOMsg;
+	setParClearGPSGLOMsg.id = MessageId::SetPar;
+	setParClearGPSGLOMsg.parameters.push_back(utils::createFromString("1200"));
+	setParClearGPSGLOMsg.parameters.push_back(utils::createFromString("630000"));
+	setParClearGPSGLOMsg.parameters.push_back(utils::createFromString("2"));
+	sendMessage(*this, setParClearGPSGLOMsg);
+
 	switch(tmpMask)
 	{
 		case 1:		// GPS
+		{
+			//Enable GPS
+			model::Message setParEnableGPSMsg;
+			setParEnableGPSMsg.id = MessageId::SetPar;
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("1200"));
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("410000"));
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGPSMsg);	
+		}
+		break;
+
 		case 2:		// GLONASS
+		{
+			//Enable GLONASS
+			model::Message setParEnableGLOMsg;
+			setParEnableGLOMsg.id = MessageId::SetPar;
+			setParEnableGLOMsg.parameters.push_back(utils::createFromString("1200"));
+			setParEnableGLOMsg.parameters.push_back(utils::createFromString("220000"));
+			setParEnableGLOMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGLOMsg);
+		}
+		break;
+
 		case 3:		// GPS+GLONASS
+		{
+			//Enable GPS+GLONASS
+			model::Message setParEnableGPSGLOMsg;
+			setParEnableGPSGLOMsg.id = MessageId::SetPar;
+			setParEnableGPSGLOMsg.parameters.push_back(utils::createFromString("1200"));
+			setParEnableGPSGLOMsg.parameters.push_back(utils::createFromString("630000"));
+			setParEnableGPSGLOMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGPSGLOMsg);
+		}
+		break;
+
 		case 8:		// GALILEO
+		{
+			//Enable GALILEO
+			model::Message setParEnableGALMsg;
+			setParEnableGALMsg.id = MessageId::SetPar;
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("1227"));
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("0C0"));
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGALMsg);
+		}
+		break;
+
 		case 9:		// GPS+GALILEO
+		{
+			//Enable GPS
+			model::Message setParEnableGPSMsg;
+			setParEnableGPSMsg.id = MessageId::SetPar;
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("1200"));
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("410000"));
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGPSMsg);	
+
+			//Enable GALILEO
+			model::Message setParEnableGALMsg;
+			setParEnableGALMsg.id = MessageId::SetPar;
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("1227"));
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("0C0"));
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGALMsg);
+		}
+		break;
+
 		case 10:	// GLONASS+GALILEO
+		{
+			//Enable GLONASS
+			model::Message setParEnableGLOMsg;
+			setParEnableGLOMsg.id = MessageId::SetPar;
+			setParEnableGLOMsg.parameters.push_back(utils::createFromString("1200"));
+			setParEnableGLOMsg.parameters.push_back(utils::createFromString("220000"));
+			setParEnableGLOMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGLOMsg);
+
+			//Enable GALILEO
+			model::Message setParEnableGALMsg;
+			setParEnableGALMsg.id = MessageId::SetPar;
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("1227"));
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("0C0"));
+			setParEnableGALMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGALMsg);
+		}
+		break;
+
 		case 128:	// BEIDOU
+		{
+			//Enable BEIDOU
+			model::Message setParEnableBDMsg;
+			setParEnableBDMsg.id = MessageId::SetPar;
+			setParEnableBDMsg.parameters.push_back(utils::createFromString("1227"));
+			setParEnableBDMsg.parameters.push_back(utils::createFromString("300"));
+			setParEnableBDMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableBDMsg);
+		}
+		break;
+
 		case 129:	// GPS+BEIDOU
+		{
+			//Enable GPS
+			model::Message setParEnableGPSMsg;
+			setParEnableGPSMsg.id = MessageId::SetPar;
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("1200"));
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("410000"));
+			setParEnableGPSMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGPSMsg);			
+
+			//Enable BEIDOU
+			model::Message setParEnableBDMsg;
+			setParEnableBDMsg.id = MessageId::SetPar;
+			setParEnableBDMsg.parameters.push_back(utils::createFromString("1227"));
+			setParEnableBDMsg.parameters.push_back(utils::createFromString("300"));
+			setParEnableBDMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableBDMsg);
+		}
+		break;
+
 		case 130:	// GALILEO+BEIDOU
 		{
-			//send $PSTMSETCONSTMASK message
-			model::Message setConstMaskMsg;
-			setConstMaskMsg.id = MessageId::SetConstMask;
-			auto strMask = std::to_string(mask);
-			setConstMaskMsg.parameters.push_back(utils::createFromString(strMask));
-			sendMessage(*this, setConstMaskMsg);
+			//Enable GALILEO+BEIDOU
+			model::Message setParEnableGALBDMsg;
+			setParEnableGALBDMsg.id = MessageId::SetPar;
+			setParEnableGALBDMsg.parameters.push_back(utils::createFromString("1227"));
+			setParEnableGALBDMsg.parameters.push_back(utils::createFromString("3C0"));
+			setParEnableGALBDMsg.parameters.push_back(utils::createFromString("1"));
+			sendMessage(*this, setParEnableGALBDMsg);
 
-			// send $PSTMSAVEPAR message
-			model::Message saveParMsg;
-			saveParMsg.id = MessageId::SavePar;
-			sendMessage(*this, saveParMsg);
-			error = 0;
+			
 		}
 		break;
 
 		default:
-			error = 1;
 			break;
 	}
+
+	// send $PSTMSAVEPAR message
+	model::Message saveParMsg;
+	saveParMsg.id = MessageId::SavePar;
+	sendMessage(*this, saveParMsg);
+
+	// reset Teseo software
+	model::Message systemResetMsg;
+	systemResetMsg.id = MessageId::SystemReset;
+	sendMessage(*this, systemResetMsg);
+
 	return error;
 }
 

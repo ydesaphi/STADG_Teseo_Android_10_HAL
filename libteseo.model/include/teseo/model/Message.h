@@ -83,16 +83,35 @@ enum class MessageId {
 	Stagps_PGPS7_Seed,
 
 	/**
-	 * Set GNSS constellation mask
+	 * Execute cold start
 	 * Parameters:
-	 * - mask
+	 * - mask [optional]
 	 */
-	SetConstMask,
+	ColdStart,
+
+	/**
+	 * Suspend GNSS engine
+	 */
+	GpsSuspend,
+
+	/**
+	 * Set FW configuration parameter
+	 * Parameters:
+	 * - ID
+	 * - value
+	 * - mode [optional]
+	 */
+	SetPar,
 
 	/**
 	 * Save FW config parameters
 	 */
 	SavePar,
+
+	/**
+	 * Reset Teseo software
+	 */
+	SystemReset,
 };
 
 struct Message {

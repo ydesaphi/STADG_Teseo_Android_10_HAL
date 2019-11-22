@@ -46,9 +46,15 @@ constexpr const auto stagps_realtime_almanac = BA("PSTMALMANAC");
 
 constexpr const auto stagps_pgps7_seed = BA("PSTMSTAGPSSATSEED");
 
-constexpr const auto set_const_mask = BA("PSTMSETCONSTMASK");
+constexpr const auto cold_start = BA("PSTMCOLD");
+
+constexpr const auto gps_suspend = BA("PSTMGPSSUSPEND");
+
+constexpr const auto set_par = BA("PSTMSETPAR");
 
 constexpr const auto save_par = BA("PSTMSAVEPAR");
+
+constexpr const auto system_reset = BA("PSTMSRR");
 } // namespace messages
 
 template<std::size_t N>
@@ -183,29 +189,43 @@ ByteVectorPtr stagps_pgps7_seed(
 	return generic_encoder(messages::stagps_pgps7_seed, 7, parameters);
 }
 
-ByteVectorPtr set_const_mask(
+ByteVectorPtr cold_start(
 	const device::AbstractDevice &,
 	const std::vector<ByteVector> & parameters)
 {
-	ALOGI("Encode Set GNSS constellation message");
+	ALOGI("Encode Cold start message");
 
-	if(parameters.size() != 1)
+	if(parameters.size() == 0)
 	{
-		throw std::runtime_error("Expected 1 parameters");
+		return ba2bvptr(messages::cold_start);
 	}
 
-	ByteVectorPtr messagePtr = std::make_shared<ByteVector>();
-	ByteVector & message = *messagePtr;
+	return generic_encoder(messages::cold_start, 1, parameters);
+}
 
-	message.insert(message.begin(),
-		messages::set_const_mask.begin(),
-		messages::set_const_mask.end());
+ByteVectorPtr gps_suspend(
+	const device::AbstractDevice & device,
+	const std::vector<ByteVector> & parameters)
+{
+	// Unused params
+	(void)(device);
+	(void)(parameters);
 
-	auto mask = parameters.at(0);
+	return ba2bvptr(messages::gps_suspend);
+}
 
-	message << ','	<< mask;
+ByteVectorPtr set_par(
+	const device::AbstractDevice &,
+	const std::vector<ByteVector> & parameters)
+{
+	ALOGI("Encode Set Par message");
 
-	return messagePtr;
+	if(parameters.size() == 2)
+	{
+		return generic_encoder(messages::set_par, 2, parameters);
+	}
+
+	return generic_encoder(messages::set_par, 3, parameters);
 }
 
 ByteVectorPtr save_par(
@@ -217,6 +237,17 @@ ByteVectorPtr save_par(
 	(void)(parameters);
 
 	return ba2bvptr(messages::save_par);
+}
+
+ByteVectorPtr system_reset(
+	const device::AbstractDevice & device,
+	const std::vector<ByteVector> & parameters)
+{
+	// Unused params
+	(void)(device);
+	(void)(parameters);
+
+	return ba2bvptr(messages::system_reset);
 }
 
 
@@ -253,12 +284,24 @@ void NmeaEncoder::encode(
 			encodedBytes(encoders::stagps_pgps7_seed(device, message.parameters));
 			break;
 
-		case MessageId::SetConstMask:
-			encodedBytes(encoders::set_const_mask(device, message.parameters));
+		case MessageId::ColdStart:
+			encodedBytes(encoders::cold_start(device, message.parameters));
+			break;
+
+		case MessageId::GpsSuspend:
+			encodedBytes(encoders::gps_suspend(device, message.parameters));
+			break;
+
+		case MessageId::SetPar:
+			encodedBytes(encoders::set_par(device, message.parameters));
 			break;
 
 		case MessageId::SavePar:
 			encodedBytes(encoders::save_par(device, message.parameters));
+			break;
+
+		case MessageId::SystemReset:
+			encodedBytes(encoders::system_reset(device, message.parameters));
 			break;
 
 		default:
