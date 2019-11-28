@@ -168,23 +168,23 @@ std::optional<GpsUtcTime> parseTimestamp(
 
 	hour = byteVectorParse<int>(
 		begin + PARSER_HOUR_OFFSET,
-		begin + PARSER_HOUR_OFFSET + PARSER_HOUR_SIZE-1);
+		begin + PARSER_HOUR_OFFSET + PARSER_HOUR_SIZE);
 
 	min = byteVectorParse<int>(
 		begin + PARSER_MIN_OFFSET,
-		begin + PARSER_MIN_OFFSET + PARSER_MIN_SIZE-1);
+		begin + PARSER_MIN_OFFSET + PARSER_MIN_SIZE);
 
 	sec = byteVectorParse<int>(
 		begin + PARSER_SEC_OFFSET,
-		begin + PARSER_SEC_OFFSET + PARSER_SEC_SIZE-1);
+		begin + PARSER_SEC_OFFSET + PARSER_SEC_SIZE);
 
 	msec = byteVectorParse<int>(
 		begin + PARSER_MSEC_OFFSET,
-		begin + PARSER_MSEC_OFFSET + PARSER_MSEC_SIZE-1);
+		begin + PARSER_MSEC_OFFSET + PARSER_MSEC_SIZE);
 
-	if(end != begin + PARSER_MSEC_OFFSET + PARSER_MSEC_SIZE-1)
+	if(end != begin + PARSER_MSEC_OFFSET + PARSER_MSEC_SIZE)
 		ALOGW("Trailing data after timestamp");
-		
+
 	if(hour && min && sec && msec)
 		return *msec + *sec * 1000 + *min * 60000 + *hour * 3600000 +
 			duration_cast<milliseconds>(utcTodayOffset.time_since_epoch()).count();
