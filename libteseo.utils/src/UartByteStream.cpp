@@ -33,7 +33,6 @@
 
 #include <unistd.h>
 
-#include <teseo/config/config.h>
 #include <teseo/utils/errors.h>
 #include <unordered_map>
 
@@ -60,7 +59,7 @@ UartByteStream::~UartByteStream()
 {
 	dbgRx.stop();
 	dbgTx.stop();
-	
+
 	if(this->isRunning())
 	{
 		this->stop();
@@ -230,7 +229,7 @@ fd_set set;
 		}
 		else
 		{
-			ALOGW("Read error"); 
+			ALOGW("Read error");
 		}
 
 		if(nbBytes == -1)

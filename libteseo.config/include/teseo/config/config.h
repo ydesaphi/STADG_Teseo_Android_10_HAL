@@ -58,7 +58,7 @@ struct Configuration {
         bool beidou;
         bool galileo;
     } constellations;
-    
+
     /**
      * Gnss Measurement Constellations supports
      */
@@ -124,7 +124,7 @@ struct Configuration {
 
 };
 
-const Configuration & read(const std::string & path = std::string("/etc/gps.conf"));
+const Configuration & read(const std::string & path = std::string("/vendor/etc/gps/gps.conf"));
 
 const Configuration & get();
 

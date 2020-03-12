@@ -87,9 +87,9 @@ struct GpsEphemerisData
 
 union GpsEphemeris {
 	GpsEphemerisData d;
-	uint8_t          raw[sizeof(GpsEphemerisData)];	
+    uint8_t          raw[sizeof(GpsEphemerisData)];
 
-	GpsEphemeris(): raw({0}) { }
+	GpsEphemeris(): raw{0} { }
 };
 
 } // namespace stm::model
@@ -99,6 +99,6 @@ union GpsEphemeris {
  */
 stm::ByteVector operator << (stm::ByteVector && bv, const stm::model::GpsEphemeris & eph);
 stm::ByteVector & operator << (stm::ByteVector & bv, const stm::model::GpsEphemeris & eph);
- 
+
 
 #endif // TESEO_HAL_MODEL_EPHEMERIS_H

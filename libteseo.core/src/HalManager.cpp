@@ -60,8 +60,8 @@
 
 #ifdef AGPS_ENABLED
 #include <teseo/agnss/agps_if.h>
-#include <teseo/agnss/ril_if.h>
-#include <teseo/agnss/ni_if.h>
+#include <teseo/agnss/ril/ril_if.h>
+#include <teseo/agnss/ni/ni_if.h>
 #endif
 
 namespace stm {
@@ -95,7 +95,7 @@ int HalManager::init(GpsCallbacks * cb)
 	(void)(cb);
 
 	ALOGI("Initialize the HAL");
-	
+
 	LocServiceProxy::gps::sendSystemInfo(2018);
 
 	ALOGI("Initialize modules");
@@ -108,7 +108,7 @@ int HalManager::init(GpsCallbacks * cb)
 	initRilIf();
 	initNiIf();
 	initAssistance();
-	
+
 	ALOGI("Set capabilities");
 	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
 	#ifdef SUPL_ENABLED
@@ -281,28 +281,28 @@ void HalManager::initGeofencing()
 {
 	using namespace stm::geofencing;
 
-	ALOGI("Initialize Geofencing");
+    ALOGI("Initialize Geofencing");
 
-	geofencingManager = new GeofencingManager();
+    geofencingManager = new GeofencingManager();
 
-	geofencingManager->answerGeofenceAddRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceAddRequest));
-	geofencingManager->answerGeofenceRemoveRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceRemoveRequest));
-	geofencingManager->answerGeofencePauseRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofencePauseRequest));
-	geofencingManager->answerGeofenceResumeRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceResumeRequest));
+    geofencingManager->answerGeofenceAddRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceAddRequest));
+    geofencingManager->answerGeofenceRemoveRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceRemoveRequest));
+    geofencingManager->answerGeofencePauseRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofencePauseRequest));
+    geofencingManager->answerGeofenceResumeRequest.connect(SlotFactory::create(LocServiceProxy::geofencing::answerGeofenceResumeRequest));
 
-	geofencingManager->sendGeofenceStatus.connect(SlotFactory::create(LocServiceProxy::geofencing::sendGeofenceStatus));
-	geofencingManager->sendGeofenceTransition.connect(SlotFactory::create(LocServiceProxy::geofencing::sendGeofenceTransition));
+    geofencingManager->sendGeofenceStatus.connect(SlotFactory::create(LocServiceProxy::geofencing::sendGeofenceStatus));
+    geofencingManager->sendGeofenceTransition.connect(SlotFactory::create(LocServiceProxy::geofencing::sendGeofenceTransition));
 
-	auto & geofencingSignals = LocServiceProxy::geofencing::getSignals();
-	// Initialize slot is empty
-	geofencingSignals.init.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::initialize));
-	geofencingSignals.addGeofenceArea.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::add));
-	geofencingSignals.removeGeofenceArea.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::remove));
-	geofencingSignals.pauseGeofence.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::pause));
-	geofencingSignals.resumeGeofence.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::resume));
+    auto & geofencingSignals = LocServiceProxy::geofencing::getSignals();
+    // Initialize slot is empty
+    geofencingSignals.init.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::initialize));
+    geofencingSignals.addGeofenceArea.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::add));
+    geofencingSignals.removeGeofenceArea.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::remove));
+    geofencingSignals.pauseGeofence.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::pause));
+    geofencingSignals.resumeGeofence.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::resume));
 
-	device->locationUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onLocationUpdate));
-	device->statusUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onDeviceStatusUpdate));
+    device->locationUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onLocationUpdate));
+    device->statusUpdate.connect(SlotFactory::create(*geofencingManager, &GeofencingManager::onDeviceStatusUpdate));
 }
 
 #ifdef STRAW_ENABLED
@@ -339,12 +339,12 @@ void HalManager::initRilIf()
 {
 	//using namespace stm::ril;
 	if(config::get().agnss.enable)
-	{	
+	{
 
-		ALOGI("Initialize RIL interface");	
+		ALOGI("Initialize RIL interface");
 
 		rilIf = ril::Ril_If::getInstance();
-	
+
 		// Ril interface -> framework signals
 		rilIf->reqRefLoc.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestReferenceLocation));
 		rilIf->reqSetId.connect(SlotFactory::create(LocServiceProxy::ril::sendRequestSetId));
@@ -372,7 +372,7 @@ void HalManager::initNiIf()
 {
 	if(config::get().agnss.enable)
 	{
-		ALOGI("Initialize NI interface");	
+		ALOGI("Initialize NI interface");
 
 		niIf = ni::Ni_If::getInstance();
 
@@ -428,7 +428,7 @@ void HalManager::initAssistance()
 #else
 void HalManager::initAssistance()
 {
-	
+
 }
 #endif //#ifdef AGPS_ENABLED
 

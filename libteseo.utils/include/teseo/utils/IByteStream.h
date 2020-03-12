@@ -62,10 +62,13 @@ public:
 		type(other.type)
 	{ }
 
+//TODO: disable first, error due to no return type
+#if 0
     StreamException & operator=(const StreamException & other) noexcept
 	{
 		type = other.type;
 	}
+#endif
 
     virtual ~StreamException() noexcept
 	{ }
@@ -118,7 +121,7 @@ class IByteStream : public Trackable {
 protected:
 	template<bool CatchException>
 	friend class ByteStreamOpener;
-	
+
 	friend class ByteStreamReader;
 	friend class ByteStreamWriter;
 
@@ -287,7 +290,7 @@ private:
 		WRITE,
 		STOP
 	};
-	
+
 protected:
 	void run();
 

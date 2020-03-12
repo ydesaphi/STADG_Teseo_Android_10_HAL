@@ -66,7 +66,7 @@ union GpsAlmanac {
 	GpsAlmanacData d;
 	uint8_t        raw[sizeof(GpsAlmanacData)];
 
-	GpsAlmanac(): raw({0}) { }
+	GpsAlmanac(): raw{0} { }
 };
 
 } // namespace stm::model
