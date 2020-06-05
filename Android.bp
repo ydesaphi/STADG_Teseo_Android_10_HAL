@@ -46,7 +46,6 @@ cc_defaults {
 	shared_libs: [
         "libc",
         "liblog",
-        "libcutils",
         "libsysutils",
         "libhardware",
     ],

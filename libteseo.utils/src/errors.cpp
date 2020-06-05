@@ -34,7 +34,7 @@
 #define ALOGE(message) std::cout << message << std::endl
 #else
 #define LOG_TAG "teseo_hal_errors"
-#include <cutils/log.h>
+#include <log/log.h>
 #endif
 
 #include <errno.h>

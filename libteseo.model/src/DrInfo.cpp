@@ -22,7 +22,7 @@
 #include <teseo/model/DrInfo.h>
 
 #define LOG_TAG "teseo_hal_DrInfo"
-#include <cutils/log.h>
+#include <log/log.h>
 
 namespace stm {
 

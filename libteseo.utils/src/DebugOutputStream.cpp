@@ -30,7 +30,7 @@
 #include <string.h>
 
 #define LOG_TAG "teseo_hal_debugOutputStream"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <teseo/utils/ByteVector.h>
 

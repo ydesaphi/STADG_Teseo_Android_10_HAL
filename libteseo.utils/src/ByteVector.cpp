@@ -29,7 +29,7 @@
 #include <teseo/utils/ByteVector.h>
 
 #define LOG_TAG "teseo_hal_utils_ByteVector"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <stdexcept>
 #include <typeinfo>

@@ -24,7 +24,7 @@
 #include <sstream>
 
 #define LOG_TAG "teseo_hal_ConfigIf"
-#include <cutils/log.h>
+#include <log/log.h>
 
 
 namespace stm {

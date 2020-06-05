@@ -22,7 +22,7 @@
 #include <teseo/utils/http.h>
 
 #define LOG_TAG "teseo_hal_http"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <sstream>
 #include <curl/curl.h>

@@ -22,7 +22,7 @@
 #include <teseo/model/SatInfo.h>
 
 #define LOG_TAG "teseo_hal_SatInfo"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <cstring>
 

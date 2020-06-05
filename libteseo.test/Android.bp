@@ -33,7 +33,6 @@ cc_binary {
 	shared_libs: [
         "libc",
         "liblog",
-        "libcutils",
         "libsysutils",
         "libhardware",
 	    "libcurl",

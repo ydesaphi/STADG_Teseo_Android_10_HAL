@@ -29,7 +29,7 @@
 #include <termios.h>
 
 #define LOG_TAG "teseo_hal_UartByteStream"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <unistd.h>
 

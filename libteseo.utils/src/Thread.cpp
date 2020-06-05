@@ -29,7 +29,7 @@
 #include <teseo/utils/Thread.h>
 
 #define LOG_TAG "teseo_hal_Thread"
-#include <cutils/log.h>
+#include <log/log.h>
 
 namespace stm {
 namespace priv {

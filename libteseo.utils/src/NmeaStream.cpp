@@ -28,7 +28,7 @@
 #include <teseo/utils/NmeaStream.h>
 
 #define LOG_TAG "teseo_hal_NmeaStream"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

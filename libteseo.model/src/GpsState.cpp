@@ -23,7 +23,7 @@
 #include <teseo/model/GpsState.h>
 
 #define LOG_TAG "teseo_hal_GpsState"
-#include <cutils/log.h>
+#include <log/log.h>
 
 static stm::GpsState GpsStateInternal;
 

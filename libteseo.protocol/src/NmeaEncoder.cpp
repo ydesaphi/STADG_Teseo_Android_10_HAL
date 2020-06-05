@@ -24,7 +24,7 @@
 #include <utility>
 
 #define LOG_TAG "teseo_hal_NmeaEncoder"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <teseo/utils/Time.h>
 

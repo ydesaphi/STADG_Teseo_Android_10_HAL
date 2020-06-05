@@ -28,7 +28,7 @@
 #include <teseo/config/config.h>
 
 #define LOG_TAG "teseo_hal_config"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <memory>
 #include <string>
 

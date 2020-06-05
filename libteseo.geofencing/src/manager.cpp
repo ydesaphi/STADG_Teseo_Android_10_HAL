@@ -28,7 +28,7 @@
 #include <teseo/geofencing/manager.h>
 
 #define LOG_TAG "teseo_hal_GeofencingManager"
-#include <cutils/log.h>
+#include <log/log.h>
 
 using namespace stm::geofencing::model;
 

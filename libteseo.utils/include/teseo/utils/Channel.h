@@ -42,7 +42,7 @@
 		#define UNDEF_LOG_TAG
 	#endif
 
-	#include <cutils/log.h>
+	#include <log/log.h>
 	#define CHANNEL_LOGI(...) ALOGI(__VA_ARGS__)
 	#define CHANNEL_LOGE(...) ALOGE(__VA_ARGS__)
 	#define CHANNEL_LOGW(...) ALOGW(__VA_ARGS__)

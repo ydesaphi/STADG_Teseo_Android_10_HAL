@@ -23,7 +23,7 @@
 #include <teseo/utils/Signal.h>
 
 #define LOG_TAG "teseo_hal_Signal"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <cstdarg>
 

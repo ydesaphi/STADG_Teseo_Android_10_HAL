@@ -28,7 +28,7 @@
 #include "messages.h"
 
 #define LOG_TAG "teseo_hal_nmea_messages"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <unordered_map>
 #include <map>
 #include <unordered_set>

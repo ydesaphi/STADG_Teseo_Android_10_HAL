@@ -31,7 +31,7 @@
 #include <teseo/LocServiceProxy.h>
 
 #define LOG_TAG "teseo_hal_LocServiceProxy"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <hardware/hardware.h>
 #include <hardware/gps.h>
 #include <string.h>

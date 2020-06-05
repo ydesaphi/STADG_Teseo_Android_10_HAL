@@ -28,7 +28,7 @@
 #include <teseo/protocol/AbstractDecoder.h>
 
 #define LOG_TAG "teseo_hal_AbstractDecoder"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <stdexcept>
 
 #include <teseo/utils/errors.h>

@@ -28,7 +28,7 @@
 #include <teseo/protocol/NmeaDecoder.h>
 
 #define LOG_TAG "teseo_hal_NmeaDecoder"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <teseo/model/TalkerId.h>
 

@@ -28,7 +28,7 @@
 #include <teseo/device/AbstractDevice.h>
 
 #define LOG_TAG "teseo_hal_AbstractDevice"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <time.h>
 
 #include <teseo/utils/Wakelock.h>

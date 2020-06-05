@@ -28,7 +28,7 @@
 #include <teseo/model/Coordinate.h>
 
 #define LOG_TAG "teseo_hal_model_Coordinate"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cmath>
 #include <cstdlib>
 #include <tuple>

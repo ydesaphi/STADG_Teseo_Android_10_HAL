@@ -22,7 +22,7 @@
 #include <teseo/model/Version.h>
 
 #define LOG_TAG "teseo_hal_Version"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <sstream>
 #include <unordered_map>

@@ -29,7 +29,7 @@
 #include <teseo/HalManager.h>
 
 #define LOG_TAG "teseo_hal_HalManager"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <teseo/config/config.h>
 #include <teseo/utils/Time.h>

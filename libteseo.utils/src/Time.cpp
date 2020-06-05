@@ -29,7 +29,7 @@
 #include <teseo/utils/Time.h>
 
 #define LOG_TAG "teseo_hal_utils_Time"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <chrono>
 #include <ctime>
 #include <cstring>

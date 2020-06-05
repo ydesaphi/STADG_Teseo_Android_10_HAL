@@ -28,7 +28,7 @@
 #include <teseo/device/NmeaDevice.h>
 
 #define LOG_TAG "teseo_hal_NmeaDevice"
-#include <cutils/log.h>
+#include <log/log.h>
 
 namespace stm {
 namespace device {

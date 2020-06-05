@@ -22,7 +22,7 @@
 #include <teseo/utils/IByteStream.h>
 
 #define LOG_TAG "teseo_hal_ByteStream"
-#include <cutils/log.h>
+#include <log/log.h>
 
 namespace stm {
 namespace stream {
