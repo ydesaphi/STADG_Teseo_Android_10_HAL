@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @file AbstractDevice.cpp
  * @author Baudouin Feildel <baudouin.feildel@st.com>
@@ -47,7 +47,7 @@ AbstractDevice::AbstractDevice()
 
 void AbstractDevice::init()
 {
-	statusUpdate(GPS_STATUS_NONE);
+	statusUpdate(GnssStatusValue::NONE);
 	gnssConstMask = 0;
 }
 
@@ -60,7 +60,7 @@ void AbstractDevice::addSatellite(const SatInfo & sat)
 {
 	if(!satellites)
 		satellites.set(std::map<SatIdentifier, SatInfo>());
-	
+
 	auto & sats = *satellites;
 	sats[sat.getId()] = sat;
 }
@@ -76,7 +76,7 @@ DrInfo & AbstractDevice::getDrInfo()
 	return this->drInfo;
 }
 
-Result<GpsUtcTime, ValueStatus> AbstractDevice::getTimestamp() const
+Result<GnssUtcTime, ValueStatus> AbstractDevice::getTimestamp() const
 {
 	if(this->timestamp)
 		return *timestamp;
@@ -139,7 +139,7 @@ int AbstractDevice::start()
 	// Acquire wakelock, request UTC time and update status
 	utils::Wakelock::acquire();
 	requestUtcTime();
-	statusUpdate(GPS_STATUS_SESSION_BEGIN);
+	statusUpdate(GnssStatusValue::SESSION_BEGIN);
 
 	// Start the navigation
 	startNavigation();
@@ -156,12 +156,12 @@ int AbstractDevice::stop()
 
 	// Release wakelock and update status
 	utils::Wakelock::release();
-	statusUpdate(GPS_STATUS_SESSION_END);
+	statusUpdate(GnssStatusValue::SESSION_END);
 
 	return 0;
 }
 
-void AbstractDevice::setTimestamp(GpsUtcTime t)
+void AbstractDevice::setTimestamp(GnssUtcTime t)
 {
 	timestamp = t;
 	location->timestamp(t);

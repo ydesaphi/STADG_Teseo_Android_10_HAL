@@ -158,7 +158,7 @@ void decoders::rmc(AbstractDevice & dev, const NmeaMessage & msg)
 {
 	RMC_LOGI("Decode RMC: %s", msg.toString().c_str());
 
-	GpsUtcTime timestamp = 0;
+	GnssUtcTime timestamp = 0;
 
 	if(auto opt = utils::parseTimeAndDate(msg.parameters[0], msg.parameters[8]))
 		timestamp = *opt;

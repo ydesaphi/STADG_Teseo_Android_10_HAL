@@ -1,7 +1,7 @@
 /*
  * This file is part of Teseo Android HAL
  *
- * Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
  * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
  *
  * License terms: Apache 2.0.
@@ -10,7 +10,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,17 +20,17 @@
  */
 
 cc_library_shared {
-    name: "libteseo.geofencing",
-    defaults: ["teseo_defaults"],
+    name: "libteseo.geofencing@1.0",
+    defaults: ["teseo_defaults@1.0"],
     srcs: [
         "src/Geofence.cpp",
         "src/manager.cpp",
         "src/model.cpp",
     ],
-	shared_libs: [
-	    "libteseo.model",
-	    "libteseo.utils",
-	    "libteseo.vendor",
+    shared_libs: [
+        "libteseo.model@1.0",
+        "libteseo.utils@1.0",
+        "libteseo.vendor@1.0",
     ],
     cppflags: [
         "-Wno-unused-parameter",

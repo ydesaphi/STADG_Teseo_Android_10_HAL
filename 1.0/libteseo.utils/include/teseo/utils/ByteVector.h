@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @brief Byte vector utilities
  * @file ByteVector.h
@@ -39,7 +39,7 @@
 
 #include "optional.h"
 
-#include <hardware/gps.h>
+#include <teseo/utils/Gnss_1_0.h>
 
 namespace stm {
 
@@ -199,7 +199,7 @@ struct ByteVectorParser
 	{
 		(void)(data);
 		static_assert(true, "Missing implementation of ByteVectorParser");
-		return {};		
+		return {};
 	}
 };
 
@@ -242,7 +242,7 @@ struct ByteVectorParser<double>
 	{
 		if(begin == end)
 			return {};
-			
+
 		return std::stod(bytesToString(begin, end));
 	}
 
@@ -267,7 +267,7 @@ struct ByteVectorParser<float>
 	{
 		if(begin == end)
 			return {};
-			
+
 		return std::stof(bytesToString(begin, end));
 	}
 
@@ -292,7 +292,7 @@ struct ByteVectorParser<int16_t>
 	{
 		if(begin == end)
 			return {};
-			
+
 		return static_cast<int16_t>(std::stoi(bytesToString(begin, end)));
 	}
 
@@ -300,7 +300,7 @@ struct ByteVectorParser<int16_t>
 	{
 		if(data.size() == 0)
 			return {};
-			
+
 		return static_cast<int16_t>(std::stoi(bytesToString(data)));
 	}
 };
@@ -319,7 +319,7 @@ struct ByteVectorParser<bool>
 	{
 		if(begin == end)
 			return {};
-			
+
 		return std::stoi(bytesToString(begin, end)) != 0;
 	}
 
@@ -327,7 +327,7 @@ struct ByteVectorParser<bool>
 	{
 		if(data.size() == 0)
 			return {};
-			
+
 		return std::stoi(bytesToString(data)) != 0;
 	}
 };
@@ -342,7 +342,7 @@ void __bytevector_parse_log_error(const char * format, const char * bytes, int s
  *
  * @param begin   Iterator to the begining of the byte vector to parse
  * @param end     Iterator to the end of the byte vector to parse
- * 
+ *
  * @tparam Tout   The type of value to parse
  * @tparam Parser The parser to use, automatically deduced from Tout
  *
@@ -385,7 +385,7 @@ std::optional<Tout> byteVectorParse(
  * @brief Generic byte vector parser function
  *
  * @param value   The byte vector to parse
- * 
+ *
  * @tparam Tout   The type of value to parse
  * @tparam Parser The parser to use, automatically deduced from Tout
  *
@@ -429,7 +429,7 @@ std::optional<Tout> byteVectorParse(const ByteVector & value) noexcept
  *
  * @param[in]  bytes      The bytes
  * @param[in]  separator  The separator
- * 
+ *
  * @return     The list of pieces
  */
 std::vector<ByteVector> split(const ByteVector & bytes, uint8_t separator);
@@ -560,7 +560,7 @@ uint6_msb_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_
 	return 0;
 
 }
-//*/
+*/
 
 template<uint8_t>
 uint8_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_iterator end)
@@ -626,7 +626,7 @@ uint32_t extract_from_bv(ByteVector::const_iterator begin, ByteVector::const_ite
  * @param begin   Iterator to the begining of the range to extract
  * @param end     Iterator to the end of the range to extract
  * @param iteratorShift  Shift iterator
- * 
+ *
  * @return        The parsed value, or empty value.
  */
 template<typename T>
@@ -649,11 +649,11 @@ T extract_value(
 /**
  * @brief Generic function to extract a byte from a byte vector
  *
- * @param dest    pointer to the destination 
+ * @param dest    pointer to the destination
  * @param ptr     Iterator to the begining of the range to extract
  * @param end     Iterator to the end of the range to extract
  * @param iteratorShift  Shift iterator
- * 
+ *
  * @return        null
  */
 template<typename T>
@@ -771,7 +771,7 @@ stm::ByteVector & operator << (stm::ByteVector & bv, unsigned int value);
 
 stm::ByteVector & operator << (stm::ByteVector & bv, unsigned long value);
 
-stm::ByteVector & operator << (stm::ByteVector & bv, GpsUtcTime timestamp);
+stm::ByteVector & operator << (stm::ByteVector & bv, GnssUtcTime timestamp);
 
 template<typename T>
 stm::ByteVector operator << (stm::ByteVector && bv, T data)

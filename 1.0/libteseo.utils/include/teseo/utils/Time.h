@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @brief Clock time utilities
  * @file Time.h
@@ -31,7 +31,6 @@
 
 #include <chrono>
 #include <iomanip>
-#include <hardware/gps.h>
 #include <sstream>
 #include "ByteVector.h"
 #include "optional.h"
@@ -41,7 +40,7 @@ namespace utils {
 
 /**
  * @brief      Convert a byte vector to a timestamp
- * 
+ *
  * @details    The timestamp format is 'hhmmss.msec'. To output a complete timestamp we used the
  * current UTC date injected by the platform.
  *
@@ -50,12 +49,12 @@ namespace utils {
  *
  * @return     The parsed timestamp
  */
-std::optional<GpsUtcTime> parseTimestamp(
+std::optional<GnssUtcTime> parseTimestamp(
 	const ByteVector::const_iterator & begin, const ByteVector::const_iterator & end);
 
 /**
  * @brief      Convert a byte vector to a timestamp
- * 
+ *
  * @details    The timestamp format is 'hhmmss.msec'. To output a complete timestamp we used the
  * current UTC date injected by the platform.
  *
@@ -63,11 +62,11 @@ std::optional<GpsUtcTime> parseTimestamp(
  *
  * @return     The parsed timestamp
  */
-std::optional<GpsUtcTime> parseTimestamp(const ByteVector & vec);
+std::optional<GnssUtcTime> parseTimestamp(const ByteVector & vec);
 
 /**
  * @brief      Convert a time and a date byte vector to a timestamp
- * 
+ *
  * @details    The time format is 'hhmmss.msec'. The date format is 'DDMMYY' To output a complete timestamp we used the
  * current UTC date injected by the platform.
  *
@@ -76,7 +75,7 @@ std::optional<GpsUtcTime> parseTimestamp(const ByteVector & vec);
  *
  * @return     The parsed timestamp
  */
-std::optional<GpsUtcTime> parseTimeAndDate(const ByteVector & vecTime, const ByteVector & vecDate);
+std::optional<GnssUtcTime> parseTimeAndDate(const ByteVector & vecTime, const ByteVector & vecDate);
 
 /**
  * @brief      Save the UTC time into the HAL memory
@@ -87,14 +86,14 @@ std::optional<GpsUtcTime> parseTimeAndDate(const ByteVector & vecTime, const Byt
  *
  * @return     always 0
  */
-int injectTime(GpsUtcTime time, int64_t timeReference, int uncertainty);
+int injectTime(GnssUtcTime time, int64_t timeReference, int uncertainty);
 
 /**
  * @brief      Get the current system UTC time
  *
  * @return     The current system UTC time
  */
-GpsUtcTime systemNow();
+GnssUtcTime systemNow();
 
 template<class ClockT>
 std::string time2string(const std::chrono::time_point<ClockT> & tp)
@@ -107,9 +106,9 @@ std::string time2string(const std::chrono::time_point<ClockT> & tp)
 	return oss.str();
 }
 
-std::string time2string(GpsUtcTime tp);
+std::string time2string(GnssUtcTime tp);
 
-GpsUtcTime utc_timestamp_to_gps_timestamp(GpsUtcTime tp);
+GnssUtcTime utc_timestamp_to_gps_timestamp(GnssUtcTime tp);
 
 } // namespace utils
 } // namespace stm

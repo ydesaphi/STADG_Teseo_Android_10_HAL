@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file
 ## [Unreleased]
 - Batching
 
+## [0.7.0] - 2020-06-04
+### Changed
+- change to full binderized mode
+
 ## [0.6.0] - 2018-12-21
 ### Added
 - gnss configuration interface
@@ -10,6 +14,7 @@ All notable changes to this project will be documented in this file
 ### Changed
 - use unique instances of agps, ril and ni interfaces
 - support location io api v8
+
 ## [0.5.0] - 2018-09-27
 ### Added
 - Geofencing

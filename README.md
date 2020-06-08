@@ -48,13 +48,13 @@ When not used by any application the Teseo chip isn’t sleeping. It is up to yo
 You must place the source in the correct location in the android source tree. Then you have to download the source from the repositories. The following commands will do all:
 
 ```bash
-$ mkdir <AOSP_DIR>/hardware/stm
+$ mkdir <AOSP_DIR>/vendor/stm/
 
-$ cd <AOSP_DIR>/hardware/stm
+$ cd <AOSP_DIR>/vendor/stm
 
-<AOSP_DIR>/hardware/stm $ git clone https://github.com/STMicroelectronics/STADG_Teseo_Android_HAL.git teseo
+<AOSP_DIR>/vendor/stm $ git clone https://github.com/STMicroelectronics/STADG_Teseo_Android_HAL.git teseo
 
-<AOSP_DIR>/hardware/stm $ cd teseo
+<AOSP_DIR>/vendor/stm $ cd teseo
 ```
 
 ### Configure the target device
@@ -129,7 +129,7 @@ Please note that the release of STM proprietary libraries is subject to signatur
 
 Copyright
 ========
-Copyright (C) 2018 STMicroelectronics
+Copyright (C) 2020 STMicroelectronics
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

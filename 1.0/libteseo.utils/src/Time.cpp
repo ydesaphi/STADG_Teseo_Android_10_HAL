@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @brief Clock time utilities
  * @file Time.cpp
@@ -41,7 +41,7 @@ using namespace std;
 using namespace std::chrono;
 
 static struct {
-	GpsUtcTime time;
+	GnssUtcTime time;
 	int uncertainty;
 	time_point<system_clock> timePoint;
 } utcNow;
@@ -49,7 +49,7 @@ static struct {
 static time_point<system_clock> utcTodayOffset;
 
 
-int injectTime(GpsUtcTime time, int64_t timeReference, int uncertainty)
+int injectTime(GnssUtcTime time, int64_t timeReference, int uncertainty)
 {
 	ALOGI("Inject time: %" PRId64 ", reference: %" PRId64 ", uncertainty: %d -- now: %lld",
 		time, timeReference, uncertainty,
@@ -74,13 +74,13 @@ int injectTime(GpsUtcTime time, int64_t timeReference, int uncertainty)
 	return 0;
 }
 
-GpsUtcTime systemNow()
+GnssUtcTime systemNow()
 {
-	return static_cast<GpsUtcTime>(
+	return static_cast<GnssUtcTime>(
 		duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
 }
 
-std::optional<GpsUtcTime> parseTimestamp(const ByteVector & vec)
+std::optional<GnssUtcTime> parseTimestamp(const ByteVector & vec)
 {
 	return parseTimestamp(vec.cbegin(), vec.cend());
 }
@@ -92,7 +92,7 @@ constexpr int PARSER_MSEC_SIZE = 3, PARSER_MSEC_OFFSET = 7;
 constexpr int PARSER_DAY_SIZE = 2, PARSER_DAY_OFFSET = 0;
 constexpr int PARSER_MONTH_SIZE  = 2, PARSER_MONTH_OFFSET  = 2;
 constexpr int PARSER_YEAR_SIZE  = 2, PARSER_YEAR_OFFSET  = 4;
-std::optional<GpsUtcTime> parseTimeAndDate(const ByteVector & time, const ByteVector & date)
+std::optional<GnssUtcTime> parseTimeAndDate(const ByteVector & time, const ByteVector & date)
 {
 	tm timestamp;
 	int msec;
@@ -143,12 +143,12 @@ std::optional<GpsUtcTime> parseTimeAndDate(const ByteVector & time, const ByteVe
 	return duration_cast<milliseconds>(resultTime.time_since_epoch()).count() + msec - (tz.tz_minuteswest*60*1000);
 }
 
-std::string time2string(GpsUtcTime tp)
+std::string time2string(GnssUtcTime tp)
 {
 	return time2string(time_point<system_clock>(milliseconds(tp)));
 }
 
-GpsUtcTime utc_timestamp_to_gps_timestamp(GpsUtcTime tp)
+GnssUtcTime utc_timestamp_to_gps_timestamp(GnssUtcTime tp)
 {
 	// Not a magic number, juste the timestamp of GPS Time origin
 	// GPS Time origin is : 1980-01-06T00:00:00.000
@@ -160,7 +160,7 @@ GpsUtcTime utc_timestamp_to_gps_timestamp(GpsUtcTime tp)
 // We ignore the '.' before msec field as it make the parse int function crash
 
 
-std::optional<GpsUtcTime> parseTimestamp(
+std::optional<GnssUtcTime> parseTimestamp(
 	const ByteVector::const_iterator & begin,
 	const ByteVector::const_iterator & end)
 {

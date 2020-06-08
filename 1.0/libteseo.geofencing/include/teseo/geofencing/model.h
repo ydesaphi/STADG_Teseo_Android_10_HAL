@@ -1,32 +1,33 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef TESEO_HAL_GEOFENCING_MODEL_H
 #define TESEO_HAL_GEOFENCING_MODEL_H
 
 #include <chrono>
-#include <hardware/gps.h>
 
 #include <teseo/model/Location.h>
 #include <teseo/model/Coordinate.h>
+
+#include <teseo/utils/Gnss_1_0.h>
 
 namespace stm {
 namespace geofencing {
@@ -38,9 +39,9 @@ using GeofenceId = int32_t;
  * Geofence transitions
  */
 enum class Transition {
-    Entered   = GPS_GEOFENCE_ENTERED,
-    Exited    = GPS_GEOFENCE_EXITED,
-    Uncertain = GPS_GEOFENCE_UNCERTAIN
+    Entered   = static_cast<std::underlying_type_t<GeofenceTransition>>(GeofenceTransition::ENTERED),
+    Exited    = static_cast<std::underlying_type_t<GeofenceTransition>>(GeofenceTransition::EXITED),
+    Uncertain = static_cast<std::underlying_type_t<GeofenceTransition>>(GeofenceTransition::UNCERTAIN),
 };
 
 /**
@@ -52,20 +53,20 @@ using TransitionFlags = int;
  * Geofence system status/availability
  */
 enum class SystemStatus {
-    Unavailable = GPS_GEOFENCE_UNAVAILABLE,
-    Available   = GPS_GEOFENCE_AVAILABLE
+    Unavailable = static_cast<std::underlying_type_t<GeofenceAvailability>>(GeofenceAvailability::UNAVAILABLE),
+    Available   = static_cast<std::underlying_type_t<GeofenceAvailability>>(GeofenceAvailability::AVAILABLE),
 };
 
 /**
  * Geofence operation status/result
  */
 enum class OperationStatus {
-    Success                 = GPS_GEOFENCE_OPERATION_SUCCESS,
-    Error_TooManyGeofences  = GPS_GEOFENCE_ERROR_TOO_MANY_GEOFENCES,
-    Error_IdExists          = GPS_GEOFENCE_ERROR_ID_EXISTS,
-    Error_IdUnknown         = GPS_GEOFENCE_ERROR_ID_UNKNOWN,
-    Error_InvalidTransition = GPS_GEOFENCE_ERROR_INVALID_TRANSITION,
-    Error_Generic           = GPS_GEOFENCE_ERROR_GENERIC
+    Success                 = static_cast<std::underlying_type_t<GeofenceStatus>>(GeofenceStatus::OPERATION_SUCCESS),
+    Error_TooManyGeofences  = static_cast<std::underlying_type_t<GeofenceStatus>>(GeofenceStatus::ERROR_TOO_MANY_GEOFENCES),
+    Error_IdExists          = static_cast<std::underlying_type_t<GeofenceStatus>>(GeofenceStatus::ERROR_ID_EXISTS),
+    Error_IdUnknown         = static_cast<std::underlying_type_t<GeofenceStatus>>(GeofenceStatus::ERROR_ID_UNKNOWN),
+    Error_InvalidTransition = static_cast<std::underlying_type_t<GeofenceStatus>>(GeofenceStatus::ERROR_INVALID_TRANSITION),
+    Error_Generic           = static_cast<std::underlying_type_t<GeofenceStatus>>(GeofenceStatus::ERROR_GENERIC),
 };
 
 /**

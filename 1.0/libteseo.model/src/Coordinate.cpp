@@ -60,7 +60,7 @@ static std::tuple<int, double, CoordinateDirection>
 	}
 
 	double degree = std::floor(value);
-	
+
 	double tmpMinutes = std::floor(60. * (value - degree));
 	double tmpSeconds = 3600. * (value - degree) - 60. * tmpMinutes;
 

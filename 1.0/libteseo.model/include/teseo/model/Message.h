@@ -1,7 +1,7 @@
 /*
 * This file is part of Teseo Android HAL
 *
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
+* Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
 * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
 *
 * License terms: Apache 2.0.

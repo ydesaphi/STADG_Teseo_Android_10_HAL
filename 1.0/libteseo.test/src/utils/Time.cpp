@@ -1,7 +1,7 @@
 /*
 * This file is part of Teseo Android HAL
 *
-* Copyright (c) 2016-2018, STMicroelectronics - All Rights Reserved
+* Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
 * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
 *
 * License terms: Apache 2.0.
@@ -34,18 +34,18 @@ TEST_CASE( "NMEA Time parser works correctly", "[utils][Time]" ) {
 
 	ByteVector time_str = { '1', '3', '3', '7', '4', '2', '.', '0', '0', '0' };
 
-	std::optional<GpsUtcTime> opt_time = parseTimestamp(time_str);
+	std::optional<GnssUtcTime> opt_time = parseTimestamp(time_str);
 
 	REQUIRE(static_cast<bool>(opt_time) == true);
 
-	GpsUtcTime time = *opt_time;
+	GnssUtcTime time = *opt_time;
 
 	CHECK(time == 49062000);
 
 	/* ByteVector empty = { };
 
-	std::optional<GpsUtcTime> opt_empty = parseTimestamp(empty);
+	std::optional<GnssUtcTime> opt_empty = parseTimestamp(empty);
 
 	REQUIRE(static_cast<bool>(opt_empty) == false);
-	//*/
+	*/
 }

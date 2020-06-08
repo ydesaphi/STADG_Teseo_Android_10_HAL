@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @brief Android Location Service proxy
  * @file LocServiceProxy.h
@@ -32,13 +32,16 @@
 #include <cstdint>
 #include <string>
 #include <map>
-#include <hardware/gps.h>
 
 #include <teseo/utils/Signal.h>
 #include <teseo/model/NmeaMessage.h>
 #include <teseo/model/Location.h>
 #include <teseo/model/SatInfo.h>
 #include <teseo/geofencing/model.h>
+#include <teseo/utils/Thread.h>
+
+#include <teseo/utils/Gnss_1_0.h>
+#include <teseo/utils/LegacyGps.h>
 
 namespace stm {
 
@@ -51,93 +54,19 @@ namespace stm {
 namespace LocServiceProxy {
 
 /**
- * @brief      HAL public interfaces
- */
-struct Interfaces {
-	GpsInterface                  gps;
-	GpsXtraInterface              xtra;
-	GpsDebugInterface             debug;
-	AGpsInterface                 agps;
-	SuplCertificateInterface      suplCertificate;
-	GpsNiInterface                ni;
-	AGpsRilInterface              ril;
-	GpsGeofencingInterface        geofencing;
-	GpsMeasurementInterface       measurement;
-	GpsNavigationMessageInterface navigationMessage;
-	GnssConfigurationInterface    configuration;
-};
-
-/**
- * @brief      Register GpsCallbacks
- *
- * @param[in]  cb    The GpsCallbacks to register
- */
-void RegisterCallbacks(const GpsCallbacks * cb);
-
-#ifdef STRAW_ENABLED
-/**
- * @brief      Register MeasurementsCallbacks
- *
- * @param[in]  cb    The MeasurementsCallbacks to register
- */
-void RegisterMeasurementsCallbacks(const GpsMeasurementCallbacks * cb);
-/**
- * @brief      Register NavigationMessageCallbacks
- *
- * @param[in]  cb    The NavigationMessageCallbacks to register
- */
- void RegisterNavigationMessageCallbacks(const GpsNavigationMessageCallbacks * cb);
-#endif
-
-/**
- * @brief      Register GpsGeofenceCallbacks
- *
- * @param[in]  cb    The GpsGeofenceCallbacks to register
- */
-void RegisterGeofenceCallbacks(const GpsGeofenceCallbacks * cb);
-
-/**
- * @brief      Register AGpsRilCallbacks
- *
- * @param[in]  cb    The AGpsRilCallbacks to register
- */
-void RegisterRilCallbacks(const AGpsRilCallbacks *cb);
-
-/**
- * @brief      Register AGpsRilCallbacks
- *
- * @param[in]  cb    The AGpsRilCallbacks to register
- */
-void RegisterNiCallbacks(const GpsNiCallbacks *cb);
-
-/**
  * @brief      Open function called by the Android platform to create the "HAL device"
- *
- * @param[in]  module  The GPS module instance
- * @param      name    The GPS module name
- * @param      dev     The pointer to device where to store the allocated device
- *
- * @return     0 on success, 1 on failure
  */
-int openDevice(const struct hw_module_t * module, char const * name, struct hw_device_t ** dev);
+void openDevice(void);
 
 /**
  * @brief      Close function called by the Android platform to close the "HAL device"
- *
- * @param      dev   The device to close
- *
- * @return     0 on succes, 1 on failure
  */
-int closeDevice(struct hw_device_t * dev);
+void closeDevice(void);
 
-/**
- * @brief      Function called by the Android platform to get the HAL Gps Interface
- *
- * @param      device  The HAL device
- *
- * @return     The gps interface.
- */
-const GpsInterface * getGpsInterface(struct gps_device_t * device);
+pthread_t createThreadCb(
+    const char* name,
+    void (*start)(void*),
+    void* arg);
 
 /**
  * Namespace containing interfaces and callbacks from GpsInterface and GpsCallbacks
@@ -148,7 +77,7 @@ namespace gps {
 	 * @brief GPS Signals received from Android Location services
 	 */
 	struct Signals {
-		Signal<int, GpsCallbacks *> init = Signal<int, GpsCallbacks *>("gps::signals::init");
+		Signal<int, const sp<IGnssCallback>&> init = Signal<int, const sp<IGnssCallback>&>("gps::signals::init");
 
 		Signal<int> start = Signal<int>("gps::signals::start");
 
@@ -156,22 +85,24 @@ namespace gps {
 
 		Signal<void> cleanup = Signal<void>("gps::signals::cleanup");
 
-		Signal<int, GpsUtcTime, int64_t, int> injectTime =
-			Signal<int, GpsUtcTime, int64_t, int>("gps::signals::injectTime");
+		Signal<int, GnssUtcTime, int64_t, int> injectTime =
+			Signal<int, GnssUtcTime, int64_t, int>("gps::signals::injectTime");
 
 		Signal<int, double, double, float> injectLocation =
 			Signal<int, double, double, float>("gps::signals::injectLocation");
 
-		Signal<void, GpsAidingData> deleteAidingData =
-			Signal<void, GpsAidingData>("gps::signals::deleteAidingData");
+		Signal<void, GnssAidingData> deleteAidingData =
+			Signal<void, GnssAidingData>("gps::signals::deleteAidingData");
 
-		Signal<int, GpsPositionMode, GpsPositionRecurrence, uint32_t, uint32_t, uint32_t> setPositionMode =
-			Signal<int, GpsPositionMode, GpsPositionRecurrence, uint32_t, uint32_t, uint32_t>("gps::signals::setPositionMode");
+		Signal<int, GnssPositionMode, GnssPositionRecurrence, uint32_t, uint32_t, uint32_t> setPositionMode =
+			Signal<int, GnssPositionMode, GnssPositionRecurrence, uint32_t, uint32_t, uint32_t>("gps::signals::setPositionMode");
 
 		Signal<int, int> setGNSSConstellationMask = Signal<int, int>("gps::signals::setGNSSConstellationMask");
 
 		Signal<int> getGNSSConstellationMask = Signal<int>("gps::signals::getGNSSConstellationMask");
 	};
+
+	int onInit(const sp<IGnssCallback>& cb);
 
 	int onStart(void);
 
@@ -179,19 +110,19 @@ namespace gps {
 
 	void onCleanup(void);
 
-	int onInjectTime(GpsUtcTime time, int64_t timeReference, int uncertainty);
+	int onInjectTime(GnssUtcTime time, int64_t timeReference, int uncertainty);
 
 	int onInjectLocation(double latitude, double longitude, float accuracy);
 
-	void onDeleteAidingData(GpsAidingData flags);
+	void onDeleteAidingData(GnssAidingData flags);
 
-	int onSetPositionMode(GpsPositionMode mode,	GpsPositionRecurrence recurrence,uint32_t minInterval,uint32_t preferredAccuracy,uint32_t preferredTime);
+	int onSetPositionMode(GnssPositionMode mode, GnssPositionRecurrence recurrence,uint32_t minInterval,uint32_t preferredAccuracy,uint32_t preferredTime);
 
 	int onSetGNSSConstellationMask(int mask);
 
 	int onGetGNSSConstellationMask(void);
 
-	const void * onGetExtension(const char * name);
+	bool onGetExtension(const char * name);
 
 	/**
 	 * @brief      Gets the GPS signal list
@@ -200,7 +131,7 @@ namespace gps {
 	 */
 	Signals & getSignals();
 
-	void sendNmea(GpsUtcTime timestamp, const NmeaMessage & nmea);
+	void sendNmea(GnssUtcTime timestamp, const NmeaMessage & nmea);
 
 	void sendLocationUpdate(const Location & loc);
 
@@ -208,7 +139,7 @@ namespace gps {
 
 	void sendCapabilities(uint32_t capabilities);
 
-	void sendStatusUpdate(GpsStatusValue status);
+	void sendStatusUpdate(GnssStatusValue status);
 
 	void sendSystemInfo(uint16_t yearOfHardware);
 
@@ -243,7 +174,7 @@ namespace geofencing {
 		Signal<void, GeofenceId> removeGeofenceArea = Signal<void, GeofenceId>("geofencing::signals::removeGeofenceArea");
 	};
 
-	void onInit(GpsGeofenceCallbacks * callbacks);
+	void onInit(const sp<IGnssGeofenceCallback>& cb);
 
 	void onAddGeofenceArea (int32_t geofence_id, double latitude, double longitude, double radius_meters, int last_transition, int monitor_transitions, int notification_responsiveness_ms, int unknown_timer_ms);
 
@@ -255,7 +186,7 @@ namespace geofencing {
 
 	Signals & getSignals();
 
-	void sendGeofenceTransition(GeofenceId geofence_id,  const Location & loc, Transition transition, GpsUtcTime timestamp);
+	void sendGeofenceTransition(GeofenceId geofence_id,  const Location & loc, Transition transition, GnssUtcTime timestamp);
 
 	void sendGeofenceStatus(SystemStatus status, const Location & last_location);
 
@@ -290,15 +221,18 @@ namespace debug {
 	size_t getInternalState(char * buffer, size_t bufferSize);
 }
 
-#ifdef STRAW_ENABLED
+//#ifdef STRAW_ENABLED
 namespace navigationMessage {
 
 	struct Signals {
-		Signal<int, GpsNavigationMessageCallbacks *> init = Signal<int, GpsNavigationMessageCallbacks *>("navigationMessage::signals::init");
+		Signal<int, const sp<IGnssNavigationMessageCallback> &> init = Signal<int, const sp<IGnssNavigationMessageCallback> &>("navigationMessage::signals::init");
 		Signal<void> close = Signal<void>("navigationMessage::signals::close");
 	};
 
 	Signals & getSignals();
+
+	int onInit(const sp<IGnssNavigationMessageCallback>& cb);
+	void onClose(void);
 
 	void sendNavigationMessages(GnssNavigationMessage & msg);
 }
@@ -306,55 +240,60 @@ namespace navigationMessage {
 namespace measurement {
 
 	struct Signals {
-		Signal<int, GpsMeasurementCallbacks *> init = Signal<int, GpsMeasurementCallbacks *>("measurement::signals::init");
+		Signal<int, const sp<IGnssMeasurementCallback> &> init = Signal<int, const sp<IGnssMeasurementCallback> &>("measurement::signals::init");
 		Signal<void> close = Signal<void>("measurement::signals::close");
 	};
 
 	Signals & getSignals();
 
+	int onInit(const sp<IGnssMeasurementCallback>& cb);
+	void onClose(void);
 	void sendMeasurements(const GnssClock & clockData,std::vector <GnssMeasurement> & measurementdata);
 }
-#endif
+//#endif
+
 namespace ril {
 
 	struct Signals {
 		Signal<void> init = Signal<void>("ril::signals::init");
 
-		Signal<void, const AGpsRefLocation *> setRefLocation = Signal<void, const AGpsRefLocation * >("ril::signals::setRefLocation");
-		
-		Signal<void, AGpsSetIDType, const char *> setSetId = Signal<void, AGpsSetIDType, const char *>("ril::signals::setSetId");
-		
+		Signal<void, const AGnssRefLocation *> setRefLocation = Signal<void, const IAGnssRil::AGnssRefLocation * >("ril::signals::setRefLocation");
+
+		Signal<void, IAGnssRil::SetIDType, const char *> setSetId = Signal<void, IAGnssRil::SetIDType, const char *>("ril::signals::setSetId");
+
 		Signal<void, uint8_t *> niMessage = Signal<void, uint8_t *>("ril::signals::niMessage");
-		
+
 		Signal<void, int, int,int>updateNetworkState = Signal<void, int, int,int>("ril::signals::updateNetworkState");
 
 		Signal<void, int>updateNetworkAvailability = Signal<void, int>("ril::signals::updateNetworkAvailability");
 	};
 
-	void onInit(AGpsRilCallbacks *callbacks);
-	void onSetRefLocation(const AGpsRefLocation *agps_reflocation, size_t sz_struct);
- 	void onSetSetId( AGpsSetIDType type, const char *setid);
+	void onInit(const sp<IAGnssRilCallback>& cb);
+	void onSetRefLocation(const AGnssRefLocation *agnss_reflocation);
+	void onSetSetId(SetIDType type, const char *setid);
  	void onNiMessage(uint8_t *msg, size_t len);
 	void onUpdateNetworkState(int connected, int type, int roaming, const char *extra_info);
 	void onUpdateNetworkAvailability(int available, const char *apn);
 
 	Signals & getSignals();
 
-	void sendRequestSetId(uint32_t flags);
+	void sendRequestSetId(SetID flags);
+
 	void sendRequestReferenceLocation(uint32_t flags);
 
-} // namespace ril 
+} // namespace ril
 
 namespace ni
 {
 	struct Signals {
 		Signal<void> init = Signal<void>("ni::signals::init");
-		Signal<void, int, GpsUserResponseType> respond = Signal<void, int, GpsUserResponseType>("ni::signals::respond");
+		Signal<void, int, IGnssNiCallback::GnssUserResponseType> respond = Signal<void, int, IGnssNiCallback::GnssUserResponseType>("ni::signals::respond");
 	};
-	void onInit(GpsNiCallbacks *callbacks);
-	void onResponse(int notif_id, GpsUserResponseType user_response);
+
+	void onInit(const sp<IGnssNiCallback>& cb);
+	void onResponse(int notif_id, IGnssNiCallback::GnssUserResponseType user_response);
 	Signals & getSignals();
-	void sendNiNotificationRequest(GpsNiNotification *notification);
+	void sendNiNotificationRequest(IGnssNiCallback::GnssNiNotification &notification);
 
 } // namespace ni
 
@@ -363,18 +302,19 @@ namespace agps
 
 	struct Signals {
 		Signal<void> init = Signal<void>("agps::signals:: init");
-		Signal<int,AGpsType,const char*,int> setServer = Signal<int,AGpsType,const char*,int>("agps::signals::setServer");
+		Signal<int,AGnssType,const char*,int> setServer = Signal<int,AGnssType,const char*,int>("agps::signals::setServer");
 	};
 
 	Signals & getSignals();
-	void onInit(AGpsCallbacks *callbacks);
+	void onInit(const sp<IAGnssCallback>& cb);
 	int onDataConnOpen(const char* apn);
 	int onDataConnClosed(void);
 	int onDataConnFailed(void);
-	int onSetServer(AGpsType type, const char* hostname, int port);
+	int onSetServer(AGnssType type, const char* hostname, int port);
 	int onDataConnOpenWithApnType(const char* apn, ApnIpType apnIpType);
 
-	void sendAGpsStatus(AGpsStatus* status);
+	void sendAGpsStatusIpV4(AGnssStatusIpV4 status);
+	void sendAGpsStatusIpV6(AGnssStatusIpV6 status);
 }
 
 namespace configuration
@@ -382,6 +322,7 @@ namespace configuration
 	struct Signals {
 		Signal<void,const char*,int32_t> cfgUpdateSig = Signal<void,const char*,int32_t>("configuration::signals::cfgUpdateSig");
 	};
+
 	Signals & getSignals();
 	void onConfigurationUpdate(const char* config_data, int32_t length);
 }

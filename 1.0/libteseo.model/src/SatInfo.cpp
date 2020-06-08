@@ -1,32 +1,30 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
-#include <teseo/model/SatInfo.h>
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #define LOG_TAG "teseo_hal_SatInfo"
+
 #include <log/log.h>
 
+#include <teseo/model/SatInfo.h>
 #include <cstring>
-
-#include <hardware/gps.h>
 
 namespace stm {
 
@@ -186,21 +184,21 @@ SatInfo & SatInfo::setUsedInFix(bool usedInFix)
 
 void SatInfo::copyToGnssSvInfo(GnssSvInfo * dest) const
 {
-	dest->size = sizeof(GnssSvInfo);
 	dest->svid = this->id.getSvid();
-	dest->constellation = ConstellationUtils::toAndroidType(this->id.getConstellation());
-	dest->c_n0_dbhz = this->snr;
-	dest->elevation = this->elevation;
-	dest->azimuth = this->azimuth;
-	dest->flags = (this->almanac   ? GNSS_SV_FLAGS_HAS_ALMANAC_DATA   : 0x00) |
-	              (this->ephemeris ? GNSS_SV_FLAGS_HAS_EPHEMERIS_DATA : 0x00) |
-	              (this->usedInFix ? GNSS_SV_FLAGS_USED_IN_FIX        : 0x00);
+	dest->constellation = this->id.getConstellation();
+	dest->cN0Dbhz = this->snr;
+	dest->elevationDegrees = this->elevation;
+	dest->azimuthDegrees = this->azimuth;
+	dest->svFlag = (this->almanac   ? static_cast<std::underlying_type_t<GnssSvFlags>>(GnssSvFlags::HAS_ALMANAC_DATA)   : 0x00) |
+	               (this->ephemeris ? static_cast<std::underlying_type_t<GnssSvFlags>>(GnssSvFlags::HAS_EPHEMERIS_DATA) : 0x00) |
+	               (this->usedInFix ? static_cast<std::underlying_type_t<GnssSvFlags>>(GnssSvFlags::USED_IN_FIX)        : 0x00);
+    dest->carrierFrequencyHz = 0;
 }
 
 constexpr int16_t PRN_GPS_MIN = 1,
                   PRN_GPS_MAX = 32,
-				  PRN_SBA_MIN = 33,
-				  PRN_SBA_MAX = 64,
+                  PRN_SBA_MIN = 33,
+                  PRN_SBA_MAX = 64,
                   PRN_GLO_MIN = 65,
                   PRN_GLO_MAX = 98,
                   PRN_BEI_MIN = 141,
@@ -210,14 +208,14 @@ constexpr int16_t PRN_GPS_MIN = 1,
                   PRN_GAL_MIN = 301,
                   PRN_GAL_MAX = 330;
 
-Constellation prn2constellation(int16_t prn)
+GnssConstellationType prn2constellation(int16_t prn)
 {
-	if(PRN_GPS_MIN <= prn && prn <= PRN_GPS_MAX) return Constellation::Gps;
-	if(PRN_SBA_MIN <= prn && prn <= PRN_SBA_MAX) return Constellation::Sbas;
-	if(PRN_GLO_MIN <= prn && prn <= PRN_GLO_MAX) return Constellation::Glonass;
-	if(PRN_BEI_MIN <= prn && prn <= PRN_BEI_MAX) return Constellation::Beidou;
-	if(PRN_QZS_MIN <= prn && prn <= PRN_QZS_MAX) return Constellation::Qzss;
-	if(PRN_GAL_MIN <= prn && prn <= PRN_GAL_MAX) return Constellation::Galileo;
+	if(PRN_GPS_MIN <= prn && prn <= PRN_GPS_MAX) return GnssConstellationType::GPS;
+	if(PRN_SBA_MIN <= prn && prn <= PRN_SBA_MAX) return GnssConstellationType::SBAS;
+	if(PRN_GLO_MIN <= prn && prn <= PRN_GLO_MAX) return GnssConstellationType::GLONASS;
+	if(PRN_BEI_MIN <= prn && prn <= PRN_BEI_MAX) return GnssConstellationType::BEIDOU;
+	if(PRN_QZS_MIN <= prn && prn <= PRN_QZS_MAX) return GnssConstellationType::QZSS;
+	if(PRN_GAL_MIN <= prn && prn <= PRN_GAL_MAX) return GnssConstellationType::GALILEO;
 
 	switch (prn)
 	{
@@ -241,65 +239,65 @@ Constellation prn2constellation(int16_t prn)
 		case 124: 	//EGNOS   Artemis                21.5° E
 		case 126: 	//EGNOS   Inmarsat 4f2 (IOR-W)   25.1° E
 
-			return Constellation::Sbas;
+			return GnssConstellationType::SBAS;
 	}
 
 	ALOGW("prn2constellation: invalid prn: %d", prn);
-	return Constellation::Unknown;
+	return GnssConstellationType::UNKNOWN;
 }
 
-int16_t prn2svid(Constellation constellation, int16_t prn)
+int16_t prn2svid(GnssConstellationType constellation, int16_t prn)
 {
 	switch(constellation)
 	{
-		case Constellation::Gps:
+		case GnssConstellationType::GPS:
 			return prn;
 
-		case Constellation::Glonass:
+		case GnssConstellationType::GLONASS:
 			return prn - PRN_GLO_MIN + 1;
 
-		case Constellation::Beidou:
+		case GnssConstellationType::BEIDOU:
 			return prn - PRN_BEI_MIN + 1;
 
-		case Constellation::Qzss:
+		case GnssConstellationType::QZSS:
 			return prn;
 
-		case Constellation::Galileo:
+		case GnssConstellationType::GALILEO:
 			return prn - PRN_GAL_MIN + 1;
 
-		case Constellation::Sbas:
+		case GnssConstellationType::SBAS:
 			return prn;
 
-		case Constellation::Unknown:
+		case GnssConstellationType::UNKNOWN:
 		default:
 			ALOGW("prn2svid: unknown constellation, returning prn as svid");
 			return prn;
 	}
 }
 
-static int16_t svid2prn(Constellation constellation, int16_t svid)
+static int16_t svid2prn(GnssConstellationType constellation, int16_t svid)
 {
 	switch(constellation)
 	{
-		case Constellation::Gps:
+		case GnssConstellationType::GPS:
 			return svid;
 
-		case Constellation::Glonass:
+		case GnssConstellationType::GLONASS:
 			return svid + PRN_GLO_MIN - 1;
 
-		case Constellation::Beidou:
+		case GnssConstellationType::BEIDOU:
 			return svid + PRN_BEI_MIN - 1;
 
-		case Constellation::Qzss:
+		case GnssConstellationType::QZSS:
 			return svid;
 
-		case Constellation::Galileo:
+		case GnssConstellationType::GALILEO:
 			return svid + PRN_GAL_MIN - 1;
 
-		case Constellation::Sbas:
+		case GnssConstellationType::SBAS:
 			return svid;
 
-		case Constellation::Unknown:
+		case GnssConstellationType::UNKNOWN:
 		default:
 			ALOGW("svid2prn: unknown constellation, returning svid as prn");
 			return svid;
@@ -309,7 +307,7 @@ static int16_t svid2prn(Constellation constellation, int16_t svid)
 SatIdentifier::SatIdentifier() :
 	prn(-1),
 	svid(-1),
-	constellation(Constellation::Unknown)
+	constellation(GnssConstellationType::UNKNOWN)
 { }
 
 SatIdentifier::SatIdentifier(int16_t prn) :
@@ -319,7 +317,7 @@ SatIdentifier::SatIdentifier(int16_t prn) :
 	this->svid = prn2svid(this->constellation, this->prn);
 }
 
-SatIdentifier::SatIdentifier(Constellation constellation, int16_t svid) :
+SatIdentifier::SatIdentifier(GnssConstellationType constellation, int16_t svid) :
 	prn(svid2prn(constellation, svid)),
 	svid(svid),
 	constellation(constellation)

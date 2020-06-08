@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef TESEO_HAL_MODEL_SAT_INFO_H
 #define TESEO_HAL_MODEL_SAT_INFO_H
 
@@ -26,30 +26,25 @@
 
 #include "Constellations.h"
 
+#include <teseo/utils/Gnss_1_0.h>
+
 namespace stm {
 
-enum class SatInfoFlags : uint8_t {
-	None         = GNSS_SV_FLAGS_NONE,
-	HasAlmanac   = GNSS_SV_FLAGS_HAS_ALMANAC_DATA,
-	HasEphemeris = GNSS_SV_FLAGS_HAS_EPHEMERIS_DATA,
-	UsedInFix    = GNSS_SV_FLAGS_USED_IN_FIX
-};
-
-Constellation prn2constellation(int16_t prn);
-int16_t prn2svid(Constellation constellation, int16_t prn);
+GnssConstellationType prn2constellation(int16_t prn);
+int16_t prn2svid(GnssConstellationType constellation, int16_t prn);
 
 class SatIdentifier {
 private:
 	int16_t prn;
 	int16_t svid;
-	Constellation constellation;
+	GnssConstellationType constellation;
 
 public:
 	SatIdentifier();
 
 	explicit SatIdentifier(int16_t prn);
 
-	SatIdentifier(Constellation constellation, int16_t svid);
+	SatIdentifier(GnssConstellationType constellation, int16_t svid);
 
 	SatIdentifier(const SatIdentifier & other);
 
@@ -59,7 +54,7 @@ public:
 	int16_t getSvid() const
 	{ return svid; }
 
-	Constellation getConstellation() const
+	GnssConstellationType getConstellation() const
 	{ return constellation; }
 
 	SatIdentifier & operator = (const SatIdentifier & other);

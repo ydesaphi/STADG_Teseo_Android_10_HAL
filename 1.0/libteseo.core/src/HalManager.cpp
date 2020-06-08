@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @brief HAL Life cycle manager
  * @file HalManager.cpp
@@ -26,10 +26,10 @@
  * @copyright 2016, STMicroelectronics, All rights reserved.
  */
 
-#include <teseo/HalManager.h>
-
 #define LOG_TAG "teseo_hal_HalManager"
 #include <log/log.h>
+
+#include <teseo/HalManager.h>
 
 #include <teseo/config/config.h>
 #include <teseo/utils/Time.h>
@@ -90,7 +90,7 @@ HalManager & HalManager::getInstance()
 	return instance;
 }
 
-int HalManager::init(GpsCallbacks * cb)
+int HalManager::init(const sp<IGnssCallback>& cb)
 {
 	(void)(cb);
 
@@ -110,15 +110,15 @@ int HalManager::init(GpsCallbacks * cb)
 	initAssistance();
 
 	ALOGI("Set capabilities");
-	setCapabilites(GPS_CAPABILITY_SCHEDULING     |
+	setCapabilites(GnssCapabilities::SCHEDULING     |
 	#ifdef SUPL_ENABLED
-				   GPS_CAPABILITY_MSB            | //MS Based
+				   GnssCapabilities::MSB            | //MS Based
 	#endif
-	               GPS_CAPABILITY_SINGLE_SHOT    |
-	               GPS_CAPABILITY_ON_DEMAND_TIME |
-				   GPS_CAPABILITY_GEOFENCING     |
-	               GPS_CAPABILITY_MEASUREMENTS   |
-	               GPS_CAPABILITY_NAV_MESSAGES);
+	               GnssCapabilities::SINGLE_SHOT    |
+	               GnssCapabilities::ON_DEMAND_TIME |
+				   GnssCapabilities::GEOFENCING     |
+	               GnssCapabilities::MEASUREMENTS   |
+	               GnssCapabilities::NAV_MESSAGES);
 
 	LocServiceProxy::gps::getSignals().injectTime.connect(
 		SlotFactory::create(utils::injectTime));
@@ -325,7 +325,7 @@ void HalManager::initRawMeasurement(void)
 	gnssSignals.close.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::closeMeasurement));
 
 	rawMeasurement->sendMeasurements.connect(SlotFactory::create(LocServiceProxy::measurement::sendMeasurements));
-	rawMeasurement->sendNavigathionMessages.connect(SlotFactory::create(LocServiceProxy::navigationMessage::sendNavigationMessages));
+	rawMeasurement->sendNavigationMessages.connect(SlotFactory::create(LocServiceProxy::navigationMessage::sendNavigationMessages));
 
 	device->onNmea.connect(SlotFactory::create(*rawMeasurement, &StrawEngine::onNmeaMessage));
 
@@ -410,7 +410,8 @@ void HalManager::initAGpsIf()
 		agpsSignals.init.connect(SlotFactory::create(*AgpsIf, &agps::Agps_If::initialize));
 		agpsSignals.setServer.connect(SlotFactory::create(*AgpsIf, &agps::Agps_If::setServer));
 
-		AgpsIf->statusCb.connect(SlotFactory::create(LocServiceProxy::agps::sendAGpsStatus));
+		AgpsIf->ipV4StatusCb.connect(SlotFactory::create(LocServiceProxy::agps::sendAGpsStatusIpV4));
+		AgpsIf->ipV6StatusCb.connect(SlotFactory::create(LocServiceProxy::agps::sendAGpsStatusIpV6));
 	}
 }
 #else

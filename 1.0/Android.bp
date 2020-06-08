@@ -1,7 +1,7 @@
 /*
  * This file is part of Teseo Android HAL
  *
- * Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
  * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
  *
  * License terms: Apache 2.0.
@@ -10,7 +10,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,7 @@
  */
 
 cc_defaults {
-    name: "teseo_defaults",
+    name: "teseo_defaults@1.0",
     owner: "stm",
     proprietary: true,
     vendor: true,
@@ -34,6 +34,10 @@ cc_defaults {
          * These flags can be commented or not
          * to enable or disable some features of the HAL
          */
+        "-DSTAGPS_ENABLED",
+        "-DSTRAW_ENABLED",
+        "-DAGPS_ENABLED",
+        //"-DSUPL_ENABLED",
         //"-DDEBUG_NMEA_DECODER",               // Debug the NMEA Decoder
         "-DDEBUG_NMEA_LOG_OUTPUT",              // Output the NMEA messages
         //"-DDISABLE_ALL_MESSAGE_DEBUGGING",    // Disable all message debuggers (see messages.cpp)
@@ -48,7 +52,10 @@ cc_defaults {
         "libc",
         "liblog",
         "libsysutils",
-        "libhardware",
+        "libhidlbase",
+        "libhidltransport",
+        "libutils",
+        "android.hardware.gnss@1.0",
     ],
 }
 

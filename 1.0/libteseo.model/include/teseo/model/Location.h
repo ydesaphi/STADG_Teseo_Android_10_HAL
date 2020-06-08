@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @file Location.h
  * @author Baudouin Feildel <baudouin.feildel@st.com>
@@ -28,11 +28,12 @@
 #ifndef TESEO_HAL_MODEL_LOCATION
 #define TESEO_HAL_MODEL_LOCATION
 
-#include <hardware/gps.h>
 #include <teseo/utils/ByteVector.h>
 
 #include "FixAndOperatingModes.h"
 #include "FixQuality.h"
+
+#include <teseo/utils/Gnss_1_0.h>
 
 namespace stm {
 
@@ -50,36 +51,36 @@ private:
 
 	/** Represents latitude in degrees. */
     double          _latitude;
-    
+
 	/** Represents longitude in degrees. */
     double          _longitude;
 
 	bool hasLatLong;
-    
+
 	/**
      * Represents altitude in meters above the WGS 84 reference ellipsoid.
      */
     double          _altitude;
 
 	bool hasAltitude;
-    
+
 	/** Represents speed in meters per second. */
     float           _speed;
 
 	bool hasSpeed;
-    
+
 	/** Represents heading in degrees. */
     float           _bearing;
 
 	bool hasBearing;
-    
+
 	/** Represents expected accuracy in meters. */
     float           _accuracy;
 
 	bool hasAccuracy;
 
     /** Timestamp for the location fix. */
-    GpsUtcTime      _timestamp;
+    GnssUtcTime      _timestamp;
 
 public:
 	Location();
@@ -187,7 +188,7 @@ public:
 	/**
 	 * @brief      Get timestamp value
 	 */
-	GpsUtcTime timestamp() const;
+	GnssUtcTime timestamp() const;
 
 	/**
 	 * @brief      Set the fix quality
@@ -227,12 +228,12 @@ public:
 	/**
 	 * @brief      Set and get timestamp value
 	 */
-	GpsUtcTime timestamp(GpsUtcTime value);
+	GnssUtcTime timestamp(GnssUtcTime value);
 
 	/**
 	 * @brief      Get pointer to the Android platform location structure
 	 */
-	void copyToGpsLocation(GpsLocation & loc) const;
+	void copyToGnssLocation(GnssLocation & loc) const;
 
 	/**
 	 * @brief      Returns a string representation of the location.

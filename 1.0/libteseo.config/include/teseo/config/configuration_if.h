@@ -1,28 +1,27 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2018, STMicroelectronics - All Rights Reserved
-* Author(s): Fabrice Deruy <fabrice.deruy@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Fabrice Deruy <fabrice.deruy@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef TESEO_HAL_CONFIG_IF_H
 #define TESEO_HAL_CONFIG_IF_H
 
-#include <hardware/gps.h>
 #include <teseo/utils/Signal.h>
 #include <teseo/utils/singleton.h>
 #include <vector>
@@ -51,8 +50,8 @@ using namespace std;
 #define GET_MAJ_VERSION_NB(x) ((x>>MAJOR_VERSION_SHIFT)&MAJOR_VERSION_MASK)
 #define GET_MIN_VERSION_NB(x) ((x>>MINOR_VERSION_SHIFT)&MINOR_VERSION_MASK)
 
-static const vector<string> vStrings = { 
-        SUPL_VER, 
+static const vector<string> vStrings = {
+        SUPL_VER,
         GPS_LOCK,
         SUPL_ES,
         SUPL_MODE,
@@ -63,9 +62,9 @@ static const vector<string> vStrings = {
 
 /**
  * @brief      Configuration Interface class
- * 
+ *
  * @details    This class is responsible of:
- * - Interface for passing GNSS configuration 
+ * - Interface for passing GNSS configuration
  *   info from platform to HAL
  */
 class Config_If:public Trackable,

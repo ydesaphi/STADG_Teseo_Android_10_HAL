@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @file Location.cpp
  * @author Baudouin Feildel <baudouin.feildel@st.com>
@@ -84,7 +84,7 @@ float Location::accuracy() const
 	return _accuracy;
 }
 
-GpsUtcTime Location::timestamp() const
+GnssUtcTime Location::timestamp() const
 {
 	return _timestamp;
 }
@@ -137,27 +137,37 @@ float Location::accuracy(float value)
 	return _accuracy;
 }
 
-GpsUtcTime Location::timestamp(GpsUtcTime value)
+GnssUtcTime Location::timestamp(GnssUtcTime value)
 {
 	_timestamp = value;
 	return _timestamp;
 }
 
-void Location::copyToGpsLocation(GpsLocation & loc) const
+void Location::copyToGnssLocation(GnssLocation & loc) const
 {
-	loc.size      = sizeof(GpsLocation);
-    loc.latitude  = this->_latitude;
-    loc.longitude = this->_longitude;
-    loc.altitude  = this->_altitude;
-    loc.speed     = this->_speed;
-    loc.bearing   = this->_bearing;
-    loc.accuracy  = this->_accuracy;
-    loc.timestamp = this->_timestamp;
-    loc.flags = (hasLatLong  ? GPS_LOCATION_HAS_LAT_LONG : 0x0000) |
-	            (hasAltitude ? GPS_LOCATION_HAS_ALTITUDE : 0x0000) |
-				(hasSpeed    ? GPS_LOCATION_HAS_SPEED    : 0x0000) |
-				(hasBearing  ? GPS_LOCATION_HAS_BEARING  : 0x0000) |
-				(hasAccuracy ? GPS_LOCATION_HAS_ACCURACY : 0x0000) ;
+    // Bit operation AND with 1f below is needed to clear vertical accuracy,
+    // speed accuracy and bearing accuracy flags as some vendors are found
+    // to be setting these bits in pre-Android-O devices
+    loc.gnssLocationFlags               = static_cast<uint16_t>((
+        (hasLatLong  ? static_cast<std::underlying_type_t<GnssLocationFlags>>(GnssLocationFlags::HAS_LAT_LONG) : 0x0000) |
+        (hasAltitude ? static_cast<std::underlying_type_t<GnssLocationFlags>>(GnssLocationFlags::HAS_ALTITUDE) : 0x0000) |
+        (hasSpeed    ? static_cast<std::underlying_type_t<GnssLocationFlags>>(GnssLocationFlags::HAS_SPEED)    : 0x0000) |
+        (hasBearing  ? static_cast<std::underlying_type_t<GnssLocationFlags>>(GnssLocationFlags::HAS_BEARING)  : 0x0000) |
+        (hasAccuracy ? static_cast<std::underlying_type_t<GnssLocationFlags>>(GnssLocationFlags::HAS_HORIZONTAL_ACCURACY) : 0x0000) )
+        & 0x1f);
+    loc.latitudeDegrees                 = this->_latitude;
+    loc.longitudeDegrees                = this->_longitude;
+    loc.altitudeMeters                  = this->_altitude;
+    loc.speedMetersPerSec               = this->_speed;
+    loc.bearingDegrees                  = this->_bearing;
+    loc.horizontalAccuracyMeters        = this->_accuracy;
+    // Older chipsets do not provide the following 3 fields, hence the flags
+    // HAS_VERTICAL_ACCURACY, HAS_SPEED_ACCURACY and HAS_BEARING_ACCURACY are
+    // not set and the field are set to zeros.
+    loc.verticalAccuracyMeters          = 0;
+    loc.speedAccuracyMetersPerSecond    = 0;
+    loc.bearingAccuracyDegrees          = 0;
+    loc.timestamp                       = this->_timestamp;
 }
 
 std::string Location::toString() const

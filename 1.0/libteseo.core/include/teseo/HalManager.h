@@ -1,24 +1,24 @@
 /*
-* This file is part of Teseo Android HAL
-*
-* Copyright (c) 2016-2017, STMicroelectronics - All Rights Reserved
-* Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
-*
-* License terms: Apache 2.0.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-*/
+ * This file is part of Teseo Android HAL
+ *
+ * Copyright (c) 2016-2020, STMicroelectronics - All Rights Reserved
+ * Author(s): Baudouin Feildel <baudouin.feildel@st.com> for STMicroelectronics.
+ *
+ * License terms: Apache 2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * @brief HAL Life cycle manager
  * @file HalManager.h
@@ -29,12 +29,12 @@
 #ifndef TESEO_HAL_HAL_MANAGER_H
 #define TESEO_HAL_HAL_MANAGER_H
 
-#include <hardware/hardware.h>
-#include <hardware/gps.h>
 #include <stdlib.h>
 
 #include <teseo/utils/optional.h>
 #include <teseo/utils/Signal.h>
+
+#include <teseo/utils/Gnss_1_0.h>
 
 namespace stm {
 
@@ -66,6 +66,7 @@ class GeofencingManager;
 namespace straw {
 class StrawEngine;
 } // namespace straw
+
 namespace ril {
 class Ril_If;
 } // namespace ril
@@ -93,7 +94,7 @@ class HalManager :
 private:
 
 	Signal<void, uint32_t> setCapabilites;
-	
+
 	device::AbstractDevice * device;
 
 	decoder::AbstractDecoder * decoder;
@@ -148,7 +149,7 @@ public:
 	 *
 	 * @return     0 on success, 1 on failure
 	 */
-	int init(GpsCallbacks * cb);
+	int init(const sp<IGnssCallback>& cb);
 
 	/**
 	 * @brief      HAL Cleanup

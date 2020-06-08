@@ -172,7 +172,7 @@ Version::Status::operator Version::Status::Values () const
 
 			if(IsBeta() && IsTest())
 				return TESTING;
-			
+
 			return UNKNOWN;
 	}
 }
