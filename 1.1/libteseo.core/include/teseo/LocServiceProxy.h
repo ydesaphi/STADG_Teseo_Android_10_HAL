@@ -33,15 +33,15 @@
 #include <string>
 #include <map>
 
+#include <teseo/utils/Gnss_1_1.h>
+#include <teseo/utils/LegacyGps.h>
+
 #include <teseo/utils/Signal.h>
 #include <teseo/model/NmeaMessage.h>
 #include <teseo/model/Location.h>
 #include <teseo/model/SatInfo.h>
 #include <teseo/geofencing/model.h>
 #include <teseo/utils/Thread.h>
-
-#include <teseo/utils/Gnss_1_1.h>
-#include <teseo/utils/LegacyGps.h>
 
 namespace stm {
 
@@ -248,24 +248,26 @@ namespace measurement {
 
 	int onInit(const sp<IGnssMeasurementCallback>& cb);
 	void onClose(void);
-	void sendMeasurements(const GnssClock & clockData,std::vector <GnssMeasurement> & measurementdata);
+	void sendMeasurements(
+        const GnssClock & clockData,
+        std::vector <GnssMeasurement> & measurementdata);
 }
 //#endif
 
 namespace ril {
 
 	struct Signals {
-		Signal<void> init = Signal<void>("ril::signals::init");
+		Signal<void> init = Signal<void> ("ril::signals::init");
 
-		Signal<void, const AGnssRefLocation *> setRefLocation = Signal<void, const IAGnssRil::AGnssRefLocation * >("ril::signals::setRefLocation");
+		Signal<void, const AGnssRefLocation *> setRefLocation = Signal<void, const IAGnssRil::AGnssRefLocation *> ("ril::signals::setRefLocation");
 
-		Signal<void, IAGnssRil::SetIDType, const char *> setSetId = Signal<void, IAGnssRil::SetIDType, const char *>("ril::signals::setSetId");
+		Signal<void, IAGnssRil::SetIDType, const char *> setSetId = Signal<void, IAGnssRil::SetIDType, const char *> ("ril::signals::setSetId");
 
-		Signal<void, uint8_t *> niMessage = Signal<void, uint8_t *>("ril::signals::niMessage");
+		Signal<void, uint8_t *> niMessage = Signal<void, uint8_t *> ("ril::signals::niMessage");
 
-		Signal<void, int, int,int>updateNetworkState = Signal<void, int, int,int>("ril::signals::updateNetworkState");
+		Signal<void, int, int,int> updateNetworkState = Signal<void, int, int,int> ("ril::signals::updateNetworkState");
 
-		Signal<void, int>updateNetworkAvailability = Signal<void, int>("ril::signals::updateNetworkAvailability");
+		Signal<void, int> updateNetworkAvailability = Signal<void, int> ("ril::signals::updateNetworkAvailability");
 	};
 
 	void onInit(const sp<IAGnssRilCallback>& cb);

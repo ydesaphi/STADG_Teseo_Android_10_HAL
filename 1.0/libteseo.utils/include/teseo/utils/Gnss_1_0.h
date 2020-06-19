@@ -29,26 +29,26 @@
 #ifndef TESEO_HAL_GNSS_1_0_H
 #define TESEO_HAL_GNSS_1_0_H
 
-#include <android/hardware/gnss/1.0/IAGnss.h>
-#include <android/hardware/gnss/1.0/IAGnssCallback.h>
-#include <android/hardware/gnss/1.0/IAGnssRil.h>
-#include <android/hardware/gnss/1.0/IAGnssRilCallback.h>
+//#include <android/hardware/gnss/1.0/IAGnss.h>
+//#include <android/hardware/gnss/1.0/IAGnssCallback.h>
+//#include <android/hardware/gnss/1.0/IAGnssRil.h>
+//#include <android/hardware/gnss/1.0/IAGnssRilCallback.h>
 #include <android/hardware/gnss/1.0/IGnss.h>
-#include <android/hardware/gnss/1.0/IGnssCallback.h>
-#include <android/hardware/gnss/1.0/IGnssBatching.h>
-#include <android/hardware/gnss/1.0/IGnssBatchingCallback.h>
-#include <android/hardware/gnss/1.0/IGnssConfiguration.h>
-#include <android/hardware/gnss/1.0/IGnssDebug.h>
-#include <android/hardware/gnss/1.0/IGnssGeofencing.h>
-#include <android/hardware/gnss/1.0/IGnssGeofenceCallback.h>
-#include <android/hardware/gnss/1.0/IGnssMeasurement.h>
-#include <android/hardware/gnss/1.0/IGnssMeasurementCallback.h>
-#include <android/hardware/gnss/1.0/IGnssNavigationMessage.h>
-#include <android/hardware/gnss/1.0/IGnssNavigationMessageCallback.h>
-#include <android/hardware/gnss/1.0/IGnssNi.h>
-#include <android/hardware/gnss/1.0/IGnssNiCallback.h>
-#include <android/hardware/gnss/1.0/IGnssXtra.h>
-#include <android/hardware/gnss/1.0/IGnssXtraCallback.h>
+//#include <android/hardware/gnss/1.0/IGnssCallback.h>
+//#include <android/hardware/gnss/1.0/IGnssBatching.h>
+//#include <android/hardware/gnss/1.0/IGnssBatchingCallback.h>
+//#include <android/hardware/gnss/1.0/IGnssConfiguration.h>
+//#include <android/hardware/gnss/1.0/IGnssDebug.h>
+//#include <android/hardware/gnss/1.0/IGnssGeofencing.h>
+//#include <android/hardware/gnss/1.0/IGnssGeofenceCallback.h>
+//#include <android/hardware/gnss/1.0/IGnssMeasurement.h>
+//#include <android/hardware/gnss/1.0/IGnssMeasurementCallback.h>
+//#include <android/hardware/gnss/1.0/IGnssNavigationMessage.h>
+//#include <android/hardware/gnss/1.0/IGnssNavigationMessageCallback.h>
+//#include <android/hardware/gnss/1.0/IGnssNi.h>
+//#include <android/hardware/gnss/1.0/IGnssNiCallback.h>
+//#include <android/hardware/gnss/1.0/IGnssXtra.h>
+//#include <android/hardware/gnss/1.0/IGnssXtraCallback.h>
 
 using ::android::sp;
 
@@ -99,12 +99,31 @@ using AGnssRefLocation          = IAGnssRil::AGnssRefLocation;
 /* V1_0/IAGnssRilCallback */
 using SetID = IAGnssRilCallback::ID;
 
+/* V1_0/IGnss */
+using GnssPositionMode          = IGnss::GnssPositionMode;
+using GnssPositionRecurrence    = IGnss::GnssPositionRecurrence;
+using GnssAidingData            = IGnss::GnssAidingData;
+
+/* V1_0/IGnssCallback */
+using GnssCapabilities  = IGnssCallback::Capabilities;
+using GnssStatusValue   = IGnssCallback::GnssStatusValue;
+using GnssSvFlags       = IGnssCallback::GnssSvFlags;
+using GnssSvInfo        = IGnssCallback::GnssSvInfo;
+using GnssSvStatus      = IGnssCallback::GnssSvStatus;
+using GnssSystemInfo    = IGnssCallback::GnssSystemInfo;
+
 /* V1_0/IGnssBatching */
 using BatchingFlag      = IGnssBatching::Flag;
 using BatchingOptions   = IGnssBatching::Options;
 
 /* V1_0/IGnssBatchingCallback */
 //NA
+
+/* V1_0/IGnssConfiguration */
+using SuplMode              = IGnssConfiguration::SuplMode;
+using GpsLock               = IGnssConfiguration::GpsLock;
+using LppProfile            = IGnssConfiguration::LppProfile;
+using GlonassPosProtocol    = IGnssConfiguration::GlonassPosProtocol;
 
 /* V1_0/IGnssDebug */
 using SatelliteEphemerisType    = IGnssDebug::SatelliteEphemerisType;
@@ -122,6 +141,26 @@ using DebugData                 = IGnssDebug::DebugData;
 using GeofenceTransition    = IGnssGeofenceCallback::GeofenceTransition;
 using GeofenceAvailability  = IGnssGeofenceCallback::GeofenceAvailability;
 using GeofenceStatus        = IGnssGeofenceCallback::GeofenceStatus;
+
+/* V1_0/IGnssMeasurement */
+using GnssMeasurementStatus = IGnssMeasurement::GnssMeasurementStatus;
+
+/* V1_0/IGnssMeasurementCallback */
+using GnssClockFlags                    =
+        IGnssMeasurementCallback::GnssClockFlags;
+using GnssMeasurementFlags              =
+        IGnssMeasurementCallback::GnssMeasurementFlags;
+using GnssMultipathIndicator            =
+        IGnssMeasurementCallback::GnssMultipathIndicator;
+using GnssMeasurementState              =
+        IGnssMeasurementCallback::GnssMeasurementState;
+
+using GnssClock         = IGnssMeasurementCallback::GnssClock;
+
+using GnssAccumulatedDeltaRangeState    =
+        IGnssMeasurementCallback::GnssAccumulatedDeltaRangeState;
+using GnssMeasurement   = IGnssMeasurementCallback::GnssMeasurement;
+using GnssData          = IGnssMeasurementCallback::GnssData;
 
 /* V1_0/IGnssNavigationMessage */
 using GnssNavigationMessageStatus   =
@@ -147,45 +186,5 @@ using GnssNiNotification    = IGnssNiCallback::GnssNiNotification;
 
 /* V1_0/IGnssXtraCallback */
 //NA
-
-/* V1_0/IGnss */
-using GnssPositionMode          = IGnss::GnssPositionMode;
-using GnssPositionRecurrence    = IGnss::GnssPositionRecurrence;
-using GnssAidingData            = IGnss::GnssAidingData;
-
-/* V1_0/IGnssCallback */
-using GnssCapabilities  = IGnssCallback::Capabilities;
-using GnssStatusValue   = IGnssCallback::GnssStatusValue;
-using GnssSvFlags       = IGnssCallback::GnssSvFlags;
-using GnssSvInfo        = IGnssCallback::GnssSvInfo;
-using GnssSvStatus      = IGnssCallback::GnssSvStatus;
-using GnssSystemInfo    = IGnssCallback::GnssSystemInfo;
-
-/* V1_0/IGnssConfiguration */
-using SuplMode              = IGnssConfiguration::SuplMode;
-using GpsLock               = IGnssConfiguration::GpsLock;
-using LppProfile            = IGnssConfiguration::LppProfile;
-using GlonassPosProtocol    = IGnssConfiguration::GlonassPosProtocol;
-
-
-/* V1_0/IGnssMeasurement */
-using GnssMeasurementStatus = IGnssMeasurement::GnssMeasurementStatus;
-
-/* V1_0/IGnssMeasurementCallback */
-using GnssClockFlags                    =
-        IGnssMeasurementCallback::GnssClockFlags;
-using GnssMeasurementFlags              =
-        IGnssMeasurementCallback::GnssMeasurementFlags;
-using GnssMultipathIndicator            =
-        IGnssMeasurementCallback::GnssMultipathIndicator;
-using GnssMeasurementState              =
-        IGnssMeasurementCallback::GnssMeasurementState;
-
-using GnssClock         = IGnssMeasurementCallback::GnssClock;
-
-using GnssAccumulatedDeltaRangeState    =
-        IGnssMeasurementCallback::GnssAccumulatedDeltaRangeState;
-using GnssMeasurement   = IGnssMeasurementCallback::GnssMeasurement;
-using GnssData          = IGnssMeasurementCallback::GnssData;
 
 #endif  // TESEO_HAL_GNSS_1_0_H

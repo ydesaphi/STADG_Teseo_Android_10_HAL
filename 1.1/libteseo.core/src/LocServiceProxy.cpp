@@ -199,9 +199,11 @@ void sendSatelliteListUpdate(const std::map<SatIdentifier, SatInfo> & satellites
 	svStatus.numSvs = satellites.size();
 
 	int gpsSats = 0;
+	int sbaSats = 0;
 	int gloSats = 0;
-	int galSats = 0;
+	int qzsSats = 0;
 	int beiSats = 0;
+	int galSats = 0;
 	int otherSats = 0;
 	int totalSats = 0;
 
@@ -210,16 +212,32 @@ void sendSatelliteListUpdate(const std::map<SatIdentifier, SatInfo> & satellites
         svStatus.gnssSvList[totalSats] = svInfo;
 
         switch(p.second.getId().getConstellation()) {
-            case GnssConstellationType::GPS:     gpsSats++; break;
-            case GnssConstellationType::GLONASS: gloSats++; break;
-            case GnssConstellationType::GALILEO: galSats++; break;
-            case GnssConstellationType::BEIDOU:  beiSats++; break;
-            default: otherSats++; break;
+            case GnssConstellationType::GPS:
+                gpsSats++;
+                break;
+            case GnssConstellationType::SBAS:
+                sbaSats++;
+                break;
+            case GnssConstellationType::GLONASS:
+                gloSats++;
+                break;
+            case GnssConstellationType::QZSS:
+                qzsSats++;
+                break;
+            case GnssConstellationType::BEIDOU:
+                beiSats++;
+                break;
+            case GnssConstellationType::GALILEO:
+                galSats++;
+                break;
+            default:
+                otherSats++;
+                break;
         }
         totalSats++;
     };
 
-	if(svStatus.numSvs < static_cast<uint32_t>(GnssMax::SVS_COUNT))
+	if(satellites.size() < static_cast<uint32_t>(GnssMax::SVS_COUNT))
 	{
 		std::for_each(satellites.begin(), satellites.end(), action);
 	}
@@ -232,23 +250,23 @@ void sendSatelliteListUpdate(const std::map<SatIdentifier, SatInfo> & satellites
 		}
 	}
 
-	ALOGI("Send satellite list: %d satellites, %d gps, %d glonass, %d galileo, %d beidou, %d others",
+	ALOGI("Send satellite list: %d satellites, %d gps, %d sbas, %d glonass, %d qzss, %d beidou, %d galileo, %d others",
 		totalSats,
         gpsSats,
+        sbaSats,
         gloSats,
-        galSats,
+        qzsSats,
         beiSats,
+        galSats,
         otherSats);
 	sGnssCallback->gnssSvStatusCb(svStatus);
 }
-
 
 void sendCapabilities(uint32_t capabilities)
 {
 	ALOGI("Set capabilities: 0x%x", capabilities);
 	sGnssCallback->gnssSetCapabilitesCb(capabilities);
 }
-
 
 void acquireWakelock()
 {
@@ -442,7 +460,9 @@ void onClose(void)
 	signals.close.emit();
 }
 
-void sendMeasurements(const GnssClock & clockData, std::vector<GnssMeasurement>& measurementsData)
+void sendMeasurements(
+    const GnssClock & clockData,
+    std::vector<GnssMeasurement>& measurementsData)
 {
 	ALOGI("SendMeasurements");
 

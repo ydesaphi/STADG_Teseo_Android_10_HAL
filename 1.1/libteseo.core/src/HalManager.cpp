@@ -111,9 +111,9 @@ int HalManager::init(const sp<IGnssCallback>& cb)
 
 	ALOGI("Set capabilities");
 	setCapabilites(GnssCapabilities::SCHEDULING     |
-	#ifdef SUPL_ENABLED
+#ifdef SUPL_ENABLED
 				   GnssCapabilities::MSB            | //MS Based
-	#endif
+#endif
 	               GnssCapabilities::SINGLE_SHOT    |
 	               GnssCapabilities::ON_DEMAND_TIME |
 				   GnssCapabilities::GEOFENCING     |

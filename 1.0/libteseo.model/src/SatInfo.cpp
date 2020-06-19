@@ -194,19 +194,22 @@ void SatInfo::copyToGnssSvInfo(GnssSvInfo * dest) const
 	               (this->usedInFix ? static_cast<std::underlying_type_t<GnssSvFlags>>(GnssSvFlags::USED_IN_FIX)        : 0x00);
     dest->carrierFrequencyHz = 0;
 }
-
+/* This value is based on ST GNSS NMEA specification and commands Rev 3.44
+ * from GNSS_NMEA_Interface_344.pdf
+ * which released for STA8089-90 Binary Image v4.5.12.4
+ */
 constexpr int16_t PRN_GPS_MIN = 1,
                   PRN_GPS_MAX = 32,
                   PRN_SBA_MIN = 33,
-                  PRN_SBA_MAX = 64,
+                  PRN_SBA_MAX = 51,
                   PRN_GLO_MIN = 65,
-                  PRN_GLO_MAX = 98,
+                  PRN_GLO_MAX = 92,
                   PRN_BEI_MIN = 141,
-                  PRN_BEI_MAX = 170,
-                  PRN_QZS_MIN = 193,
-                  PRN_QZS_MAX = 200,
+                  PRN_BEI_MAX = 172,
+                  PRN_QZS_MIN = 183,
+                  PRN_QZS_MAX = 197,
                   PRN_GAL_MIN = 301,
-                  PRN_GAL_MAX = 330;
+                  PRN_GAL_MAX = 336;
 
 GnssConstellationType prn2constellation(int16_t prn)
 {

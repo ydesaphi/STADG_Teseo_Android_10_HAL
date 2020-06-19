@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file
 ## [Unreleased]
 - Batching
 
+## [0.8.0] - 2020-06-18
+### Added
+- GNSS HIDL v2.0 support
+
 ## [0.7.0] - 2020-06-04
 ### Changed
 - change to full binderized mode
