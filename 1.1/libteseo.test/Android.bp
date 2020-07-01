@@ -35,7 +35,6 @@ cc_binary {
         "libc",
         "liblog",
         "libsysutils",
-        "libhardware",
         "libcurl",
         "libteseo.utils@1.1",
     ],
