@@ -437,7 +437,6 @@ std::size_t getInternalState(char * buffer, std::size_t bufferSize)
 
 } // namespace debug
 
-#ifdef STRAW_ENABLED
 namespace measurement {
 
 static Signals signals;
@@ -447,6 +446,7 @@ Signals & getSignals()
 	return signals;
 }
 
+#ifdef STRAW_ENABLED
 int onInit(const sp<IGnssMeasurementCallback>& cb)
 {
 	sGnssMeasureCallback = cb;
@@ -474,9 +474,24 @@ void sendMeasurements(
     gnssData.measurements = measurementsData;
     sGnssMeasureCallback->gnssMeasurementCb(gnssData);
 }
+#else
 
+int onInit(const sp<IGnssMeasurementCallback>& cb)
+{
+	return static_cast<std::underlying_type_t<GnssMeasurementStatus>>(GnssMeasurementStatus::ERROR_GENERIC);
+}
+
+void onClose(void)
+{
+}
+
+void sendMeasurements(
+    const GnssClock &,
+    std::vector<GnssMeasurement>&)
+{
+}
+#endif
 } // namespace measurement
-
 
 namespace navigationMessage {
 
@@ -484,6 +499,7 @@ static Signals signals;
 
 Signals & getSignals() { return signals; }
 
+#ifdef STRAW_ENABLED
 int onInit(const sp<IGnssNavigationMessageCallback>& cb)
 {
 	sGnssNavigationMsgCallback = cb;
@@ -502,9 +518,24 @@ void sendNavigationMessages(GnssNavigationMessage & msg)
 	ALOGI("SendNavigationMessages");
     sGnssNavigationMsgCallback->gnssNavigationMessageCb(msg);
 }
-} // namespace navigationMessage
+#else
+int onInit(const sp<IGnssNavigationMessageCallback>&)
+{
+	return static_cast<std::underlying_type_t<GnssNavigationMessageStatus>>(GnssNavigationMessageStatus::ERROR_GENERIC);
+}
+
+void onClose(void)
+{
+}
+
+void sendNavigationMessages(GnssNavigationMessage &)
+{
+}
 
 #endif // STRAW_ENABLED
+
+} // namespace navigationMessage
+
 
 namespace ril {
 	static Signals signals;
